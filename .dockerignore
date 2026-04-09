@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+dist
+**/dist
+
+# Docker
+docker-compose*.yml
+.dockerignore
+Dockerfile
+**/Dockerfile
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results
+test-results
+.nyc_output
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Turborepo
+.turbo
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+# Misc
+*.md
+!README.md
