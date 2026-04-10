@@ -22,7 +22,6 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@ticktick/shared": "*",
     "@types/bcrypt": "^5.0.0",
     "@types/luxon": "^3.7.1",
     "@types/node": "^20.0.0",

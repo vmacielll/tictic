@@ -29,6 +29,7 @@ Thumbs.db
 
 # Test results
 test-results
+**/test-results
 .nyc_output
 
 # Logs
@@ -40,8 +41,9 @@ npm-debug.log*
 .env.local
 .env.*.local
 
-# Turborepo
+# Cache
 .turbo
+**/.turbo
 
 # Prisma
 prisma/dev.db

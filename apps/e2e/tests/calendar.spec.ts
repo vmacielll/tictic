@@ -21,7 +21,8 @@ test.describe('Calendar', () => {
 
   test('should navigate between months', async ({ page }) => {
     await page.goto('/calendar')
-    const heading = page.locator('h1.capitalize')
+    const heading = page.getByTestId('calendar-heading')
+    await expect(heading).toBeVisible()
     const initialContent = await heading.textContent()
     await page.getByRole('button', { name: '→' }).click()
     const nextContent = await heading.textContent()
@@ -39,6 +40,6 @@ test.describe('Calendar', () => {
     await page.getByRole('button', { name: 'Today' }).click()
     const today = new Date()
     const monthLabel = today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    await expect(page.locator('h1.capitalize')).toContainText(monthLabel, { ignoreCase: true })
+    await expect(page.getByTestId('calendar-heading')).toContainText(monthLabel, { ignoreCase: true })
   })
 })

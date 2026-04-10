@@ -11,20 +11,5 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  app:
-    build:
-      context: .
-      dockerfile: apps/server/Dockerfile
-    container_name: ticktick-app
-    ports:
-      - '3333:3333'
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ticktick?schema=public
-      JWT_SECRET: ${JWT_SECRET:-supersecretkey}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-refreshsecretkey}
-      PORT: 3333
-    depends_on:
-      - postgres
-
 volumes:
   pgdata:

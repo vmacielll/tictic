@@ -98,7 +98,7 @@ export default function CalendarPage() {
           <button onClick={goToNext} className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors">
             →
           </button>
-          <h1 className="text-xl font-semibold capitalize">
+          <h1 className="text-xl font-semibold capitalize" data-testid="calendar-heading">
             {view === 'month' ? monthLabel : view === 'week' ? weekLabel : dayLabel}
           </h1>
         </div>

@@ -6,8 +6,7 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { setToken } from '@/lib/auth'
-import { apiRequest } from '@/lib/api'
-import type { AuthResponse } from '@ticktick/shared'
+import { apiRequest, type AuthResponse } from '@/lib/api'
 
 export default function RegisterPage() {
   const router = useRouter()
