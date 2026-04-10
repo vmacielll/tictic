@@ -1,5 +1,16 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
+// Auth types
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  user: {
+    id: string
+    name: string
+    email: string
+  }
+}
+
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean
 }

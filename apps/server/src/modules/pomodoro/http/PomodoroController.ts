@@ -21,10 +21,13 @@ export class PomodoroController {
     const body = request.body as Record<string, any>
 
     try {
+      const duration = typeof body.duration === 'number' && body.duration > 0 ? body.duration : 25
+      const taskId = typeof body.taskId === 'string' && body.taskId.length > 0 ? body.taskId : undefined
+
       const result = await this.startPomodoro.execute({
         userId: req.userId,
-        duration: body.duration ?? 25,
-        taskId: body.taskId,
+        duration,
+        taskId,
       })
 
       return reply.status(201).send(result)

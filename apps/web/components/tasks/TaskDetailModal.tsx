@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react'
 import { type Task, type UpdateTaskInput, updateTask, completeTask, uncompleteTask, deleteTask } from '@/lib/api'
+import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
 
 interface TaskDetailModalProps {
   task: Task
@@ -281,6 +282,16 @@ export function TaskDetailModal({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Pomodoro Section */}
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              🍅 Pomodoro Focus
+            </h3>
+            <PomodoroTimer taskId={task.id} onSessionComplete={() => {
+              // Optionally refresh task data or show notification
+            }} />
           </div>
         </form>
 
