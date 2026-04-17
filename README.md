@@ -10,9 +10,10 @@ A clone of [TickTick](https://ticktick.com) — productivity application for tas
 | **Frontend**    | Next.js 14 (App Router), React, TailwindCSS     |
 | **Database**    | PostgreSQL 16, Prisma ORM                       |
 | **Auth**        | @fastify/jwt, bcrypt                            |
-| **Unit Tests**  | Vitest with V8 coverage                        |
+| **Unit Tests**  | Vitest with V8 coverage                         |
 | **E2E Tests**   | Playwright                                      |
 | **Date/Time**   | Luxon                                           |
+| **Task Runner** | Makefile (replaced Turborepo)                   |
 
 ## 📁 Project Structure
 
@@ -39,7 +40,9 @@ tictic/
 │   │   │   │   └── utils/         # Utilities (e.g. timezone)
 │   │   │   └── app.ts             # Application entry point
 │   │   ├── Dockerfile
-│   │   └── vitest.config.ts
+│   │   ├── package.json
+│   │   ├── vitest.config.ts
+│   │   └── tsconfig.json
 │   │
 │   ├── web/                       # Frontend (Next.js App Router)
 │   │   ├── app/
@@ -64,17 +67,33 @@ tictic/
 │   │   │   ├── useCalendar.ts
 │   │   │   ├── usePomodoro.ts
 │   │   │   └── useTaskDetail.ts
-│   │   └── lib/
-│   │       ├── api.ts             # API client
-│   │       └── auth.ts            # Auth utilities
+│   │   ├── domain/                # Domain types and Zod schemas
+│   │   │   ├── auth/
+│   │   │   ├── tasks/
+│   │   │   ├── lists/
+│   │   │   ├── calendar/
+│   │   │   ├── pomodoro/
+│   │   │   └── shared/
+│   │   ├── lib/
+│   │   │   ├── api.ts             # API client
+│   │   │   └── auth.ts            # Auth utilities
+│   │   ├── package.json
+│   │   ├── tailwind.config.ts
+│   │   └── vitest.config.ts
 │   │
-│   └── e2e/                       # End-to-end tests
-│       └── tests/
+│   └── e2e/                       # End-to-end tests (Playwright)
+│       ├── tests/
+│       │   ├── pomodoro.spec.ts
+│       │   └── calendar.spec.ts
+│       └── playwright.config.ts
 │
 ├── docker-compose.yml             # PostgreSQL container
 ├── .env.example                   # Environment variables
-└── Makefile                       # Quick commands
+├── Makefile                       # Quick commands
+└── README.md                      # This file
 ```
+
+> **Note:** This project does NOT use Turborepo. Each app in `apps/` has its own `package.json` and must be managed independently or via the Makefile.
 
 ## 🏗️ Backend Architecture
 
