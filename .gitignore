@@ -51,3 +51,6 @@ prisma/migrations/
 
 #qwen
 .qwen
+
+# plan
+plans
