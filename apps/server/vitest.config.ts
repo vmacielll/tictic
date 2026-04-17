@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import path from 'path'
 
 export default defineConfig({
   test: {
@@ -9,6 +10,14 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'html'],
       include: ['src/modules/**/*.ts', 'src/shared/**/*.ts'],
       exclude: ['src/**/*.test.ts', 'src/**/index.ts'],
+    },
+  },
+  resolve: {
+    alias: {
+      '@shared': path.resolve(__dirname, 'src/shared'),
+      '@modules': path.resolve(__dirname, 'src/modules'),
+      '@infra': path.resolve(__dirname, 'src/infra'),
+      '@prisma': path.resolve(__dirname, 'src/infra/database/prisma'),
     },
   },
 })
