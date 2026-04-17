@@ -1,71 +1,64 @@
 'use client'
 
-import { type CalendarDay } from '@/lib/api'
+import { type CalendarDay } from '@/domain/calendar/types'
+import { type CalendarSummaryTask } from '@/domain/calendar/types'
 
 interface WeekViewProps {
   days: CalendarDay[]
   loading: boolean
   onDayClick: (date: Date) => void
   onToggleTask?: (id: string, completed: boolean) => void
-  onViewTask?: (task: CalendarDay['tasks'][0]) => void
+  onViewTask?: (task: CalendarSummaryTask) => void
 }
 
 export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }: WeekViewProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-400">Loading...</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
       </div>
     )
   }
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="grid grid-cols-7 divide-x divide-gray-700 min-h-full" data-testid="calendar-week-grid">
+    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden" data-testid="calendar-week-grid">
+      <div className="grid grid-cols-7 divide-x divide-border min-h-[400px]">
         {days.map((day) => {
-          // Parse date string directly without timezone conversion
           const [year, month, dateDay] = day.date.split('-').map(Number)
-          const date = new Date(year, month - 1, dateDay) // Local date
+          const date = new Date(year, month - 1, dateDay)
           const isToday = date.toDateString() === new Date().toDateString()
-          const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' })
+          const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
 
           return (
-            <div key={day.date} data-testid={`calendar-week-day-${day.date}`} className="p-2 min-h-[300px] cursor-pointer hover:bg-gray-700/20 transition-colors">
+            <div key={day.date} data-testid={`calendar-week-day-${day.date}`} className="p-2 min-h-[300px] cursor-pointer hover:bg-surface-overlay/30 transition-colors">
               <div className="text-center mb-2">
-                <div className="text-xs text-gray-400 uppercase">{dayName}</div>
+                <div className="text-xs text-text-muted uppercase">{dayName}</div>
                 <span
                   className={`inline-block text-lg font-bold px-2 py-1 rounded-full mt-1 ${
-                    isToday ? 'bg-indigo-600 text-white' : 'text-gray-200'
+                    isToday ? 'bg-primary-600 text-white' : 'text-text-primary'
                   }`}
                 >
                   {date.getDate()}
                 </span>
               </div>
               <div className="space-y-1" onClick={(e) => {
-                // Only navigate if clicking on the day container, not on tasks
-                if (e.target === e.currentTarget) {
-                  onDayClick(date)
-                }
+                if (e.target === e.currentTarget) onDayClick(date)
               }}>
-                {day.tasks.map((task) => (
+                {day.tasks.map((task: CalendarSummaryTask) => (
                   <div
                     key={task.id}
                     className={`text-sm px-2 py-1 rounded flex items-center gap-1 ${
                       task.completed
-                        ? 'bg-gray-600/50 line-through text-gray-400'
+                        ? 'bg-surface-overlay/50 line-through text-text-muted'
                         : task.priority === 'HIGH'
-                        ? 'bg-red-900/50 text-red-300'
+                        ? 'bg-red-950/60 text-red-300 border border-red-900/40'
                         : task.priority === 'MEDIUM'
-                        ? 'bg-yellow-900/50 text-yellow-300'
-                        : 'bg-green-900/50 text-green-300'
+                        ? 'bg-amber-950/60 text-amber-300 border border-amber-900/40'
+                        : 'bg-emerald-950/60 text-emerald-300 border border-emerald-900/40'
                     }`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (onToggleTask) {
-                        onToggleTask(task.id, task.completed)
-                      } else {
-                        onDayClick(date)
-                      }
+                      if (onToggleTask) onToggleTask(task.id, task.completed)
                     }}
                   >
                     {onToggleTask && (
@@ -75,18 +68,18 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
                           onToggleTask(task.id, task.completed)
                         }}
                         className={`w-3 h-3 rounded border flex-shrink-0 flex items-center justify-center ${
-                          task.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                          task.completed ? 'bg-primary-600 border-primary-600' : 'border-border-light'
                         }`}
                         aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
                       >
                         {task.completed && (
                           <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4.5 12.75l6 6 9-13.5" />
                           </svg>
                         )}
                       </button>
                     )}
-                    <span 
+                    <span
                       className="truncate flex-1 cursor-pointer hover:underline"
                       onClick={(e) => {
                         e.stopPropagation()

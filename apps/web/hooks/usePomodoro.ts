@@ -7,8 +7,16 @@ import {
   cancelPomodoro,
   listPomodoros,
   getActivePomodoro,
-  type PomodoroSession,
 } from '@/lib/api'
+import {
+  type PomodoroSession,
+  type StartPomodoroInput,
+  parsePomodoro,
+  parsePomodoroList,
+  parseActivePomodoro,
+  startPomodoroSchema,
+  getTimeLeft,
+} from '@/domain/pomodoro/types'
 
 interface UsePomodoroReturn {
   activeSession: PomodoroSession | null
@@ -75,12 +83,11 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
 
   const loadActiveSession = useCallback(async () => {
     try {
-      const { pomodoroSession } = await getActivePomodoro()
-      if (pomodoroSession && pomodoroSession.status === 'RUNNING') {
-        setActiveSession(pomodoroSession)
-        const elapsed = Date.now() - new Date(pomodoroSession.startedAt).getTime()
-        const totalMs = pomodoroSession.duration * 60 * 1000
-        const remaining = Math.max(0, totalMs - elapsed)
+      const raw = await getActivePomodoro()
+      const session = parseActivePomodoro(raw)
+      if (session && session.status === 'RUNNING') {
+        setActiveSession(session)
+        const remaining = getTimeLeft(session)
         setTimeLeft(remaining)
         setIsRunning(true)
       } else {
@@ -97,8 +104,8 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
 
   const loadSessions = useCallback(async () => {
     try {
-      const { pomodoroSessions } = await listPomodoros()
-      setSessions(pomodoroSessions)
+      const raw = await listPomodoros()
+      setSessions(parsePomodoroList(raw))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sessions')
     }
@@ -108,10 +115,13 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
     setLoading(true)
     setError(null)
     try {
-      const newSession = await startPomodoro({
+      const input: StartPomodoroInput = {
         duration,
         taskId: taskIdOverride ?? taskId,
-      })
+      }
+      const validated = startPomodoroSchema.parse(input)
+      const raw = await startPomodoro(validated)
+      const newSession = parsePomodoro(raw)
       setActiveSession(newSession)
       setTimeLeft(newSession.duration * 60 * 1000)
       setIsRunning(true)
@@ -129,7 +139,8 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
     setLoading(true)
     setError(null)
     try {
-      const updated = await completePomodoro(activeSession.id)
+      const raw = await completePomodoro(activeSession.id)
+      const updated = parsePomodoro(raw)
       setActiveSession(updated)
       setIsRunning(false)
       setTimeLeft(0)
@@ -146,7 +157,8 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
     setLoading(true)
     setError(null)
     try {
-      const updated = await cancelPomodoro(activeSession.id)
+      const raw = await cancelPomodoro(activeSession.id)
+      const updated = parsePomodoro(raw)
       setActiveSession(updated)
       setIsRunning(false)
       setTimeLeft(0)

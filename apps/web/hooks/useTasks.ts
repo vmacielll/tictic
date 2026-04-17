@@ -9,10 +9,16 @@ import {
   completeTask,
   uncompleteTask,
   deleteTask,
+} from '@/lib/api'
+import {
   type Task,
   type CreateTaskInput,
   type UpdateTaskInput,
-} from '@/lib/api'
+  parseTasks,
+  parseTask,
+  createTaskSchema,
+  updateTaskSchema,
+} from '@/domain/tasks/types'
 
 type TaskSource = 'inbox' | 'today'
 
@@ -37,7 +43,7 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
     setError(null)
     try {
       const result = source === 'inbox' ? await listInboxTasks() : await listTodayTasks()
-      setTasks(result)
+      setTasks(parseTasks(result))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tasks')
     } finally {
@@ -51,7 +57,9 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
 
   const addTask = useCallback(async (data: CreateTaskInput) => {
     try {
-      const created = await createTask(data)
+      const validated = createTaskSchema.parse(data)
+      const raw = await createTask(validated)
+      const created = parseTask(raw)
       setTasks((prev) => [created, ...prev])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create task')
@@ -61,8 +69,10 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
 
   const updateTaskFn = useCallback(async (id: string, data: UpdateTaskInput) => {
     try {
-      const updated = await updateTask(id, data)
-      setTasks((prev) => prev.map((t) => t.id === id ? updated : t))
+      const validated = updateTaskSchema.parse(data)
+      const raw = await updateTask(id, validated)
+      const updated = parseTask(raw)
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
       return updated
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update task')
@@ -75,7 +85,7 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? { ...t, completed: !currentCompleted, completedAt: currentCompleted ? undefined : new Date().toISOString() }
+          ? { ...t, completed: !currentCompleted, completedAt: currentCompleted ? undefined : new Date() }
           : t
       )
     )

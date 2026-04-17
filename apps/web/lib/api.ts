@@ -1,16 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
-// Auth types
-export interface AuthResponse {
-  accessToken: string
-  refreshToken: string
-  user: {
-    id: string
-    name: string
-    email: string
-  }
-}
-
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean
 }
@@ -23,8 +12,8 @@ export async function apiRequest<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'X-Timezone': typeof window !== 'undefined' 
-      ? Intl.DateTimeFormat().resolvedOptions().timeZone 
+    'X-Timezone': typeof window !== 'undefined'
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
       : 'UTC',
     ...(customHeaders as Record<string, string>),
   }
@@ -53,161 +42,139 @@ export async function apiRequest<T>(
   return response.json() as Promise<T>
 }
 
-// Calendar API helpers
-export interface CalendarTask {
-  id: string
-  title: string
-  description?: string
-  priority: 'LOW' | 'MEDIUM' | 'HIGH'
-  completed: boolean
-  dueDate: string
-  dueTime?: string
-  listId?: string
+// ── Auth ──
+export async function login(email: string, password: string): Promise<unknown> {
+  return apiRequest('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
 }
 
-export interface CalendarDay {
-  date: string
-  tasks: CalendarTask[]
+export async function register(name: string, email: string, password: string): Promise<unknown> {
+  return apiRequest('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password }),
+  })
 }
 
-export async function getCalendarMonth(month: number, year: number): Promise<{ days: CalendarDay[] }> {
+// ── Calendar ──
+export async function getCalendarMonth(month: number, year: number): Promise<unknown> {
   return apiRequest(`/calendar/month?month=${month}&year=${year}`, { requiresAuth: true })
 }
 
-export async function getCalendarWeek(date: string): Promise<{ days: CalendarDay[] }> {
+export async function getCalendarWeek(date: string): Promise<unknown> {
   return apiRequest(`/calendar/week?date=${date}`, { requiresAuth: true })
 }
 
-export async function getCalendarDay(date: string): Promise<{ date: string; tasks: CalendarTask[] }> {
+export async function getCalendarDay(date: string): Promise<unknown> {
   return apiRequest(`/calendar/day?date=${date}`, { requiresAuth: true })
 }
 
-// Task types
-export interface Task {
-  id: string
-  title: string
-  description?: string
-  priority: 'LOW' | 'MEDIUM' | 'HIGH'
-  dueDate?: string
-  dueTime?: string
-  completed: boolean
-  completedAt?: string
-  listId?: string
-  userId: string
-  createdAt: string
-  updatedAt: string
+// ── Tasks ──
+export async function createTask(data: unknown): Promise<unknown> {
+  return apiRequest('/tasks', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    requiresAuth: true,
+  })
 }
 
-export interface CreateTaskInput {
-  title: string
-  description?: string
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH'
-  dueDate?: string
-  dueTime?: string
-  listId?: string
+export async function updateTask(id: string, data: unknown): Promise<unknown> {
+  return apiRequest(`/tasks/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    requiresAuth: true,
+  })
 }
 
-export interface UpdateTaskInput {
-  title?: string
-  description?: string
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH'
-  dueDate?: string
-  dueTime?: string
-  listId?: string
+export async function completeTask(id: string): Promise<unknown> {
+  return apiRequest(`/tasks/${id}/complete`, {
+    method: 'PATCH',
+    requiresAuth: true,
+  })
 }
 
-// Task API helpers
-export async function createTask(data: CreateTaskInput): Promise<Task> {
-  return apiRequest('/tasks', { method: 'POST', body: JSON.stringify(data), requiresAuth: true })
-}
-
-export async function updateTask(id: string, data: UpdateTaskInput): Promise<Task> {
-  return apiRequest(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data), requiresAuth: true })
-}
-
-export async function completeTask(id: string): Promise<{ id: string; completed: boolean; completedAt?: string }> {
-  return apiRequest(`/tasks/${id}/complete`, { method: 'PATCH', requiresAuth: true })
-}
-
-export async function uncompleteTask(id: string): Promise<{ id: string; completed: boolean }> {
-  return apiRequest(`/tasks/${id}/uncomplete`, { method: 'PATCH', requiresAuth: true })
+export async function uncompleteTask(id: string): Promise<unknown> {
+  return apiRequest(`/tasks/${id}/uncomplete`, {
+    method: 'PATCH',
+    requiresAuth: true,
+  })
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  return apiRequest(`/tasks/${id}`, { method: 'DELETE', requiresAuth: true })
+  return apiRequest(`/tasks/${id}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  })
 }
 
-export async function listTasks(): Promise<Task[]> {
+export async function listTasks(): Promise<unknown[]> {
   return apiRequest('/tasks', { requiresAuth: true })
 }
 
-export async function listTodayTasks(): Promise<Task[]> {
+export async function listTodayTasks(): Promise<unknown[]> {
   return apiRequest('/tasks/today', { requiresAuth: true })
 }
 
-export async function listInboxTasks(): Promise<Task[]> {
+export async function listInboxTasks(): Promise<unknown[]> {
   return apiRequest('/tasks/inbox', { requiresAuth: true })
 }
 
-// List types
-export interface List {
-  id: string
-  name: string
-  color?: string
-  userId: string
-  createdAt: string
+// ── Lists ──
+export async function createList(name: string, color?: string): Promise<unknown> {
+  return apiRequest('/lists', {
+    method: 'POST',
+    body: JSON.stringify({ name, color }),
+    requiresAuth: true,
+  })
 }
 
-// List API helpers
-export async function createList(name: string, color?: string): Promise<List> {
-  return apiRequest('/lists', { method: 'POST', body: JSON.stringify({ name, color }), requiresAuth: true })
-}
-
-export async function updateList(id: string, data: { name?: string; color?: string }): Promise<List> {
-  return apiRequest(`/lists/${id}`, { method: 'PATCH', body: JSON.stringify(data), requiresAuth: true })
+export async function updateList(id: string, data: { name?: string; color?: string }): Promise<unknown> {
+  return apiRequest(`/lists/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    requiresAuth: true,
+  })
 }
 
 export async function deleteList(id: string): Promise<void> {
-  return apiRequest(`/lists/${id}`, { method: 'DELETE', requiresAuth: true })
+  return apiRequest(`/lists/${id}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  })
 }
 
-export async function listLists(): Promise<List[]> {
+export async function listLists(): Promise<unknown[]> {
   return apiRequest('/lists', { requiresAuth: true })
 }
 
-// Pomodoro types
-export interface PomodoroSession {
-  id: string
-  userId: string
-  taskId?: string
-  duration: number
-  startedAt: string
-  completedAt?: string
-  status: 'RUNNING' | 'COMPLETED' | 'CANCELLED'
+// ── Pomodoro ──
+export async function startPomodoro(data: unknown = {}): Promise<unknown> {
+  return apiRequest('/pomodoro', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    requiresAuth: true,
+  })
 }
 
-export interface StartPomodoroInput {
-  duration?: number
-  taskId?: string
+export async function completePomodoro(id: string): Promise<unknown> {
+  return apiRequest(`/pomodoro/${id}/complete`, {
+    method: 'PATCH',
+    requiresAuth: true,
+  })
 }
 
-// Pomodoro API helpers
-export async function startPomodoro(data: StartPomodoroInput = {}): Promise<PomodoroSession> {
-  return apiRequest('/pomodoro', { method: 'POST', body: JSON.stringify(data), requiresAuth: true })
+export async function cancelPomodoro(id: string): Promise<unknown> {
+  return apiRequest(`/pomodoro/${id}/cancel`, {
+    method: 'PATCH',
+    requiresAuth: true,
+  })
 }
 
-export async function completePomodoro(id: string): Promise<PomodoroSession> {
-  return apiRequest(`/pomodoro/${id}/complete`, { method: 'PATCH', requiresAuth: true })
-}
-
-export async function cancelPomodoro(id: string): Promise<PomodoroSession> {
-  return apiRequest(`/pomodoro/${id}/cancel`, { method: 'PATCH', requiresAuth: true })
-}
-
-export async function listPomodoros(): Promise<{ pomodoroSessions: PomodoroSession[] }> {
+export async function listPomodoros(): Promise<unknown> {
   return apiRequest('/pomodoro', { requiresAuth: true })
 }
 
-export async function getActivePomodoro(): Promise<{ pomodoroSession?: PomodoroSession }> {
+export async function getActivePomodoro(): Promise<unknown> {
   return apiRequest('/pomodoro/active', { requiresAuth: true })
 }

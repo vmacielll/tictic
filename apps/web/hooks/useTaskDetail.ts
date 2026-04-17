@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { type Task } from '@/lib/api'
+import { type Task } from '@/domain/tasks/types'
 
 interface UseTaskDetailReturn {
   selectedTask: Task | null
@@ -44,13 +44,13 @@ export function useTaskDetail(
   const handleToggleComplete = useCallback((taskId: string, wasCompleted: boolean) => {
     // Toggle the completed status
     onToggleTask(taskId, wasCompleted)
-    
+
     // Update selected task if it's still open
     if (selectedTask?.id === taskId) {
       setSelectedTask({
         ...selectedTask,
         completed: !wasCompleted,
-        completedAt: !wasCompleted ? new Date().toISOString() : undefined
+        completedAt: !wasCompleted ? new Date() : undefined
       })
     }
   }, [onToggleTask, selectedTask])

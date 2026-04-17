@@ -31,8 +31,8 @@ export default function TodayPage() {
         title: updatedTask.title,
         description: updatedTask.description,
         priority: updatedTask.priority,
-        dueDate: updatedTask.dueDate,
-        dueTime: updatedTask.dueTime,
+        dueDate: updatedTask.dueDate ? updatedTask.dueDate.toISOString().split('T')[0] : undefined,
+        dueTime: updatedTask.dueTime ? updatedTask.dueTime.toISOString().slice(11, 16) : undefined,
       })
       await refresh()
     },
@@ -45,14 +45,14 @@ export default function TodayPage() {
   )
 
   return (
-    <div>
+    <div className="max-w-2xl animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Today</h1>
-        <p className="text-sm text-gray-500 mt-1 capitalize">{today}</p>
+        <h1 className="text-2xl font-bold text-text-primary">Today</h1>
+        <p className="text-sm text-text-muted mt-1 capitalize">{today}</p>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
           {error}
         </div>
       )}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, type FormEvent } from 'react'
-import { type Task, type UpdateTaskInput, updateTask, completeTask, uncompleteTask, deleteTask } from '@/lib/api'
+import { type Task, type UpdateTaskInput, parseTask } from '@/domain/tasks/types'
+import { updateTask, completeTask, uncompleteTask, deleteTask } from '@/lib/api'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
 
 interface TaskDetailModalProps {
@@ -24,8 +25,8 @@ export function TaskDetailModal({
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>(task.priority)
-  const [dueDate, setDueDate] = useState(task.dueDate?.split('T')[0] || '')
-  const [dueTime, setDueTime] = useState(task.dueTime ? task.dueTime.slice(11, 16) : '')
+  const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.toISOString().split('T')[0] : '')
+  const [dueTime, setDueTime] = useState(task.dueTime ? task.dueTime.toISOString().slice(11, 16) : '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,8 +35,8 @@ export function TaskDetailModal({
     setTitle(task.title)
     setDescription(task.description || '')
     setPriority(task.priority)
-    setDueDate(task.dueDate?.split('T')[0] || '')
-    setDueTime(task.dueTime ? task.dueTime.slice(11, 16) : '')
+    setDueDate(task.dueDate ? task.dueDate.toISOString().split('T')[0] : '')
+    setDueTime(task.dueTime ? task.dueTime.toISOString().slice(11, 16) : '')
     setError(null)
   }, [task])
 
@@ -78,7 +79,8 @@ export function TaskDetailModal({
         dueTime: dueTime || undefined,
       }
 
-      const updated = await updateTask(task.id, updateData)
+      const raw = await updateTask(task.id, updateData)
+      const updated = parseTask(raw)
       onSave(updated)
       onClose()
     } catch (err) {
@@ -103,7 +105,7 @@ export function TaskDetailModal({
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this task?')) return
-    
+
     try {
       await deleteTask(task.id)
       onDelete(task.id)
@@ -113,9 +115,7 @@ export function TaskDetailModal({
     }
   }
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return 'N/A'
-    const date = new Date(dateStr)
+  const formatDate = (date: Date) => {
     return date.toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -126,31 +126,31 @@ export function TaskDetailModal({
   }
 
   const priorityColors = {
-    HIGH: 'bg-red-100 text-red-700 border-red-400',
-    MEDIUM: 'bg-yellow-100 text-yellow-700 border-yellow-400',
-    LOW: 'bg-green-100 text-green-700 border-green-400',
+    HIGH: 'bg-danger/10 text-danger/80 border-danger/30',
+    MEDIUM: 'bg-warning/10 text-warning/80 border-warning/30',
+    LOW: 'bg-success/10 text-success/80 border-success/30',
   }
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-slide-up"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-surface-overlay rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border">
         {/* Header */}
-        <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl ${task.completed ? 'opacity-60' : ''}`}>
+        <div className={`sticky top-0 bg-surface-overlay border-b border-border px-6 py-4 rounded-t-xl ${task.completed ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
               <button
                 onClick={handleToggleComplete}
                 className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
-                  ${task.completed ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-green-400'}`}
+                  ${task.completed ? 'bg-success border-success' : 'border-border-light hover:border-success/60'}`}
                 aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
               >
                 {task.completed && (
@@ -159,13 +159,13 @@ export function TaskDetailModal({
                   </svg>
                 )}
               </button>
-              <h2 className={`text-xl font-semibold ${task.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+              <h2 className={`text-xl font-semibold ${task.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>
                 Task Details
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-raised rounded-lg transition-colors"
               aria-label="Close modal"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -178,21 +178,21 @@ export function TaskDetailModal({
         {/* Body */}
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="p-3 bg-danger/10 border border-danger/30 rounded-lg text-sm text-danger">
               {error}
             </div>
           )}
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-text-primary mb-1.5">
               Title *
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full rounded-lg border border-border-light bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent placeholder-text-muted"
               placeholder="Enter task title"
               required
             />
@@ -200,13 +200,13 @@ export function TaskDetailModal({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-text-primary mb-1.5">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full rounded-lg border border-border-light bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent resize-none placeholder-text-muted"
               rows={3}
               placeholder="Add a description (optional)"
             />
@@ -214,7 +214,7 @@ export function TaskDetailModal({
 
           {/* Priority */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-text-primary mb-1.5">
               Priority
             </label>
             <div className="flex gap-2">
@@ -223,10 +223,10 @@ export function TaskDetailModal({
                   key={p}
                   type="button"
                   onClick={() => setPriority(p)}
-                  className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 font-medium transition-all
+                  className={`flex-1 px-3 py-2 text-sm rounded-lg border font-medium transition-all
                     ${priority === p
                       ? priorityColors[p]
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                      : 'bg-surface-raised border-border-light text-text-secondary hover:bg-surface'
                     }`}
                 >
                   {p === 'HIGH' ? '🔴' : p === 'MEDIUM' ? '🟡' : '🟢'} {p}
@@ -238,55 +238,55 @@ export function TaskDetailModal({
           {/* Date & Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-text-primary mb-1.5">
                 Due Date
               </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full rounded-lg border border-border-light bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-text-primary mb-1.5">
                 Due Time
               </label>
               <input
                 type="time"
                 value={dueTime}
                 onChange={(e) => setDueTime(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full rounded-lg border border-border-light bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Metadata (read-only) */}
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
               Information
             </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-gray-500">Created:</span>
-                <p className="text-gray-900">{formatDate(task.createdAt)}</p>
+                <span className="text-text-secondary">Created:</span>
+                <p className="text-text-primary">{formatDate(task.createdAt)}</p>
               </div>
               <div>
-                <span className="text-gray-500">Updated:</span>
-                <p className="text-gray-900">{formatDate(task.updatedAt)}</p>
+                <span className="text-text-secondary">Updated:</span>
+                <p className="text-text-primary">{formatDate(task.updatedAt)}</p>
               </div>
               {task.completedAt && (
                 <div>
-                  <span className="text-gray-500">Completed:</span>
-                  <p className="text-gray-900">{formatDate(task.completedAt)}</p>
+                  <span className="text-text-secondary">Completed:</span>
+                  <p className="text-text-primary">{formatDate(task.completedAt)}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Pomodoro Section */}
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
               🍅 Pomodoro Focus
             </h3>
             <PomodoroTimer taskId={task.id} onSessionComplete={() => {
@@ -296,17 +296,17 @@ export function TaskDetailModal({
         </form>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-xl flex items-center justify-between">
+        <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 rounded-b-xl flex items-center justify-between">
           <button
             onClick={handleDelete}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10 rounded-lg transition-colors"
           >
             Delete Task
           </button>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-text-primary bg-surface-raised border border-border-light rounded-lg hover:bg-surface transition-colors"
             >
               Cancel
             </button>

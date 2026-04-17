@@ -7,29 +7,31 @@ import { MonthView } from '@/components/calendar/MonthView'
 import { WeekView } from '@/components/calendar/WeekView'
 import { DayView } from '@/components/calendar/DayView'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
-import { type CalendarTask, updateTask, completeTask, uncompleteTask, deleteTask } from '@/lib/api'
+import { type CalendarSummaryTask } from '@/domain/calendar/types'
+import { type Task } from '@/domain/tasks/types'
+import { updateTask, deleteTask } from '@/lib/api'
 
-// Helper to convert CalendarTask to Task format
-function calendarTaskToTask(task: CalendarTask) {
+function calendarTaskToTask(task: CalendarSummaryTask): Task {
+  const now = new Date()
   return {
     id: task.id,
     title: task.title,
-    description: task.description,
+    description: undefined,
     priority: task.priority,
     dueDate: task.dueDate,
-    dueTime: task.dueTime,
+    dueTime: undefined,
     completed: task.completed,
     completedAt: undefined,
-    listId: task.listId,
+    listId: undefined,
     userId: '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   }
 }
 
 export default function CalendarPage() {
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0)
-  
+
   const {
     view,
     setView,
@@ -60,8 +62,8 @@ export default function CalendarPage() {
         title: updatedTask.title,
         description: updatedTask.description,
         priority: updatedTask.priority,
-        dueDate: updatedTask.dueDate,
-        dueTime: updatedTask.dueTime,
+        dueDate: updatedTask.dueDate ? updatedTask.dueDate.toISOString().split('T')[0] : undefined,
+        dueTime: updatedTask.dueTime ? updatedTask.dueTime.toISOString().slice(11, 16) : undefined,
       })
       await refresh()
       setCalendarRefreshKey(prev => prev + 1)
@@ -76,7 +78,7 @@ export default function CalendarPage() {
     }
   )
 
-  const handleViewTask = (task: CalendarTask) => {
+  const handleViewTask = (task: CalendarSummaryTask) => {
     openModal(calendarTaskToTask(task))
   }
 
@@ -85,31 +87,31 @@ export default function CalendarPage() {
   const dayLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-gray-100">
+    <div className="max-w-5xl animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <div className="flex items-center gap-4">
-          <button onClick={goToPrev} className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors">
-            ←
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <button onClick={goToPrev} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           </button>
-          <button onClick={goToToday} className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm transition-colors">
+          <button onClick={goToToday} className="px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-500 transition-all shadow-sm shadow-primary-600/20">
             Today
           </button>
-          <button onClick={goToNext} className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors">
-            →
+          <button onClick={goToNext} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
-          <h1 className="text-xl font-semibold capitalize" data-testid="calendar-heading">
+          <h1 className="text-xl font-semibold text-text-primary capitalize ml-2" data-testid="calendar-heading">
             {view === 'month' ? monthLabel : view === 'week' ? weekLabel : dayLabel}
           </h1>
         </div>
 
-        <div className="flex items-center bg-gray-700 rounded-lg p-1">
+        <div className="flex items-center bg-surface-raised border border-border-light rounded-lg p-1">
           {(['month', 'week', 'day'] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                view === v ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white'
+              className={`px-3 py-1.5 text-sm rounded-md font-medium transition-all ${
+                view === v ? 'bg-primary-600 text-white shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface-overlay'
               }`}
             >
               {v === 'month' ? 'Month' : v === 'week' ? 'Week' : 'Day'}
@@ -119,49 +121,38 @@ export default function CalendarPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-900/30 text-red-300 text-sm border-b border-red-800">
+        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
           {error}
         </div>
       )}
 
       {/* Views */}
       {view === 'month' && (
-        <MonthView 
-          days={days} 
-          loading={loading} 
-          onDayClick={goToDay} 
+        <MonthView
+          days={days}
+          loading={loading}
+          onDayClick={goToDay}
           onToggleTask={onToggleTask}
           onViewTask={handleViewTask}
         />
       )}
       {view === 'week' && (
-        <WeekView 
-          days={days} 
-          loading={loading} 
+        <WeekView
+          days={days}
+          loading={loading}
           onDayClick={goToDay}
           onToggleTask={onToggleTask}
           onViewTask={handleViewTask}
         />
       )}
       {view === 'day' && singleDay && (
-        <DayView 
-          date={singleDay.date} 
-          tasks={singleDay.tasks} 
+        <DayView
+          date={singleDay.date}
+          tasks={singleDay.tasks}
           loading={loading}
           onToggleTask={onToggleTask}
           onViewTask={handleViewTask}
         />
-      )}
-      {view === 'day' && !singleDay && !loading && (
-        <div className="flex-1 flex items-center justify-center">
-          <DayView 
-            date={new Date().toISOString().split('T')[0]} 
-            tasks={[]} 
-            loading={false}
-            onToggleTask={onToggleTask}
-            onViewTask={handleViewTask}
-          />
-        </div>
       )}
 
       {/* Task Detail Modal */}

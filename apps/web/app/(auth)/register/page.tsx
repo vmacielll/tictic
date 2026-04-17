@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { setToken } from '@/lib/auth'
-import { apiRequest, type AuthResponse } from '@/lib/api'
+import { register, login } from '@/lib/api'
+import { parseAuthResponse } from '@/domain/auth/types'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -18,30 +19,18 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    console.log('Form submitted!', { name, email, password: '***' })
     setError(null)
     setIsLoading(true)
 
     try {
-      console.log('Calling /auth/register...')
-      await apiRequest<AuthResponse>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password }),
-      })
+      await register(name, email, password)
 
-      console.log('Registration successful, calling /auth/login...')
-      // Auto-login after registration
-      const data = await apiRequest<AuthResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      })
+      const raw = await login(email, password)
+      const data = parseAuthResponse(raw)
 
-      console.log('Login successful, setting token and redirecting...')
       setToken(data.accessToken, data.refreshToken)
-      console.log('Redirecting to /today...')
       router.push('/today')
     } catch (err) {
-      console.error('Registration/Login error:', err)
       setError(err instanceof Error ? err.message : 'Failed to register')
     } finally {
       setIsLoading(false)
@@ -49,11 +38,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Create account</h2>
+    <div className="bg-surface-raised/80 backdrop-blur-xl rounded-2xl border border-border p-8 animate-fade-in">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-text-primary">Create account</h2>
+        <p className="text-sm text-text-muted mt-1">Start organizing your tasks</p>
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
           {error}
         </div>
       )}
@@ -66,6 +58,7 @@ export default function RegisterPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          autoComplete="name"
         />
         <Input
           label="Email"
@@ -74,24 +67,26 @@ export default function RegisterPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
         />
         <Input
           label="Password"
           type="password"
-          placeholder="••••••••"
+          placeholder="At least 6 characters"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
+          autoComplete="new-password"
         />
         <Button type="submit" variant="primary" className="w-full" isLoading={isLoading}>
           Create account
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-600">
+      <p className="mt-6 text-center text-sm text-text-muted">
         Already have an account?{' '}
-        <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+        <Link href="/login" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
           Sign in
         </Link>
       </p>

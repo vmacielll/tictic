@@ -1,15 +1,20 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { 
-  getCalendarMonth, 
-  getCalendarWeek, 
-  getCalendarDay, 
-  completeTask, 
+import {
+  getCalendarMonth,
+  getCalendarWeek,
+  getCalendarDay,
+  completeTask,
   uncompleteTask,
-  type CalendarDay, 
-  type CalendarTask 
 } from '@/lib/api'
+import {
+  type CalendarDay,
+  type CalendarDayDetail,
+  type CalendarDetailTask,
+  parseCalendarDays,
+  parseCalendarDayDetail,
+} from '@/domain/calendar/types'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -18,7 +23,7 @@ interface UseCalendarReturn {
   setView: (view: CalendarView) => void
   currentDate: Date
   days: CalendarDay[]
-  singleDay: { date: string; tasks: CalendarTask[] } | null
+  singleDay: CalendarDayDetail | null
   loading: boolean
   error: string | null
   goToPrev: () => void
@@ -41,7 +46,7 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
   const [view, setView] = useState<CalendarView>(initialView)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [days, setDays] = useState<CalendarDay[]>([])
-  const [singleDay, setSingleDay] = useState<{ date: string; tasks: CalendarTask[] } | null>(null)
+  const [singleDay, setSingleDay] = useState<CalendarDayDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,15 +58,17 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
         const month = currentDate.getMonth() + 1
         const year = currentDate.getFullYear()
         const result = await getCalendarMonth(month, year)
-        setDays(result.days)
+        const parsed = result as { days: unknown[] }
+        setDays(parseCalendarDays(parsed.days))
         setSingleDay(null)
       } else if (view === 'week') {
         const result = await getCalendarWeek(formatDateParam(currentDate))
-        setDays(result.days)
+        const parsed = result as { days: unknown[] }
+        setDays(parseCalendarDays(parsed.days))
         setSingleDay(null)
       } else {
         const result = await getCalendarDay(formatDateParam(currentDate))
-        setSingleDay(result)
+        setSingleDay(parseCalendarDayDetail(result))
         setDays([])
       }
     } catch (err) {

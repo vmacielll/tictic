@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { setToken } from '@/lib/auth'
-import { apiRequest, type AuthResponse } from '@/lib/api'
+import { login } from '@/lib/api'
+import { parseAuthResponse } from '@/domain/auth/types'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,10 +22,8 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const data = await apiRequest<AuthResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      })
+      const raw = await login(email, password)
+      const data = parseAuthResponse(raw)
 
       setToken(data.accessToken, data.refreshToken)
       router.push('/today')
@@ -36,11 +35,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Sign in</h2>
+    <div className="bg-surface-raised/80 backdrop-blur-xl rounded-2xl border border-border p-8 animate-fade-in">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-text-primary">Welcome back</h2>
+        <p className="text-sm text-text-muted mt-1">Sign in to your account</p>
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
           {error}
         </div>
       )}
@@ -53,24 +55,26 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
         />
         <Input
           label="Password"
           type="password"
-          placeholder="••••••••"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="current-password"
         />
         <Button type="submit" variant="primary" className="w-full" isLoading={isLoading}>
           Sign in
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-600">
+      <p className="mt-6 text-center text-sm text-text-muted">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-          Sign up
+        <Link href="/register" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
+          Create one
         </Link>
       </p>
     </div>
