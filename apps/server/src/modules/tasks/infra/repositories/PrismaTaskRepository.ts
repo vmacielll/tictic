@@ -1,10 +1,12 @@
-import { prisma } from '../../../../infra/database/prisma/PrismaClient'
-import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
+import type { PrismaClient } from '@prisma/client'
+import type { ITaskRepository, PaginationParams } from '../../domain/repositories/ITaskRepository'
 import { Task } from '../../domain/entities/Task'
-import { TaskTitle } from '../../domain/value-objects/TaskTitle'
 import type { Priority } from '../../domain/types/Priority'
+import { prismaTaskToDomain } from '../../../../shared/mappers/prismaTaskMapper'
 
 export class PrismaTaskRepository implements ITaskRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
   async create(data: {
     id: string
     title: string
@@ -17,7 +19,7 @@ export class PrismaTaskRepository implements ITaskRepository {
     listId?: string
     userId: string
   }): Promise<Task> {
-    const prismaTask = await prisma.task.create({
+    const prismaTask = await this.prisma.task.create({
       data: {
         id: data.id,
         title: data.title,
@@ -32,31 +34,33 @@ export class PrismaTaskRepository implements ITaskRepository {
       },
     })
 
-    return this.toEntity(prismaTask)
+    return prismaTaskToDomain(prismaTask)
   }
 
   async findById(id: string): Promise<Task | null> {
-    const prismaTask = await prisma.task.findUnique({ where: { id } })
+    const prismaTask = await this.prisma.task.findUnique({ where: { id } })
     if (!prismaTask) return null
-    return this.toEntity(prismaTask)
+    return prismaTaskToDomain(prismaTask)
   }
 
-  async findByUserId(userId: string): Promise<Task[]> {
-    const prismaTasks = await prisma.task.findMany({
+  async findByUserId(userId: string, pagination?: PaginationParams): Promise<Task[]> {
+    const prismaTasks = await this.prisma.task.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      skip: pagination?.skip,
+      take: pagination?.take,
     })
-    return prismaTasks.map(this.toEntity)
+    return prismaTasks.map(prismaTaskToDomain)
   }
 
-  async findByUserIdAndDate(userId: string, date: Date): Promise<Task[]> {
+  async findByUserIdAndDate(userId: string, date: Date, pagination?: PaginationParams): Promise<Task[]> {
     const startOfDay = new Date(date)
     startOfDay.setHours(0, 0, 0, 0)
 
     const endOfDay = new Date(date)
     endOfDay.setHours(23, 59, 59, 999)
 
-    const prismaTasks = await prisma.task.findMany({
+    const prismaTasks = await this.prisma.task.findMany({
       where: {
         userId,
         dueDate: {
@@ -65,8 +69,10 @@ export class PrismaTaskRepository implements ITaskRepository {
         },
       },
       orderBy: { createdAt: 'desc' },
+      skip: pagination?.skip,
+      take: pagination?.take,
     })
-    return prismaTasks.map(this.toEntity)
+    return prismaTasks.map(prismaTaskToDomain)
   }
 
   async findByUserIdAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<Task[]> {
@@ -76,7 +82,7 @@ export class PrismaTaskRepository implements ITaskRepository {
     const end = new Date(endDate)
     end.setHours(23, 59, 59, 999)
 
-    const prismaTasks = await prisma.task.findMany({
+    const prismaTasks = await this.prisma.task.findMany({
       where: {
         userId,
         dueDate: {
@@ -86,22 +92,22 @@ export class PrismaTaskRepository implements ITaskRepository {
       },
       orderBy: { dueDate: 'asc' },
     })
-    return prismaTasks.map(this.toEntity)
+    return prismaTasks.map(prismaTaskToDomain)
   }
 
   async findInboxByUserId(userId: string): Promise<Task[]> {
-    const prismaTasks = await prisma.task.findMany({
+    const prismaTasks = await this.prisma.task.findMany({
       where: {
         userId,
         dueDate: null,
       },
       orderBy: { createdAt: 'desc' },
     })
-    return prismaTasks.map(this.toEntity)
+    return prismaTasks.map(prismaTaskToDomain)
   }
 
   async save(task: Task): Promise<Task> {
-    const prismaTask = await prisma.task.update({
+    const prismaTask = await this.prisma.task.update({
       where: { id: task.id },
       data: {
         title: task.title.value,
@@ -112,44 +118,13 @@ export class PrismaTaskRepository implements ITaskRepository {
         completed: Boolean(task.completed),
         completedAt: task.completedAt ?? null,
         listId: task.listId ?? null,
-        // updatedAt is auto-managed by Prisma (@updatedAt)
       },
     })
 
-    return this.toEntity(prismaTask)
+    return prismaTaskToDomain(prismaTask)
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.task.delete({ where: { id } })
-  }
-
-  private toEntity(prismaTask: {
-    id: string
-    title: string
-    description: string | null
-    priority: Priority
-    dueDate: Date | null
-    dueTime: Date | null
-    completed: boolean
-    completedAt: Date | null
-    listId: string | null
-    userId: string
-    createdAt: Date
-    updatedAt: Date
-  }): Task {
-    return Task.reconstitute({
-      id: prismaTask.id,
-      title: new TaskTitle(prismaTask.title),
-      description: prismaTask.description ?? undefined,
-      priority: prismaTask.priority,
-      dueDate: prismaTask.dueDate ?? undefined,
-      dueTime: prismaTask.dueTime ?? undefined,
-      completed: prismaTask.completed,
-      completedAt: prismaTask.completedAt ?? undefined,
-      listId: prismaTask.listId ?? undefined,
-      userId: prismaTask.userId,
-      createdAt: prismaTask.createdAt,
-      updatedAt: prismaTask.updatedAt,
-    })
+    await this.prisma.task.delete({ where: { id } })
   }
 }

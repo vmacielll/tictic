@@ -1,11 +1,13 @@
-import { prisma } from '../../../../infra/database/prisma/PrismaClient'
+import type { PrismaClient } from '@prisma/client'
 import type { IListRepository } from '../../domain/repositories/IListRepository'
 import { List } from '../../domain/entities/List'
-import { ListName } from '../../domain/value-objects/ListName'
+import { prismaListToDomain } from '../../../../shared/mappers/prismaListMapper'
 
 export class PrismaListRepository implements IListRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
   async create(data: { id: string; name: string; color?: string; userId: string }): Promise<List> {
-    const prismaList = await prisma.list.create({
+    const prismaList = await this.prisma.list.create({
       data: {
         id: data.id,
         name: data.name,
@@ -14,25 +16,25 @@ export class PrismaListRepository implements IListRepository {
       },
     })
 
-    return this.toEntity(prismaList)
+    return prismaListToDomain(prismaList)
   }
 
   async findById(id: string): Promise<List | null> {
-    const prismaList = await prisma.list.findUnique({ where: { id } })
+    const prismaList = await this.prisma.list.findUnique({ where: { id } })
     if (!prismaList) return null
-    return this.toEntity(prismaList)
+    return prismaListToDomain(prismaList)
   }
 
   async findByUserId(userId: string): Promise<List[]> {
-    const prismaLists = await prisma.list.findMany({
+    const prismaLists = await this.prisma.list.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     })
-    return prismaLists.map(this.toEntity)
+    return prismaLists.map(prismaListToDomain)
   }
 
   async save(list: List): Promise<List> {
-    const prismaList = await prisma.list.update({
+    const prismaList = await this.prisma.list.update({
       where: { id: list.id },
       data: {
         name: list.name.value,
@@ -40,20 +42,10 @@ export class PrismaListRepository implements IListRepository {
       },
     })
 
-    return this.toEntity(prismaList)
+    return prismaListToDomain(prismaList)
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.list.delete({ where: { id } })
-  }
-
-  private toEntity(prismaList: { id: string; name: string; color: string | null; userId: string; createdAt: Date }): List {
-    return List.reconstitute({
-      id: prismaList.id,
-      name: new ListName(prismaList.name),
-      color: prismaList.color ?? undefined,
-      userId: prismaList.userId,
-      createdAt: prismaList.createdAt,
-    })
+    await this.prisma.list.delete({ where: { id } })
   }
 }

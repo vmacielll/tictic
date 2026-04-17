@@ -1,21 +1,24 @@
-import { prisma } from '../../../../infra/database/prisma/PrismaClient'
+import type { PrismaClient } from '@prisma/client'
 import type { IUserRepository, IUser } from '../../domain/repositories/IUserRepository'
+import { prismaUserToDomain } from '../../../../shared/mappers/prismaUserMapper'
 
 export class PrismaUserRepository implements IUserRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
   async findByEmail(email: string): Promise<IUser | null> {
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await this.prisma.user.findUnique({ where: { email } })
     if (!user) return null
-    return this.toDomain(user)
+    return prismaUserToDomain(user)
   }
 
   async findById(id: string): Promise<IUser | null> {
-    const user = await prisma.user.findUnique({ where: { id } })
+    const user = await this.prisma.user.findUnique({ where: { id } })
     if (!user) return null
-    return this.toDomain(user)
+    return prismaUserToDomain(user)
   }
 
   async create(data: { id: string; name: string; email: string; passwordHash: string }): Promise<IUser> {
-    const user = await prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         id: data.id,
         name: data.name,
@@ -23,11 +26,11 @@ export class PrismaUserRepository implements IUserRepository {
         passwordHash: data.passwordHash,
       },
     })
-    return this.toDomain(user)
+    return prismaUserToDomain(user)
   }
 
   async save(user: IUser): Promise<IUser> {
-    const updated = await prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         name: user.name,
@@ -35,17 +38,6 @@ export class PrismaUserRepository implements IUserRepository {
         updatedAt: user.updatedAt,
       },
     })
-    return this.toDomain(updated)
-  }
-
-  private toDomain(prismaUser: { id: string; name: string; email: string; passwordHash: string; createdAt: Date; updatedAt: Date }): IUser {
-    return {
-      id: prismaUser.id,
-      name: prismaUser.name,
-      email: prismaUser.email,
-      passwordHash: prismaUser.passwordHash,
-      createdAt: prismaUser.createdAt,
-      updatedAt: prismaUser.updatedAt,
-    }
+    return prismaUserToDomain(updated)
   }
 }

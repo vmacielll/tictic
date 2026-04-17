@@ -1,26 +1,13 @@
-import { PrismaClient, PomodoroSession as PrismaPomodoroSession, PomodoroStatus as PrismaPomodoroStatus } from '@prisma/client'
+import type { PrismaClient, PomodoroStatus as PrismaPomodoroStatus } from '@prisma/client'
 import {
   PomodoroSession,
-  type PomodoroSessionProps,
   type PomodoroStatus,
 } from '../../domain/entities/PomodoroSession'
 import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
-
-const prisma = new PrismaClient()
+import { prismaPomodoroToDomain } from '../../../../shared/mappers/prismaPomodoroMapper'
 
 export class PrismaPomodoroRepository implements IPomodoroRepository {
-  private toEntity(data: PrismaPomodoroSession): PomodoroSession {
-    const props: PomodoroSessionProps = {
-      id: data.id,
-      userId: data.userId,
-      taskId: data.taskId ?? undefined,
-      duration: data.duration,
-      startedAt: data.startedAt,
-      completedAt: data.completedAt ?? undefined,
-      status: data.status as PomodoroStatus,
-    }
-    return PomodoroSession.reconstitute(props)
-  }
+  constructor(private readonly prisma: PrismaClient) {}
 
   async create(data: {
     id: string
@@ -31,7 +18,7 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
     status: PrismaPomodoroStatus
     completedAt?: Date
   }): Promise<PomodoroSession> {
-    const created = await prisma.pomodoroSession.create({
+    const created = await this.prisma.pomodoroSession.create({
       data: {
         id: data.id,
         userId: data.userId,
@@ -42,27 +29,27 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
         completedAt: data.completedAt ?? null,
       },
     })
-    return this.toEntity(created)
+    return prismaPomodoroToDomain(created)
   }
 
   async findById(id: string): Promise<PomodoroSession | null> {
-    const session = await prisma.pomodoroSession.findUnique({
+    const session = await this.prisma.pomodoroSession.findUnique({
       where: { id },
     })
     if (!session) return null
-    return this.toEntity(session)
+    return prismaPomodoroToDomain(session)
   }
 
   async findByUserId(userId: string): Promise<PomodoroSession[]> {
-    const sessions = await prisma.pomodoroSession.findMany({
+    const sessions = await this.prisma.pomodoroSession.findMany({
       where: { userId },
       orderBy: { startedAt: 'desc' },
     })
-    return sessions.map(this.toEntity.bind(this))
+    return sessions.map(prismaPomodoroToDomain)
   }
 
   async findActiveByUserId(userId: string): Promise<PomodoroSession | null> {
-    const session = await prisma.pomodoroSession.findFirst({
+    const session = await this.prisma.pomodoroSession.findFirst({
       where: {
         userId,
         status: 'RUNNING',
@@ -70,22 +57,22 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
       orderBy: { startedAt: 'desc' },
     })
     if (!session) return null
-    return this.toEntity(session)
+    return prismaPomodoroToDomain(session)
   }
 
   async save(session: PomodoroSession): Promise<PomodoroSession> {
-    const updated = await prisma.pomodoroSession.update({
+    const updated = await this.prisma.pomodoroSession.update({
       where: { id: session.id },
       data: {
         status: session.status,
         completedAt: session.completedAt ?? null,
       },
     })
-    return this.toEntity(updated)
+    return prismaPomodoroToDomain(updated)
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.pomodoroSession.delete({
+    await this.prisma.pomodoroSession.delete({
       where: { id },
     })
   }

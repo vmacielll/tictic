@@ -89,7 +89,7 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
 })
 
 // Register auth use cases
-const userRepository = new PrismaUserRepository()
+const userRepository = new PrismaUserRepository(prisma)
 const registerUser = new RegisterUser(userRepository)
 const loginUser = new LoginUser(userRepository, app)
 const authController = new AuthController(registerUser, loginUser)
@@ -98,7 +98,7 @@ const authController = new AuthController(registerUser, loginUser)
 app.decorate('authController', authController)
 
 // Register tasks use cases
-const taskRepository = new PrismaTaskRepository()
+const taskRepository = new PrismaTaskRepository(prisma)
 const createTask = new CreateTask(taskRepository)
 const updateTask = new UpdateTask(taskRepository)
 const completeTask = new CompleteTask(taskRepository)
@@ -111,7 +111,7 @@ const tasksController = new TasksController(createTask, updateTask, completeTask
 app.decorate('tasksController', tasksController)
 
 // Register lists use cases
-const listRepository = new PrismaListRepository()
+const listRepository = new PrismaListRepository(prisma)
 const createList = new CreateList(listRepository)
 const updateList = new UpdateList(listRepository)
 const deleteList = new DeleteList(listRepository)
@@ -127,7 +127,7 @@ const calendarController = new CalendarController(getCalendarMonth, getCalendarW
 app.decorate('calendarController', calendarController)
 
 // Register pomodoro use cases
-const pomodoroRepository = new PrismaPomodoroRepository()
+const pomodoroRepository = new PrismaPomodoroRepository(prisma)
 const startPomodoro = new StartPomodoro(pomodoroRepository)
 const completePomodoro = new CompletePomodoro(pomodoroRepository)
 const cancelPomodoro = new CancelPomodoro(pomodoroRepository)
