@@ -4,6 +4,8 @@ import { UpdateList } from '../application/use-cases/UpdateList'
 import { DeleteList } from '../application/use-cases/DeleteList'
 import { ListUserLists } from '../application/use-cases/ListUserLists'
 import { handleError } from '../../../shared/utils/handleError'
+import { validationError } from '../../../shared/utils/validationError'
+import { CreateListSchema, UpdateListSchema, ListIdSchema } from './schemas'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class ListsController {
@@ -16,7 +18,12 @@ export class ListsController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { name, color } = request.body as { name: string; color?: string }
+
+    const parseResult = CreateListSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const { name, color } = parseResult.data
 
     try {
       const result = await this.createList.execute({
@@ -32,8 +39,18 @@ export class ListsController {
 
   async update(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { id } = request.params as { id: string }
-    const body = request.body as { name?: string; color?: string }
+
+    const paramsResult = ListIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
+
+    const parseResult = UpdateListSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const body = parseResult.data
 
     try {
       const result = await this.updateList.execute({
@@ -50,7 +67,12 @@ export class ListsController {
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { id } = request.params as { id: string }
+
+    const paramsResult = ListIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
 
     try {
       await this.deleteList.execute({ listId: id, userId: req.userId })

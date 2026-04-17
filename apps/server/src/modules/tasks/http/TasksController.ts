@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { DateTime } from 'luxon'
+import { ZodError } from 'zod'
 import { CreateTask } from '../application/use-cases/CreateTask'
 import { UpdateTask } from '../application/use-cases/UpdateTask'
 import { CompleteTask } from '../application/use-cases/CompleteTask'
@@ -9,6 +10,8 @@ import { ListTasks } from '../application/use-cases/ListTasks'
 import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
 import { ListInboxTasks } from '../application/use-cases/ListInboxTasks'
 import { handleError } from '../../../shared/utils/handleError'
+import { validationError } from '../../../shared/utils/validationError'
+import { CreateTaskSchema, UpdateTaskSchema, TaskIdSchema } from './schemas'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class TasksController {
@@ -25,7 +28,12 @@ export class TasksController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { title, description, priority, dueDate, dueTime, listId } = request.body as Record<string, any>
+
+    const parseResult = CreateTaskSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const { title, description, priority, dueDate, dueTime, listId } = parseResult.data
 
     try {
       const result = await this.createTask.execute({
@@ -46,8 +54,18 @@ export class TasksController {
 
   async update(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { id } = request.params as { id: string }
-    const body = request.body as Record<string, any>
+
+    const paramsResult = TaskIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
+
+    const parseResult = UpdateTaskSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const body = parseResult.data
 
     try {
       const result = await this.updateTask.execute({
@@ -63,24 +81,18 @@ export class TasksController {
       return reply.send(result)
     } catch (error) {
       request.log.error({ error, taskId: id, userId: req.userId }, 'Error updating task')
-      if (error instanceof Error && 'statusCode' in error) {
-        const appError = error as unknown as { message: string; statusCode: number; code: string }
-        return reply.status(appError.statusCode).send({ message: appError.message, code: appError.code, statusCode: appError.statusCode })
-      }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      const errorStack = error instanceof Error ? error.stack : undefined
-      return reply.status(500).send({ 
-        message: errorMessage, 
-        code: 'INTERNAL_ERROR', 
-        statusCode: 500,
-        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
-      })
+      return handleError(error, reply)
     }
   }
 
   async complete(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { id } = request.params as { id: string }
+
+    const paramsResult = TaskIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
 
     try {
       const result = await this.completeTask.execute({
@@ -90,18 +102,7 @@ export class TasksController {
       return reply.send(result)
     } catch (error) {
       request.log.error({ error, taskId: id, userId: req.userId }, 'Error completing task')
-      if (error instanceof Error && 'statusCode' in error) {
-        const appError = error as unknown as { message: string; statusCode: number; code: string }
-        return reply.status(appError.statusCode).send({ message: appError.message, code: appError.code, statusCode: appError.statusCode })
-      }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      const errorStack = error instanceof Error ? error.stack : undefined
-      return reply.status(500).send({ 
-        message: errorMessage, 
-        code: 'INTERNAL_ERROR', 
-        statusCode: 500,
-        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
-      })
+      return handleError(error, reply)
     }
   }
 
@@ -148,7 +149,12 @@ export class TasksController {
 
   async uncomplete(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { id } = request.params as { id: string }
+
+    const paramsResult = TaskIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
 
     try {
       const result = await this.uncompleteTask.execute({
@@ -158,24 +164,18 @@ export class TasksController {
       return reply.send(result)
     } catch (error) {
       request.log.error({ error, taskId: id, userId: req.userId }, 'Error uncompleting task')
-      if (error instanceof Error && 'statusCode' in error) {
-        const appError = error as unknown as { message: string; statusCode: number; code: string }
-        return reply.status(appError.statusCode).send({ message: appError.message, code: appError.code, statusCode: appError.statusCode })
-      }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      const errorStack = error instanceof Error ? error.stack : undefined
-      return reply.status(500).send({ 
-        message: errorMessage, 
-        code: 'INTERNAL_ERROR', 
-        statusCode: 500,
-        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
-      })
+      return handleError(error, reply)
     }
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const { id } = request.params as { id: string }
+
+    const paramsResult = TaskIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
 
     try {
       await this.deleteTask.execute({

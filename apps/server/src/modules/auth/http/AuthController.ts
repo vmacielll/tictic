@@ -3,6 +3,8 @@ import { RegisterUser } from '../application/use-cases/RegisterUser'
 import { LoginUser } from '../application/use-cases/LoginUser'
 import { AppError } from '../../../shared/errors/AppError'
 import { handleError } from '../../../shared/utils/handleError'
+import { validationError } from '../../../shared/utils/validationError'
+import { RegisterSchema, LoginSchema } from './schemas'
 
 export class AuthController {
   private registerUser: RegisterUser
@@ -17,7 +19,11 @@ export class AuthController {
   }
 
   async register(request: FastifyRequest, reply: FastifyReply) {
-    const { name, email, password } = request.body as { name: string; email: string; password: string }
+    const parseResult = RegisterSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const { name, email, password } = parseResult.data
 
     try {
       const result = await this.registerUser.execute({ name, email, password })
@@ -28,7 +34,11 @@ export class AuthController {
   }
 
   async login(request: FastifyRequest, reply: FastifyReply) {
-    const { email, password } = request.body as { email: string; password: string }
+    const parseResult = LoginSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const { email, password } = parseResult.data
 
     try {
       const result = await this.loginUser.execute({ email, password })

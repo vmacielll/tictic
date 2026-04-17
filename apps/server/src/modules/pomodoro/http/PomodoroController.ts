@@ -5,6 +5,8 @@ import { type CancelPomodoro } from '../application/use-cases/CancelPomodoro'
 import { type ListPomodoros } from '../application/use-cases/ListPomodoros'
 import { type GetActivePomodoro } from '../application/use-cases/GetActivePomodoro'
 import { handleError } from '../../../shared/utils/handleError'
+import { validationError } from '../../../shared/utils/validationError'
+import { StartPomodoroSchema, CompletePomodoroSchema, CancelPomodoroSchema } from './schemas'
 import { type AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class PomodoroController {
@@ -18,12 +20,14 @@ export class PomodoroController {
 
   async start(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const body = request.body as Record<string, any>
+
+    const parseResult = StartPomodoroSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const { duration, taskId } = parseResult.data
 
     try {
-      const duration = typeof body.duration === 'number' && body.duration > 0 ? body.duration : 25
-      const taskId = typeof body.taskId === 'string' && body.taskId.length > 0 ? body.taskId : undefined
-
       const result = await this.startPomodoro.execute({
         userId: req.userId,
         duration,
@@ -38,11 +42,16 @@ export class PomodoroController {
 
   async complete(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const params = request.params as Record<string, any>
+
+    const paramsResult = CompletePomodoroSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id: sessionId } = paramsResult.data
 
     try {
       const result = await this.completePomodoro.execute({
-        sessionId: params.id,
+        sessionId,
         userId: req.userId,
       })
 
@@ -54,11 +63,16 @@ export class PomodoroController {
 
   async cancel(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const params = request.params as Record<string, any>
+
+    const paramsResult = CancelPomodoroSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id: sessionId } = paramsResult.data
 
     try {
       const result = await this.cancelPomodoro.execute({
-        sessionId: params.id,
+        sessionId,
         userId: req.userId,
       })
 

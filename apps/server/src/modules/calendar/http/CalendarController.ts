@@ -4,6 +4,8 @@ import { GetCalendarMonth } from '../application/use-cases/GetCalendarMonth'
 import { GetCalendarWeek } from '../application/use-cases/GetCalendarWeek'
 import { GetCalendarDay } from '../application/use-cases/GetCalendarDay'
 import { handleError } from '../../../shared/utils/handleError'
+import { validationError } from '../../../shared/utils/validationError'
+import { CalendarMonthQuerySchema, CalendarWeekQuerySchema, CalendarDayQuerySchema } from './schemas'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class CalendarController {
@@ -15,16 +17,14 @@ export class CalendarController {
 
   async getMonth(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const query = request.query as { month?: string; year?: string }
+
+    const queryResult = CalendarMonthQuerySchema.safeParse(request.query)
+    if (!queryResult.success) {
+      return validationError(reply, queryResult.error)
+    }
+    const { month, year } = queryResult.data
 
     try {
-      const month = parseInt(query.month!, 10)
-      const year = parseInt(query.year!, 10)
-
-      if (isNaN(month) || isNaN(year)) {
-        return reply.status(400).send({ message: 'Invalid month or year', code: 'INVALID_INPUT', statusCode: 400 })
-      }
-
       const result = await this.getCalendarMonth.execute({
         userId: req.userId,
         month,
@@ -39,14 +39,17 @@ export class CalendarController {
 
   async getWeek(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const query = request.query as { date?: string }
+
+    const queryResult = CalendarWeekQuerySchema.safeParse(request.query)
+    if (!queryResult.success) {
+      return validationError(reply, queryResult.error)
+    }
+    const { date: dateString } = queryResult.data
+
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = DateTime.fromObject({ year, month, day, hour: 12 }, { zone: req.userTimezone }).toJSDate()
 
     try {
-      const dateString = query.date!
-      // Parse date string in user's timezone
-      const [year, month, day] = dateString.split('-').map(Number)
-      const date = DateTime.fromObject({ year, month, day, hour: 12 }, { zone: req.userTimezone }).toJSDate()
-
       const result = await this.getCalendarWeek.execute({
         userId: req.userId,
         date,
@@ -60,14 +63,17 @@ export class CalendarController {
 
   async getDay(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const query = request.query as { date?: string }
+
+    const queryResult = CalendarDayQuerySchema.safeParse(request.query)
+    if (!queryResult.success) {
+      return validationError(reply, queryResult.error)
+    }
+    const { date: dateString } = queryResult.data
+
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = DateTime.fromObject({ year, month, day, hour: 12 }, { zone: req.userTimezone }).toJSDate()
 
     try {
-      const dateString = query.date!
-      // Parse date string in user's timezone
-      const [year, month, day] = dateString.split('-').map(Number)
-      const date = DateTime.fromObject({ year, month, day, hour: 12 }, { zone: req.userTimezone }).toJSDate()
-
       const result = await this.getCalendarDay.execute({
         userId: req.userId,
         date,
