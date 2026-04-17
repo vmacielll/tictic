@@ -4,7 +4,7 @@ import {
   type PomodoroStatus,
 } from '../../domain/entities/PomodoroSession'
 import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
-import { prismaPomodoroToDomain } from '../../../../shared/mappers/prismaPomodoroMapper'
+import { prismaPomodoroToDomain } from '@shared/mappers/prismaPomodoroMapper'
 
 export class PrismaPomodoroRepository implements IPomodoroRepository {
   constructor(private readonly prisma: PrismaClient) {}

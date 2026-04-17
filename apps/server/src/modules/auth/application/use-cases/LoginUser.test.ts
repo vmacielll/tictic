@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { LoginUser } from './LoginUser'
 import { createMockUserRepository } from '../../__mocks__/MockUserRepository'
 import { createMockFastifyInstance } from '../../__mocks__/MockFastifyInstance'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 import { Password } from '../../domain/value-objects/Password'
 import type { IUser } from '../../domain/repositories/IUserRepository'
 

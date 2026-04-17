@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { RegisterUser } from './RegisterUser'
 import { createMockUserRepository } from '../../__mocks__/MockUserRepository'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 import type { IUser } from '../../domain/repositories/IUserRepository'
 
 describe('RegisterUser Use Case', () => {

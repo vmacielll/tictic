@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
 import type { IUserRepository, IUser } from '../../domain/repositories/IUserRepository'
-import { prismaUserToDomain } from '../../../../shared/mappers/prismaUserMapper'
+import { prismaUserToDomain } from '@shared/mappers/prismaUserMapper'
 
 export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaClient) {}

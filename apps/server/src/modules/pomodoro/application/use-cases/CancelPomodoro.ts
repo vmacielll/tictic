@@ -1,6 +1,6 @@
 import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
 import { type PomodoroSession } from '../../domain/entities/PomodoroSession'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 
 interface CancelPomodoroRequest {
   sessionId: string

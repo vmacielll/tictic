@@ -1,5 +1,5 @@
 import type { IListRepository } from '../../domain/repositories/IListRepository'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 
 interface DeleteListRequest {
   listId: string

@@ -1,5 +1,5 @@
-import { List } from '../../modules/lists/domain/entities/List'
-import { ListName } from '../../modules/lists/domain/value-objects/ListName'
+import { List } from '@modules/lists/domain/entities/List'
+import { ListName } from '@modules/lists/domain/value-objects/ListName'
 
 interface PrismaList {
   id: string

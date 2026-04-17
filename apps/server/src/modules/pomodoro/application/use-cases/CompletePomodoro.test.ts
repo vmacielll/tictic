@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CompletePomodoro } from './CompletePomodoro'
 import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
 import { PomodoroSession } from '../../domain/entities/PomodoroSession'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 
 describe('CompletePomodoro', () => {
   let useCase: CompletePomodoro

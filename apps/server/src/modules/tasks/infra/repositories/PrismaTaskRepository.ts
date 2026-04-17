@@ -2,7 +2,7 @@ import type { PrismaClient } from '@prisma/client'
 import type { ITaskRepository, PaginationParams } from '../../domain/repositories/ITaskRepository'
 import { Task } from '../../domain/entities/Task'
 import type { Priority } from '../../domain/types/Priority'
-import { prismaTaskToDomain } from '../../../../shared/mappers/prismaTaskMapper'
+import { prismaTaskToDomain } from '@shared/mappers/prismaTaskMapper'
 
 export class PrismaTaskRepository implements ITaskRepository {
   constructor(private readonly prisma: PrismaClient) {}

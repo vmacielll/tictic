@@ -2,7 +2,7 @@ import {
   PomodoroSession,
   type PomodoroSessionProps,
   type PomodoroStatus,
-} from '../../modules/pomodoro/domain/entities/PomodoroSession'
+} from '@modules/pomodoro/domain/entities/PomodoroSession'
 
 interface PrismaPomodoroSession {
   id: string

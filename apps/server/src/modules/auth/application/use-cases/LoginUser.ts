@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 import { Password } from '../../domain/value-objects/Password'
 import type { IUserRepository } from '../../domain/repositories/IUserRepository'
 

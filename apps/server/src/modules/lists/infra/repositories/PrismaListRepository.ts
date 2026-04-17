@@ -1,7 +1,7 @@
 import type { PrismaClient } from '@prisma/client'
 import type { IListRepository } from '../../domain/repositories/IListRepository'
 import { List } from '../../domain/entities/List'
-import { prismaListToDomain } from '../../../../shared/mappers/prismaListMapper'
+import { prismaListToDomain } from '@shared/mappers/prismaListMapper'
 
 export class PrismaListRepository implements IListRepository {
   constructor(private readonly prisma: PrismaClient) {}

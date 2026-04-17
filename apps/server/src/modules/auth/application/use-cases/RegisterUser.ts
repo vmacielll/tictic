@@ -1,4 +1,4 @@
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 import type { IUserRepository } from '../../domain/repositories/IUserRepository'
 import { Password } from '../../domain/value-objects/Password'
 import { User } from '../../domain/entities/User'

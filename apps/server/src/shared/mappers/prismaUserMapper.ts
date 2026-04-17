@@ -1,4 +1,4 @@
-import type { IUser } from '../../modules/auth/domain/repositories/IUserRepository'
+import type { IUser } from '@modules/auth/domain/repositories/IUserRepository'
 
 interface PrismaUser {
   id: string

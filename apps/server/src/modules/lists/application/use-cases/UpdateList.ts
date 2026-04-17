@@ -1,6 +1,6 @@
 import type { IListRepository } from '../../domain/repositories/IListRepository'
 import { List } from '../../domain/entities/List'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 
 interface UpdateListRequest {
   listId: string

@@ -1,5 +1,5 @@
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 
 interface DeleteTaskRequest {
   taskId: string

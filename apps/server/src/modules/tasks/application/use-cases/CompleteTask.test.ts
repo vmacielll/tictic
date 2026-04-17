@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { type ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { CompleteTask } from './CompleteTask'
 import { Task } from '../../domain/entities/Task'
-import { AppError } from '../../../../shared/errors/AppError'
+import { AppError } from '@shared/errors/AppError'
 
 describe('CompleteTask', () => {
   let mockTaskRepository: ITaskRepository
