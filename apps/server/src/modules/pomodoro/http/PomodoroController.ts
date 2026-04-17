@@ -4,7 +4,7 @@ import { type CompletePomodoro } from '../application/use-cases/CompletePomodoro
 import { type CancelPomodoro } from '../application/use-cases/CancelPomodoro'
 import { type ListPomodoros } from '../application/use-cases/ListPomodoros'
 import { type GetActivePomodoro } from '../application/use-cases/GetActivePomodoro'
-import { toHttpError } from '../../../shared/errors/HttpError'
+import { handleError } from '../../../shared/utils/handleError'
 import { type AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class PomodoroController {
@@ -32,7 +32,7 @@ export class PomodoroController {
 
       return reply.status(201).send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -48,7 +48,7 @@ export class PomodoroController {
 
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -64,7 +64,7 @@ export class PomodoroController {
 
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -75,7 +75,7 @@ export class PomodoroController {
       const result = await this.listPomodoros.execute({ userId: req.userId })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -86,7 +86,7 @@ export class PomodoroController {
       const result = await this.getActivePomodoro.execute({ userId: req.userId })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 }

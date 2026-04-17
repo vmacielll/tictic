@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { RegisterUser } from '../application/use-cases/RegisterUser'
 import { LoginUser } from '../application/use-cases/LoginUser'
 import { AppError } from '../../../shared/errors/AppError'
-import { toHttpError } from '../../../shared/errors/HttpError'
+import { handleError } from '../../../shared/utils/handleError'
 
 export class AuthController {
   private registerUser: RegisterUser
@@ -23,8 +23,7 @@ export class AuthController {
       const result = await this.registerUser.execute({ name, email, password })
       return reply.status(201).send(result)
     } catch (error) {
-      const httpError = toHttpError(error as Error)
-      return reply.status(httpError.statusCode).send(httpError)
+      return handleError(error, reply)
     }
   }
 
@@ -35,8 +34,7 @@ export class AuthController {
       const result = await this.loginUser.execute({ email, password })
       return reply.status(200).send(result)
     } catch (error) {
-      const httpError = toHttpError(error as Error)
-      return reply.status(httpError.statusCode).send(httpError)
+      return handleError(error, reply)
     }
   }
 
@@ -56,8 +54,7 @@ export class AuthController {
 
       return reply.status(200).send({ accessToken, refreshToken })
     } catch (error) {
-      const httpError = toHttpError(error as Error)
-      return reply.status(httpError.statusCode).send(httpError)
+      return handleError(error, reply)
     }
   }
 }

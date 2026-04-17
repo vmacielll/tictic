@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import { GetCalendarMonth } from '../application/use-cases/GetCalendarMonth'
 import { GetCalendarWeek } from '../application/use-cases/GetCalendarWeek'
 import { GetCalendarDay } from '../application/use-cases/GetCalendarDay'
-import { toHttpError } from '../../../shared/errors/HttpError'
+import { handleError } from '../../../shared/utils/handleError'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class CalendarController {
@@ -33,7 +33,7 @@ export class CalendarController {
       })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -54,7 +54,7 @@ export class CalendarController {
       })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -75,7 +75,7 @@ export class CalendarController {
       })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 }

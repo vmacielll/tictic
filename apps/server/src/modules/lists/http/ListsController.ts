@@ -3,7 +3,7 @@ import { CreateList } from '../application/use-cases/CreateList'
 import { UpdateList } from '../application/use-cases/UpdateList'
 import { DeleteList } from '../application/use-cases/DeleteList'
 import { ListUserLists } from '../application/use-cases/ListUserLists'
-import { toHttpError } from '../../../shared/errors/HttpError'
+import { handleError } from '../../../shared/utils/handleError'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class ListsController {
@@ -26,7 +26,7 @@ export class ListsController {
       })
       return reply.status(201).send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -44,7 +44,7 @@ export class ListsController {
       })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -56,7 +56,7 @@ export class ListsController {
       await this.deleteList.execute({ listId: id, userId: req.userId })
       return reply.status(204).send()
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -67,7 +67,7 @@ export class ListsController {
       const result = await this.listUserLists.execute({ userId: req.userId })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 }

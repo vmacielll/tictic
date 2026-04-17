@@ -8,7 +8,7 @@ import { DeleteTask } from '../application/use-cases/DeleteTask'
 import { ListTasks } from '../application/use-cases/ListTasks'
 import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
 import { ListInboxTasks } from '../application/use-cases/ListInboxTasks'
-import { toHttpError } from '../../../shared/errors/HttpError'
+import { handleError } from '../../../shared/utils/handleError'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class TasksController {
@@ -39,12 +39,8 @@ export class TasksController {
       })
       return reply.status(201).send(result)
     } catch (error) {
-      request.log.error(error)
-      if (error instanceof Error && 'statusCode' in error) {
-        const appError = error as unknown as { message: string; statusCode: number; code: string }
-        return reply.status(appError.statusCode).send({ message: appError.message, code: appError.code, statusCode: appError.statusCode })
-      }
-      return reply.status(500).send({ message: (error as Error).message, code: 'INTERNAL_ERROR', statusCode: 500 })
+       request.log.error(error);
+       return handleError(error, reply);
     }
   }
 
@@ -116,7 +112,7 @@ export class TasksController {
       const result = await this.listTasks.execute({ userId: req.userId })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -135,7 +131,7 @@ export class TasksController {
       })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -146,7 +142,7 @@ export class TasksController {
       const result = await this.listInboxTasks.execute({ userId: req.userId })
       return reply.send(result)
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 
@@ -188,7 +184,7 @@ export class TasksController {
       })
       return reply.status(204).send()
     } catch (error) {
-      return reply.status(500).send(toHttpError(error as Error))
+      return handleError(error, reply)
     }
   }
 }
