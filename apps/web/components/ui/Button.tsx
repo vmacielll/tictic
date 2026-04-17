@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   isLoading?: boolean
 }
 
@@ -11,12 +11,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+      'inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed'
 
     const variantStyles = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700',
-      secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
-      ghost: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+      primary: 'bg-primary-600 text-white hover:bg-primary-500 active:bg-primary-700 shadow-sm shadow-primary-600/20',
+      secondary: 'bg-surface-raised text-text-primary border border-border-light hover:bg-surface-overlay',
+      ghost: 'text-text-secondary hover:bg-surface-raised hover:text-text-primary',
+      danger: 'bg-danger/10 text-danger hover:bg-danger/20 border border-danger/20',
     }
 
     return (
