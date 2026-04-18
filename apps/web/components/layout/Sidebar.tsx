@@ -60,7 +60,7 @@ export function Sidebar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         </div>
-        <span className="text-sm font-semibold text-text-primary tracking-tight">TickTick</span>
+        <span className="text-sm font-semibold text-text-primary tracking-tight">TicTic</span>
       </div>
 
       {/* Navigation */}

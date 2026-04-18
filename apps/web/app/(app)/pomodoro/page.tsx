@@ -76,7 +76,7 @@ export default function PomodoroPage() {
                           {session.taskId ? `Task: ${session.taskId.slice(0, 8)}...` : 'Focus Session'}
                         </p>
                         <p className="text-xs text-text-muted">
-                          {new Date(session.startedAt).toLocaleString('pt-BR', {
+                          {new Date(session.startedAt).toLocaleString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',

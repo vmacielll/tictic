@@ -47,6 +47,7 @@ import { GetActivePomodoro } from './modules/pomodoro/application/use-cases/GetA
 import { PrismaPomodoroRepository } from './modules/pomodoro/infra/repositories/PrismaPomodoroRepository'
 import { PomodoroController } from './modules/pomodoro/http/PomodoroController'
 import { pomodoroRoutes } from './modules/pomodoro/http/pomodoro.routes'
+import swaggerPlugin from './plugins/swagger'
 
 const app: FastifyInstance = Fastify({
   logger: {
@@ -155,6 +156,9 @@ app.register(tasksRoutes)
 app.register(listsRoutes)
 app.register(calendarRoutes)
 app.register(pomodoroRoutes)
+
+// Register Swagger documentation
+app.register(swaggerPlugin)
 
 // Health check
 app.get('/health', async () => {

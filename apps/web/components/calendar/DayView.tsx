@@ -95,7 +95,7 @@ export function DayView({ date, tasks, loading, onToggleTask, onViewTask }: DayV
                   <p className="text-sm text-text-muted mt-2">{task.description}</p>
                 )}
                 {task.dueTime && (
-                  <p className="text-xs text-text-muted mt-1">{task.dueTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs text-text-muted mt-1">{task.dueTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
                 )}
               </div>
             ))}

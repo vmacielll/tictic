@@ -22,7 +22,7 @@ export default function AuthLayout({
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">TickTick</h1>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">TicTic</h1>
           <p className="mt-2 text-sm text-text-muted">Organize your life, one task at a time</p>
         </div>
         {children}

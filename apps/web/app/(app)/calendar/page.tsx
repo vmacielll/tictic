@@ -82,9 +82,9 @@ export default function CalendarPage() {
     openModal(calendarTaskToTask(task))
   }
 
-  const monthLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-  const weekLabel = `Week of ${currentDate.toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' })}`
-  const dayLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', day: 'numeric', year: 'numeric' })
+  const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const weekLabel = `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+  const dayLabel = currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
     <div className="max-w-5xl animate-fade-in">
