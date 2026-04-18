@@ -2,15 +2,13 @@ import { DateTime } from 'luxon'
 
 const FALLBACK_TIMEZONE = 'UTC'
 
+const withZone = (date: Date, tz: string): DateTime => DateTime.fromJSDate(date, { zone: tz })
+
 /**
  * Check if a timezone string is valid
  */
 export function isValidTimezone(timezone: string): boolean {
-  try {
-    return DateTime.local().setZone(timezone).isValid
-  } catch {
-    return false
-  }
+  return DateTime.local().setZone(timezone).isValid
 }
 
 /**
@@ -18,9 +16,7 @@ export function isValidTimezone(timezone: string): boolean {
  */
 export function getStartOfDayUTC(date: Date, timezone: string): Date {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  const start = local.startOf('day')
-  return start.toUTC().toJSDate()
+  return withZone(date, tz).startOf('day').toUTC().toJSDate()
 }
 
 /**
@@ -28,9 +24,7 @@ export function getStartOfDayUTC(date: Date, timezone: string): Date {
  */
 export function getEndOfDayUTC(date: Date, timezone: string): Date {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  const end = local.endOf('day')
-  return end.toUTC().toJSDate()
+  return withZone(date, tz).endOf('day').toUTC().toJSDate()
 }
 
 /**
@@ -38,9 +32,7 @@ export function getEndOfDayUTC(date: Date, timezone: string): Date {
  */
 export function getStartOfWeekUTC(date: Date, timezone: string): Date {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  const start = local.startOf('week') // Monday in ISO 8601
-  return start.toUTC().toJSDate()
+  return withZone(date, tz).startOf('week').toUTC().toJSDate()
 }
 
 /**
@@ -48,9 +40,7 @@ export function getStartOfWeekUTC(date: Date, timezone: string): Date {
  */
 export function getEndOfWeekUTC(date: Date, timezone: string): Date {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  const end = local.endOf('week') // Sunday in ISO 8601
-  return end.toUTC().toJSDate()
+  return withZone(date, tz).endOf('week').toUTC().toJSDate()
 }
 
 /**
@@ -58,8 +48,7 @@ export function getEndOfWeekUTC(date: Date, timezone: string): Date {
  */
 export function formatDateInTimezone(date: Date, timezone: string): string {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  return local.toFormat('yyyy-MM-dd')
+  return withZone(date, tz).toFormat('yyyy-MM-dd')
 }
 
 /**
@@ -67,8 +56,7 @@ export function formatDateInTimezone(date: Date, timezone: string): string {
  */
 export function formatTimeInTimezone(date: Date, timezone: string): string {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  return local.toFormat('HH:mm')
+  return withZone(date, tz).toFormat('HH:mm')
 }
 
 /**
@@ -76,7 +64,7 @@ export function formatTimeInTimezone(date: Date, timezone: string): string {
  */
 export function getDayOfWeekInTimezone(date: Date, timezone: string): number {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
+  const local = withZone(date, tz)
   // Luxon: 1=Monday, 7=Sunday
   // Convert to: 0=Sunday, 1=Monday, ..., 6=Saturday
   return local.weekday === 7 ? 0 : local.weekday
@@ -87,8 +75,7 @@ export function getDayOfWeekInTimezone(date: Date, timezone: string): number {
  */
 export function getYearInTimezone(date: Date, timezone: string): number {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  return local.year
+  return withZone(date, tz).year
 }
 
 /**
@@ -96,8 +83,7 @@ export function getYearInTimezone(date: Date, timezone: string): number {
  */
 export function getMonthInTimezone(date: Date, timezone: string): number {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  return local.month
+  return withZone(date, tz).month
 }
 
 /**
@@ -105,8 +91,7 @@ export function getMonthInTimezone(date: Date, timezone: string): number {
  */
 export function getDayInTimezone(date: Date, timezone: string): number {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  const local = DateTime.fromJSDate(date, { zone: tz })
-  return local.day
+  return withZone(date, tz).day
 }
 
 /**
@@ -114,7 +99,9 @@ export function getDayInTimezone(date: Date, timezone: string): number {
  */
 export function parseDateToUTC(dateString: string, timezone: string): Date {
   const tz = isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE
-  // Parse as local date in the user's timezone
   const local = DateTime.fromFormat(dateString, 'yyyy-MM-dd', { zone: tz })
+  if (!local.isValid) {
+    throw new Error(`Invalid date format: ${dateString}`)
+  }
   return local.toUTC().toJSDate()
 }
