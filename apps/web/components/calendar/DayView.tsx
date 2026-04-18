@@ -25,8 +25,8 @@ export function DayView({ date, tasks, loading, onToggleTask, onViewTask }: DayV
   }
 
   return (
-    <div className="bg-surface-raised border border-border-light rounded-xl p-6" data-testid="calendar-day-view">
-      <div className="max-w-2xl mx-auto">
+    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden w-full" data-testid="calendar-day-view">
+      <div className="p-4">
         <h2 data-testid="calendar-day-view-heading" className="text-2xl font-bold text-text-primary mb-1 capitalize">
           {weekday}
         </h2>

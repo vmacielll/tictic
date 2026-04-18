@@ -11,7 +11,7 @@ const pageLabels: Record<string, string> = {
   '/pomodoro': 'Pomodoro',
 }
 
-export function Header() {
+export function Header({ className = '' }: { className?: string }) {
   const router = useRouter()
   const [userName, setUserName] = useState('')
   const [pageLabel, setPageLabel] = useState('')
@@ -32,7 +32,7 @@ export function Header() {
   }
 
   return (
-    <header className="h-14 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
+    <header className={`h-14 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6 sticky top-0 z-10 ${className}`}>
       <div className="flex items-center gap-2">
         {pageLabel && (
           <span className="text-sm text-text-muted">{pageLabel}</span>

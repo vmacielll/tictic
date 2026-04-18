@@ -85,11 +85,12 @@ export default function CalendarPage() {
   const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   const weekLabel = `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
   const dayLabel = currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const headingLabel = view === 'month' ? monthLabel : view === 'week' ? weekLabel : dayLabel
 
   return (
-    <div className="max-w-5xl animate-fade-in">
+    <div className="max-w-5xl animate-fade-in w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <button onClick={goToPrev} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
@@ -100,12 +101,12 @@ export default function CalendarPage() {
           <button onClick={goToNext} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
-          <h1 className="text-xl font-semibold text-text-primary capitalize ml-2" data-testid="calendar-heading">
-            {view === 'month' ? monthLabel : view === 'week' ? weekLabel : dayLabel}
+          <h1 className="text-base sm:text-xl font-semibold text-text-primary capitalize ml-2" data-testid="calendar-heading">
+            {headingLabel}
           </h1>
         </div>
 
-        <div className="flex items-center bg-surface-raised border border-border-light rounded-lg p-1">
+        <div className="flex items-center justify-center bg-surface-raised border border-border-light rounded-lg p-1">
           {(['month', 'week', 'day'] as const).map((v) => (
             <button
               key={v}

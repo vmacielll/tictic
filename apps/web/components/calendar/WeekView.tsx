@@ -21,8 +21,8 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
   }
 
   return (
-    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden" data-testid="calendar-week-grid">
-      <div className="grid grid-cols-7 divide-x divide-border min-h-[400px]">
+    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden w-full" data-testid="calendar-week-grid">
+      <div className="grid grid-cols-7 divide-x divide-border min-h-[400px] w-full">
         {days.map((day) => {
           const [year, month, dateDay] = day.date.split('-').map(Number)
           const date = new Date(year, month - 1, dateDay)
