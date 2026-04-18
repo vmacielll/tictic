@@ -3,7 +3,14 @@ import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
 import { prisma } from '@prisma/PrismaClient'
-import { isValidTimezone } from './shared/utils/timezone'
+import { isValidTimezone } from '@shared/utils/timezone'
+
+const requiredEnv = ['JWT_SECRET', 'DATABASE_URL', 'FRONTEND_URL']
+requiredEnv.forEach((v) => {
+  if (!process.env[v]) {
+    throw new Error(`Missing required env var: ${v}`)
+  }
+})
 import { RegisterUser } from './modules/auth/application/use-cases/RegisterUser'
 import { LoginUser } from './modules/auth/application/use-cases/LoginUser'
 import { PrismaUserRepository } from './modules/auth/infra/repositories/PrismaUserRepository'
