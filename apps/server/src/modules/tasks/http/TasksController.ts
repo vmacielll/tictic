@@ -9,10 +9,10 @@ import { DeleteTask } from '../application/use-cases/DeleteTask'
 import { ListTasks } from '../application/use-cases/ListTasks'
 import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
 import { ListInboxTasks } from '../application/use-cases/ListInboxTasks'
-import { handleError } from '../../../shared/utils/handleError'
-import { validationError } from '../../../shared/utils/validationError'
-import { CreateTaskSchema, UpdateTaskSchema, TaskIdSchema } from './schemas'
-import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
+import { handleError } from '@shared/utils/handleError'
+import { validationError } from '@shared/utils/validationError'
+import { CreateTaskSchema, UpdateTaskSchema, TaskIdSchema, PaginationSchema } from './schemas'
+import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
 
 export class TasksController {
   constructor(
@@ -109,8 +109,15 @@ export class TasksController {
   async list(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
 
+    const queryResult = PaginationSchema.safeParse(request.query)
+    if (!queryResult.success) {
+      return validationError(reply, queryResult.error)
+    }
+    const { page, size } = queryResult.data
+    const pagination = { skip: (page - 1) * size, take: size }
+
     try {
-      const result = await this.listTasks.execute({ userId: req.userId })
+      const result = await this.listTasks.execute({ userId: req.userId, pagination })
       return reply.send(result)
     } catch (error) {
       return handleError(error, reply)

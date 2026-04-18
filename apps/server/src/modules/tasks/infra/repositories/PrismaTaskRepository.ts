@@ -127,4 +127,8 @@ export class PrismaTaskRepository implements ITaskRepository {
   async delete(id: string): Promise<void> {
     await this.prisma.task.delete({ where: { id } })
   }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.prisma.task.count({ where: { userId } })
+  }
 }

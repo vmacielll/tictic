@@ -28,4 +28,5 @@ export interface ITaskRepository {
   findInboxByUserId(userId: string): Promise<Task[]>
   save(task: Task): Promise<Task>
   delete(id: string): Promise<void>
+  countByUserId(userId: string): Promise<number>
 }

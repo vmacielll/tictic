@@ -1,8 +1,9 @@
-import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
+import type { ITaskRepository, PaginationParams } from '../../domain/repositories/ITaskRepository'
 import type { Priority } from '../../domain/types/Priority'
 
 interface ListTasksRequest {
   userId: string
+  pagination?: PaginationParams
 }
 
 interface ListTasksResponse {
@@ -19,12 +20,32 @@ interface ListTasksResponse {
   updatedAt: Date
 }
 
+export interface ListTasksOutput {
+  items: ListTasksResponse[]
+  meta: {
+    page: number
+    size: number
+    totalCount: number
+  }
+}
+
 export class ListTasks {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
-  async execute(request: ListTasksRequest): Promise<ListTasksResponse[]> {
-    const tasks = await this.taskRepository.findByUserId(request.userId)
-    return tasks.map(this.toResponse)
+  async execute(request: ListTasksRequest): Promise<ListTasksOutput> {
+    const { userId, pagination } = request
+    const page = pagination?.skip ? Math.floor(pagination.skip / (pagination.take || 20)) + 1 : 1
+    const size = pagination?.take || 20
+
+    const [tasks, totalCount] = await Promise.all([
+      this.taskRepository.findByUserId(userId, pagination),
+      this.taskRepository.countByUserId(userId),
+    ])
+
+    return {
+      items: tasks.map(this.toResponse),
+      meta: { page, size, totalCount },
+    }
   }
 
   private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: Date; dueTime?: Date; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksResponse {
