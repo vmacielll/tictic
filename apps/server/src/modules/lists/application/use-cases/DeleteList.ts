@@ -10,7 +10,7 @@ export class DeleteList {
   constructor(private readonly listRepository: IListRepository) {}
 
   async execute(request: DeleteListRequest): Promise<void> {
-    const list = await this.listRepository.findById(request.listId)
+    const list = await this.listRepository.findById(request.listId, request.userId)
     if (!list) {
       throw new AppError('List not found', 404, 'LIST_NOT_FOUND')
     }
@@ -19,6 +19,6 @@ export class DeleteList {
       throw new AppError('Unauthorized', 403, 'FORBIDDEN')
     }
 
-    await this.listRepository.delete(request.listId)
+    await this.listRepository.delete(request.listId, request.userId)
   }
 }

@@ -37,9 +37,9 @@ export class PrismaTaskRepository implements ITaskRepository {
     return prismaTaskToDomain(prismaTask)
   }
 
-  async findById(id: string): Promise<Task | null> {
+  async findById(id: string, userId: string): Promise<Task | null> {
     const prismaTask = await this.prisma.task.findUnique({ where: { id } })
-    if (!prismaTask) return null
+    if (!prismaTask || prismaTask.userId !== userId) return null
     return prismaTaskToDomain(prismaTask)
   }
 
@@ -124,8 +124,8 @@ export class PrismaTaskRepository implements ITaskRepository {
     return prismaTaskToDomain(prismaTask)
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.task.delete({ where: { id } })
+  async delete(id: string, userId: string): Promise<void> {
+    await this.prisma.task.delete({ where: { id, userId } })
   }
 
   async countByUserId(userId: string): Promise<number> {

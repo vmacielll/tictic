@@ -17,7 +17,7 @@ export class UncompleteTask {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
   async execute(request: UncompleteTaskRequest): Promise<UncompleteTaskResponse> {
-    const task = await this.taskRepository.findById(request.taskId)
+    const task = await this.taskRepository.findById(request.taskId, request.userId)
     if (!task) {
       throw new AppError('Task not found', 404, 'TASK_NOT_FOUND')
     }

@@ -32,11 +32,11 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
     return prismaPomodoroToDomain(created)
   }
 
-  async findById(id: string): Promise<PomodoroSession | null> {
+  async findById(id: string, userId: string): Promise<PomodoroSession | null> {
     const session = await this.prisma.pomodoroSession.findUnique({
       where: { id },
     })
-    if (!session) return null
+    if (!session || session.userId !== userId) return null
     return prismaPomodoroToDomain(session)
   }
 
@@ -71,9 +71,9 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
     return prismaPomodoroToDomain(updated)
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, userId: string): Promise<void> {
     await this.prisma.pomodoroSession.delete({
-      where: { id },
+      where: { id, userId },
     })
   }
 }

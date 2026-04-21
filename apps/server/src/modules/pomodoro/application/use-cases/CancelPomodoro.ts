@@ -20,7 +20,7 @@ export class CancelPomodoro {
   constructor(private readonly pomodoroRepository: IPomodoroRepository) {}
 
   async execute(request: CancelPomodoroRequest): Promise<CancelPomodoroResponse> {
-    const session = await this.pomodoroRepository.findById(request.sessionId)
+    const session = await this.pomodoroRepository.findById(request.sessionId, request.userId)
     if (!session) {
       throw new AppError('Pomodoro session not found', 404, 'POMODORO_NOT_FOUND')
     }

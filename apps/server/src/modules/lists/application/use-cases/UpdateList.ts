@@ -21,7 +21,7 @@ export class UpdateList {
   constructor(private readonly listRepository: IListRepository) {}
 
   async execute(request: UpdateListRequest): Promise<UpdateListResponse> {
-    const list = await this.listRepository.findById(request.listId)
+    const list = await this.listRepository.findById(request.listId, request.userId)
     if (!list) {
       throw new AppError('List not found', 404, 'LIST_NOT_FOUND')
     }

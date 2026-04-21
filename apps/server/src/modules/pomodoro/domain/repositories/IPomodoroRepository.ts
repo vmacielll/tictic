@@ -11,7 +11,7 @@ export interface IPomodoroRepository {
     completedAt?: Date
   }): Promise<PomodoroSession>
 
-  findById(id: string): Promise<PomodoroSession | null>
+  findById(id: string, userId: string): Promise<PomodoroSession | null>
 
   findByUserId(userId: string): Promise<PomodoroSession[]>
 
@@ -19,5 +19,5 @@ export interface IPomodoroRepository {
 
   save(session: PomodoroSession): Promise<PomodoroSession>
 
-  delete(id: string): Promise<void>
+  delete(id: string, userId: string): Promise<void>
 }

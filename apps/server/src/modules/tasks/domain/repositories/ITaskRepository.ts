@@ -21,12 +21,12 @@ export interface ITaskRepository {
     listId?: string
     userId: string
   }): Promise<Task>
-  findById(id: string): Promise<Task | null>
+  findById(id: string, userId: string): Promise<Task | null>
   findByUserId(userId: string, pagination?: PaginationParams): Promise<Task[]>
   findByUserIdAndDate(userId: string, date: Date, pagination?: PaginationParams): Promise<Task[]>
   findByUserIdAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<Task[]>
   findInboxByUserId(userId: string): Promise<Task[]>
   save(task: Task): Promise<Task>
-  delete(id: string): Promise<void>
+  delete(id: string, userId: string): Promise<void>
   countByUserId(userId: string): Promise<number>
 }

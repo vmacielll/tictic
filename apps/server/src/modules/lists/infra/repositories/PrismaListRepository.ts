@@ -19,9 +19,9 @@ export class PrismaListRepository implements IListRepository {
     return prismaListToDomain(prismaList)
   }
 
-  async findById(id: string): Promise<List | null> {
+  async findById(id: string, userId: string): Promise<List | null> {
     const prismaList = await this.prisma.list.findUnique({ where: { id } })
-    if (!prismaList) return null
+    if (!prismaList || prismaList.userId !== userId) return null
     return prismaListToDomain(prismaList)
   }
 
@@ -45,7 +45,7 @@ export class PrismaListRepository implements IListRepository {
     return prismaListToDomain(prismaList)
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.list.delete({ where: { id } })
+  async delete(id: string, userId: string): Promise<void> {
+    await this.prisma.list.delete({ where: { id, userId } })
   }
 }

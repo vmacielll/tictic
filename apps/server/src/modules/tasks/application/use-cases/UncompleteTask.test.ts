@@ -110,6 +110,6 @@ describe('UncompleteTask', () => {
 
     await useCase.execute({ taskId: task.id, userId: 'user-1' })
 
-    expect(findByIdSpy).toHaveBeenCalledWith(task.id)
+    expect(findByIdSpy).toHaveBeenCalledWith(task.id, 'user-1')
   })
 })

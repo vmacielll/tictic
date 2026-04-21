@@ -6,6 +6,9 @@ node_modules/
 .env.local
 .env*.local
 
+# Test environments (contains sensitive test credentials)
+.environments/
+
 # Build outputs
 .next/
 **/.next/

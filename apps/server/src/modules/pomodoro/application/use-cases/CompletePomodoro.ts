@@ -23,7 +23,7 @@ export class CompletePomodoro {
   async execute(
     request: CompletePomodoroRequest,
   ): Promise<CompletePomodoroResponse> {
-    const session = await this.pomodoroRepository.findById(request.sessionId)
+    const session = await this.pomodoroRepository.findById(request.sessionId, request.userId)
     if (!session) {
       throw new AppError('Pomodoro session not found', 404, 'POMODORO_NOT_FOUND')
     }
