@@ -4,6 +4,14 @@ import { Task } from '../../domain/entities/Task'
 import type { Priority } from '../../domain/types/Priority'
 import { prismaTaskToDomain } from '@shared/mappers/prismaTaskMapper'
 
+const MAX_PAGINATION_LIMIT = 100
+
+function normalizePagination(pagination?: PaginationParams): PaginationParams | undefined {
+  if (!pagination) return undefined
+  const take = Math.min(pagination.take ?? 20, MAX_PAGINATION_LIMIT)
+  return { skip: pagination.skip, take }
+}
+
 export class PrismaTaskRepository implements ITaskRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -47,8 +55,7 @@ export class PrismaTaskRepository implements ITaskRepository {
     const prismaTasks = await this.prisma.task.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      skip: pagination?.skip,
-      take: pagination?.take,
+      ...normalizePagination(pagination),
     })
     return prismaTasks.map(prismaTaskToDomain)
   }
@@ -69,8 +76,7 @@ export class PrismaTaskRepository implements ITaskRepository {
         },
       },
       orderBy: { createdAt: 'desc' },
-      skip: pagination?.skip,
-      take: pagination?.take,
+      ...normalizePagination(pagination),
     })
     return prismaTasks.map(prismaTaskToDomain)
   }
