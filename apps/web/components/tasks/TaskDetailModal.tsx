@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react'
 import { type Task, type UpdateTaskInput, parseTask } from '@/domain/tasks/types'
-import { updateTask, completeTask, uncompleteTask, deleteTask } from '@/lib/api'
+import { updateTask, completeTask, uncompleteTask } from '@/lib/api'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
 
 interface TaskDetailModalProps {
@@ -107,7 +107,6 @@ export function TaskDetailModal({
     if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
-      await deleteTask(task.id)
       onDelete(task.id)
       onClose()
     } catch (err) {
