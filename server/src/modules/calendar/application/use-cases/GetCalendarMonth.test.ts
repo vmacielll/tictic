@@ -25,7 +25,7 @@ describe('GetCalendarMonth', () => {
 
   it('should return days of month with tasks', async () => {
     const task = Task.create('user-1', 'Task 1')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -58,10 +58,10 @@ describe('GetCalendarMonth', () => {
 
   it('should return tasks on different days', async () => {
     const task1 = Task.create('user-1', 'Task 1')
-    task1.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 5 }).toJSDate())
+    task1.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 5 }).toJSDate())
 
     const task2 = Task.create('user-1', 'Task 2')
-    task2.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 20 }).toJSDate())
+    task2.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 20 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task1, task2])
 
@@ -81,7 +81,7 @@ describe('GetCalendarMonth', () => {
 
   it('should not include task outside month range', async () => {
     const task = Task.create('user-1', 'Task 1')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 2, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 2, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -123,7 +123,7 @@ describe('GetCalendarMonth', () => {
 
   it('should convert to user timezone', async () => {
     const task = Task.create('user-1', 'Task 1')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15, hour: 23 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15, hour: 23 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -168,7 +168,7 @@ describe('GetCalendarMonth', () => {
 
   it('should return correct date format YYYY-MM-DD', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 5 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 5 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -185,7 +185,7 @@ describe('GetCalendarMonth', () => {
 
   it('should return response structure with date and tasks', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 10 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 10 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 

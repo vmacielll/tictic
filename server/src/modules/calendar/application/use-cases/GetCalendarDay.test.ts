@@ -25,7 +25,7 @@ describe('GetCalendarDay', () => {
 
   it('should return tasks for a specific day', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -77,7 +77,7 @@ describe('GetCalendarDay', () => {
 
   it('should include task description when present', async () => {
     const task = Task.create('user-1', 'Task', 'Description')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -93,7 +93,7 @@ describe('GetCalendarDay', () => {
   it('should include listId when task has list', async () => {
     const task = Task.create('user-1', 'Task')
     ;(task as any).listId = 'list-1'
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -108,7 +108,7 @@ describe('GetCalendarDay', () => {
 
   it('should include priority', async () => {
     const task = Task.create('user-1', 'Task', undefined, 'HIGH')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -123,7 +123,7 @@ describe('GetCalendarDay', () => {
 
   it('should include completed status', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
     ;(task as any).completed = true
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
@@ -139,7 +139,7 @@ describe('GetCalendarDay', () => {
 
   it('should convert dueDate to ISO string', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 

@@ -37,7 +37,7 @@ describe('GetCalendarWeek', () => {
 
   it('should return tasks on correct days', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 18 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 18 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
@@ -92,7 +92,7 @@ describe('GetCalendarWeek', () => {
 
   it('should convert to user timezone', async () => {
     const task = Task.create('user-1', 'Task')
-    task.updateDueDate(DateTime.fromObject({ year: 2024, month: 3, day: 15, hour: 23 }).toJSDate())
+    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15, hour: 23 }).toJSDate())
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 

@@ -8,4 +8,4 @@ export { PomodoroController } from './http/PomodoroController'
 export { pomodoroRoutes } from './http/pomodoro.routes'
 
 export type { IPomodoroRepository } from './domain/repositories/IPomodoroRepository'
-export type { Pomodoro, PomodoroStatus } from './domain/entities/Pomodoro'
+export type { PomodoroSession, PomodoroStatus } from './domain/entities/PomodoroSession'

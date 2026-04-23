@@ -8,7 +8,8 @@ export { UncompleteTask } from './application/use-cases/UncompleteTask'
 export { UpdateTask } from './application/use-cases/UpdateTask'
 
 export { TasksController } from './http/TasksController'
-export { taskRoutes } from './http/task.routes'
+export { tasksRoutes } from './http/tasks.routes'
 
 export type { ITaskRepository } from './domain/repositories/ITaskRepository'
-export type { Task, Priority } from './domain/entities/Task'
+export type { Task } from './domain/entities/Task'
+export type { Priority } from './domain/types/Priority'
