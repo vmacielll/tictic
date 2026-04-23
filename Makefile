@@ -16,14 +16,14 @@ help:
 	@echo "  make e2e         Run E2E tests"
 	@echo ""
 
-# First-time setup: install deps and generate Prisma client
+# First-time setup: install deps + generate Prisma client
 setup:
 	@echo "Installing dependencies..."
-	@cd server && npm install
-	@cd web && npm install
-	@cd e2e && npm install
+	@cd apps/server && npm install
+	@cd apps/web && npm install
+	@cd apps/e2e && npm install
 	@echo "Generating Prisma client..."
-	@cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma
+	@cd apps/server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma
 	@echo "Done! Run 'make dev' to start everything."
 
 # Start everything: Postgres (Docker) + server + web with hot reload
@@ -34,12 +34,12 @@ dev:
 	@until docker compose exec postgres pg_isready -U postgres -q 2>/dev/null; do sleep 1; done
 	@echo "Database ready!"
 	@echo "Generating Prisma client..."
-	@cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma 2>/dev/null
+	@cd apps/server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma 2>/dev/null
 	@echo ""
 	@echo "Starting server and web..."
 	@echo ""
-	@cd server && npm run dev 2>&1 | sed 's/^/[API] /' & \
-	 cd web && npm run dev 2>&1 | sed 's/^/[WEB] /' & \
+	@cd apps/server && npm run dev 2>&1 | sed 's/^/[API] /' & \
+	 cd apps/web && npm run dev 2>&1 | sed 's/^/[WEB] /' & \
 	 wait
 
 # Start database only
@@ -56,22 +56,22 @@ db-down:
 
 # Run Prisma migrations
 db-migrate:
-	@npx prisma migrate dev --schema=server/src/infra/database/prisma/schema.prisma
+	@npx prisma migrate dev --schema=apps/server/src/infra/database/prisma/schema.prisma
 
 # Open Prisma Studio
 db-studio:
-	@npx prisma studio --schema=server/src/infra/database/prisma/schema.prisma
+	@npx prisma studio --schema=apps/server/src/infra/database/prisma/schema.prisma
 
 # Reset database (WARNING: drops all data)
 db-reset:
 	@echo "WARNING: This will drop all data!"
-	@read -p "Are you sure? (y/N): " confirm && [ "$confirm" = "y" ] || exit 1
-	@npx prisma migrate reset --schema=server/src/infra/database/prisma/schema.prisma --force
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@npx prisma migrate reset --schema=apps/server/src/infra/database/prisma/schema.prisma --force
 
 # Run unit tests
 test:
-	@cd server && npm run test
+	@cd apps/server && npm run test
 
 # Run E2E tests
 e2e:
-	@cd e2e && npx playwright test
+	@cd apps/e2e && npx playwright test
