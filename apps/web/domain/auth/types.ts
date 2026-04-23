@@ -10,8 +10,6 @@ export const userSchema = z.object({
 export type User = z.output<typeof userSchema>
 
 export const authResponseSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
   user: userSchema,
 })
 
