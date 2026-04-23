@@ -2,6 +2,8 @@ import 'dotenv/config'
 import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
+import fastifyRateLimit from '@fastify/rate-limit'
+import fastifyCookie from '@fastify/cookie'
 import { prisma } from '@prisma/PrismaClient'
 import { isValidTimezone } from '@shared/utils/timezone'
 
@@ -79,17 +81,39 @@ app.register(fastifyCors, {
   credentials: true,
 })
 
+// Cookie support
+app.register(fastifyCookie)
+
+// Rate limiting
+app.register(fastifyRateLimit, {
+  max: 100,
+  timeWindow: '1 minute',
+})
+
 // JWT
 app.register(fastifyJwt, {
   secret: process.env.JWT_SECRET!,
   sign: {
     expiresIn: '15m',
   },
+  cookie: {
+    cookieName: 'accessToken',
+    signed: false,
+  },
 })
 
 // Auth decorator for protected routes
 app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
   try {
+    // Skip CSRF check for requests without Origin header (like curl)
+    const origin = request.headers.origin
+    if (origin) {
+      const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'
+      if (origin !== allowedOrigin) {
+        return reply.code(403).send({ message: 'Forbidden', code: 'CSRF', statusCode: 403 })
+      }
+    }
+
     await request.jwtVerify()
   } catch (err) {
     return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
@@ -100,7 +124,7 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
 const userRepository = new PrismaUserRepository(prisma)
 const registerUser = new RegisterUser(userRepository)
 const loginUser = new LoginUser(userRepository, app)
-const authController = new AuthController(registerUser, loginUser)
+const authController = new AuthController(registerUser, loginUser, userRepository)
 
 // Decorate app with auth controller
 app.decorate('authController', authController)
