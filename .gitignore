@@ -57,3 +57,11 @@ prisma/migrations/
 
 # plan
 plans
+
+# agents
+.agents
+
+# planning
+.planning
+
+skills-lock.json
