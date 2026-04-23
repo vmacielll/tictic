@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyReply } from 'fastify'
 import { AppError } from '@shared/errors/AppError'
 import { Password } from '../../domain/value-objects/Password'
 import type { IUserRepository } from '../../domain/repositories/IUserRepository'
@@ -9,8 +9,6 @@ interface LoginUserRequest {
 }
 
 interface LoginUserResponse {
-  accessToken: string
-  refreshToken: string
   user: {
     id: string
     name: string
@@ -24,7 +22,7 @@ export class LoginUser {
     private readonly app: FastifyInstance,
   ) {}
 
-  async execute({ email, password }: LoginUserRequest): Promise<LoginUserResponse> {
+  async execute({ email, password }: LoginUserRequest, reply: FastifyReply): Promise<LoginUserResponse> {
     const user = await this.userRepository.findByEmail(email)
     if (!user) {
       throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS')
@@ -42,9 +40,23 @@ export class LoginUser {
       { expiresIn: '7d' },
     )
 
+    reply.setCookie('accessToken', accessToken, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 15, // 15 minutes
+    })
+
+    reply.setCookie('refreshToken', refreshToken, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    })
+
     return {
-      accessToken,
-      refreshToken,
       user: {
         id: user.id,
         name: user.name,

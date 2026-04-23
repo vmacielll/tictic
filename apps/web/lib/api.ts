@@ -2,13 +2,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean
+  _retry?: boolean
 }
 
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { requiresAuth = false, headers: customHeaders, ...restOptions } = options
+  const { requiresAuth = false, headers: customHeaders, _retry = false, ...restOptions } = options
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -18,17 +19,20 @@ export async function apiRequest<T>(
     ...(customHeaders as Record<string, string>),
   }
 
-  if (requiresAuth && typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-  }
-
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...restOptions,
     headers,
+    credentials: 'include',
   })
+
+  if (response.status === 401 && !_retry && requiresAuth) {
+    try {
+      await refreshToken()
+      return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
+    } catch {
+      throw new Error('Session expired')
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }))
@@ -40,6 +44,27 @@ export async function apiRequest<T>(
   }
 
   return response.json() as Promise<T>
+}
+
+async function refreshToken(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (!response.ok) {
+    throw new Error('Failed to refresh token')
+  }
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+}
+
+export async function getMe(): Promise<{ id: string; name: string; email: string }> {
+  return apiRequest('/auth/me', { requiresAuth: true })
 }
 
 // ── Auth ──

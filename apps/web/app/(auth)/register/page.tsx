@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { setToken } from '@/lib/auth'
 import { register, login } from '@/lib/api'
 import { parseAuthResponse } from '@/domain/auth/types'
 
@@ -26,9 +25,8 @@ export default function RegisterPage() {
       await register(name, email, password)
 
       const raw = await login(email, password)
-      const data = parseAuthResponse(raw)
+      parseAuthResponse(raw)
 
-      setToken(data.accessToken, data.refreshToken)
       router.push('/today')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to register')

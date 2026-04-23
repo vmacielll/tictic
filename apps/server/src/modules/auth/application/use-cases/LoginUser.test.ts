@@ -8,7 +8,7 @@ import type { IUser } from '../../domain/repositories/IUserRepository'
 
 describe('LoginUser Use Case', () => {
   const mockRepository = createMockUserRepository()
-  const mockApp = createMockFastifyInstance()
+  const { app: mockApp, reply: mockReply } = createMockFastifyInstance()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -28,17 +28,15 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: existingUser,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     const result = await useCase.execute({
       email: 'john@example.com',
       password: 'correctPassword',
-    })
+    }, mockReplyInstance)
 
     expect(result).toEqual({
-      accessToken: 'mock-token-user-123-15m',
-      refreshToken: 'mock-token-user-123-7d',
       user: {
         id: 'user-123',
         name: 'John Doe',
@@ -51,21 +49,21 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: null,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     await expect(
       useCase.execute({
         email: 'nonexistent@example.com',
         password: 'anyPassword',
-      })
+      }, mockReplyInstance)
     ).rejects.toThrow(AppError)
 
     await expect(
       useCase.execute({
         email: 'nonexistent@example.com',
         password: 'anyPassword',
-      })
+      }, mockReplyInstance)
     ).rejects.toThrow('Invalid credentials')
   })
 
@@ -73,14 +71,14 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: null,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     try {
       await useCase.execute({
         email: 'nonexistent@example.com',
         password: 'anyPassword',
-      })
+      }, mockReplyInstance)
     } catch (error) {
       expect(error).toBeInstanceOf(AppError)
       expect((error as AppError).statusCode).toBe(401)
@@ -102,21 +100,21 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: existingUser,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     await expect(
       useCase.execute({
         email: 'john@example.com',
         password: 'wrongPassword',
-      })
+      }, mockReplyInstance)
     ).rejects.toThrow(AppError)
 
     await expect(
       useCase.execute({
         email: 'john@example.com',
         password: 'wrongPassword',
-      })
+      }, mockReplyInstance)
     ).rejects.toThrow('Invalid credentials')
   })
 
@@ -134,14 +132,14 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: existingUser,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     try {
       await useCase.execute({
         email: 'john@example.com',
         password: 'wrongPassword',
-      })
+      }, mockReplyInstance)
     } catch (error) {
       expect(error).toBeInstanceOf(AppError)
       expect((error as AppError).statusCode).toBe(401)
@@ -163,13 +161,13 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: existingUser,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     await useCase.execute({
       email: 'john@example.com',
       password: 'correctPassword',
-    })
+    }, mockReplyInstance)
 
     expect(mockAppInstance.jwt.sign).toHaveBeenCalledWith({ sub: 'user-123' })
   })
@@ -188,13 +186,13 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: existingUser,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     await useCase.execute({
       email: 'john@example.com',
       password: 'correctPassword',
-    })
+    }, mockReplyInstance)
 
     expect(mockAppInstance.jwt.sign).toHaveBeenCalledWith(
       { sub: 'user-123' },
@@ -216,13 +214,13 @@ describe('LoginUser Use Case', () => {
     const mockRepo = createMockUserRepository({
       findByEmailResult: existingUser,
     })
-    const mockAppInstance = createMockFastifyInstance()
+    const { app: mockAppInstance, reply: mockReplyInstance } = createMockFastifyInstance()
     const useCase = new LoginUser(mockRepo, mockAppInstance)
 
     const result = await useCase.execute({
       email: 'JOHN@EXAMPLE.COM',
       password: 'correctPassword',
-    })
+    }, mockReplyInstance)
 
     expect(result.user.email).toBe('john@example.com')
   })

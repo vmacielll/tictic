@@ -6,7 +6,7 @@ const protectedRoutes = ['/today', '/inbox', '/calendar']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = request.cookies.get('token')?.value
+  const token = request.cookies.get('accessToken')?.value
 
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
