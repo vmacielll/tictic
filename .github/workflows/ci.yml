@@ -38,13 +38,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies (server)
+      - name: Verify lockfile integrity (server)
         working-directory: ./apps/server
-        run: npm ci
+        run: npm ci --frozen-lockfile
 
-      - name: Install dependencies (web)
+      - name: Verify lockfile integrity (web)
         working-directory: ./apps/web
-        run: npm ci
+        run: npm ci --frozen-lockfile
 
       - name: Lint (server)
         working-directory: ./apps/server
