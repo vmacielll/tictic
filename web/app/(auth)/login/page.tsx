@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { login } from '@/lib/api'
-import { parseAuthResponse } from '@/domain/auth/types'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,8 +20,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const raw = await login(email, password)
-      parseAuthResponse(raw)
+      await login(email, password)
 
       router.push('/today')
     } catch (err) {
