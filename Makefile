@@ -1,4 +1,4 @@
-.PHONY: dev db-up db-down db-migrate db-reset setup help test e2e
+.PHONY: dev db-up db-down db-migrate db-reset setup help test test-all e2e
 
 # Default target
 help:
@@ -12,7 +12,8 @@ help:
 	@echo "  make db-migrate  Run Prisma migrations"
 	@echo "  make db-studio   Open Prisma Studio"
 	@echo "  make db-reset    Reset database (drops all data)"
-	@echo "  make test        Run unit tests"
+	@echo "  make test        Run unit tests (server + web)"
+	@echo "  make test-all   Run all tests + E2E"
 	@echo "  make e2e         Run E2E tests"
 	@echo ""
 
@@ -68,10 +69,12 @@ db-reset:
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@npx prisma migrate reset --schema=apps/server/src/infra/database/prisma/schema.prisma --force
 
-# Run unit tests
+# Run unit tests (server + web)
 test:
-	@cd apps/server && npm run test
+	@echo "Running server tests..."
+	@cd server && npm run test
+	@echo "Running web tests..."
+	@cd web && npm run test
 
-# Run E2E tests
-e2e:
-	@cd apps/e2e && npx playwright test
+# Run all tests + E2E
+test-all: test e2e
