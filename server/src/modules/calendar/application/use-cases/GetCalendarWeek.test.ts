@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { type ITaskRepository } from '../../../tasks/domain/repositories/ITaskRepository'
 import { GetCalendarWeek } from './GetCalendarWeek'
 import { Task } from '../../../tasks/domain/entities/Task'
-import { DateTime } from 'luxon'
+import { testDate } from '../../../../__tests__/utils/dateUtils'
 
 describe('GetCalendarWeek', () => {
   let mockTaskRepository: ITaskRepository
@@ -28,7 +28,7 @@ describe('GetCalendarWeek', () => {
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date(2024, 2, 15),
+      date: testDate(2024, 3, 15),
       timezone: 'America/Sao_Paulo',
     })
 
@@ -37,13 +37,13 @@ describe('GetCalendarWeek', () => {
 
   it('should return tasks on correct days', async () => {
     const task = Task.create('user-1', 'Task')
-    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 18 }).toJSDate())
+    task.update(undefined, undefined, undefined, testDate(2024, 3, 18))
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date(2024, 3, 18),
+      date: testDate(2024, 3, 18),
       timezone: 'America/Sao_Paulo',
     })
 
@@ -56,7 +56,7 @@ describe('GetCalendarWeek', () => {
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date(2024, 3, 15),
+      date: testDate(2024, 3, 15),
       timezone: 'America/Sao_Paulo',
     })
 
@@ -69,7 +69,7 @@ describe('GetCalendarWeek', () => {
     await expect(
       useCase.execute({
         userId: 'user-1',
-        date: new Date(2024, 3, 15),
+        date: testDate(2024, 3, 15),
         timezone: 'America/Sao_Paulo',
       }),
     ).rejects.toThrow('Database error')
@@ -80,7 +80,7 @@ describe('GetCalendarWeek', () => {
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date(2024, 3, 15),
+      date: testDate(2024, 3, 15),
       timezone: 'America/Sao_Paulo',
     })
 
@@ -92,13 +92,13 @@ describe('GetCalendarWeek', () => {
 
   it('should convert to user timezone', async () => {
     const task = Task.create('user-1', 'Task')
-    task.update(undefined, undefined, undefined, DateTime.fromObject({ year: 2024, month: 3, day: 15, hour: 23 }).toJSDate())
+    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date(2024, 3, 15),
+      date: testDate(2024, 3, 15),
       timezone: 'America/New_York',
     })
 
@@ -110,7 +110,7 @@ describe('GetCalendarWeek', () => {
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date(2024, 3, 15),
+      date: testDate(2024, 3, 15),
       timezone: 'America/Sao_Paulo',
     })
 

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { type ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { ListTasksByDate } from './ListTasksByDate'
 import { Task } from '../../domain/entities/Task'
+import { testDate } from '../../../../__tests__/utils/dateUtils'
 
 describe('ListTasksByDate', () => {
   let mockTaskRepository: ITaskRepository
@@ -24,13 +25,13 @@ describe('ListTasksByDate', () => {
 
   it('should list tasks for a specific date', async () => {
     const task = Task.create('user-1', 'Task 1')
-    ;(task as any)._dueDate = new Date('2024-12-25T10:00:00Z')
+    ;(task as any)._dueDate = testDate(2024, 12, 25)
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date('2024-12-25'),
+      date: testDate(2024, 12, 25),
       timezone: 'UTC',
     })
 
@@ -43,7 +44,7 @@ describe('ListTasksByDate', () => {
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date('2024-12-25'),
+      date: testDate(2024, 12, 25),
       timezone: 'UTC',
     })
 
@@ -56,7 +57,7 @@ describe('ListTasksByDate', () => {
 
     await useCase.execute({
       userId: 'user-1',
-      date: new Date('2024-12-25T12:00:00Z'),
+      date: testDate(2024, 12, 25),
       timezone: 'America/New_York',
     })
 
@@ -71,7 +72,7 @@ describe('ListTasksByDate', () => {
     const task = Task.create('user-1', 'Task 1')
     const findByDateRangeSpy = vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
-    const inputDate = new Date('2024-12-25')
+    const inputDate = testDate(2024, 12, 25)
     await useCase.execute({
       userId: 'user-1',
       date: inputDate,
@@ -91,7 +92,7 @@ describe('ListTasksByDate', () => {
     await expect(
       useCase.execute({
         userId: 'user-1',
-        date: new Date('2024-12-25'),
+        date: testDate(2024, 12, 25),
         timezone: 'UTC',
       }),
     ).rejects.toThrow('Database error')
@@ -99,13 +100,13 @@ describe('ListTasksByDate', () => {
 
   it('should map tasks to response format', async () => {
     const task = Task.create('user-1', 'Task 1', 'Description', 'HIGH')
-    ;(task as any)._dueDate = new Date('2024-12-25T10:00:00Z')
+    ;(task as any)._dueDate = testDate(2024, 12, 25)
 
     vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: new Date('2024-12-25'),
+      date: testDate(2024, 12, 25),
       timezone: 'UTC',
     })
 

@@ -3,6 +3,7 @@ import { type ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { CreateTask } from './CreateTask'
 import { Task } from '../../domain/entities/Task'
 import type { Priority } from '../../domain/types/Priority'
+import { testDate } from '../../../../__tests__/utils/dateUtils'
 
 describe('CreateTask', () => {
   let mockTaskRepository: ITaskRepository
@@ -65,7 +66,7 @@ describe('CreateTask', () => {
   })
 
   it('should create a task with dueDate', async () => {
-    const dueDate = new Date('2024-12-31')
+    const dueDate = testDate(2024, 12, 31)
     const task = Task.create('user-1', 'Test Task', undefined, undefined, dueDate)
 
     vi.spyOn(mockTaskRepository, 'create').mockResolvedValue(task)

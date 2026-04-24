@@ -4,6 +4,7 @@ import { UpdateTask } from './UpdateTask'
 import { Task } from '../../domain/entities/Task'
 import { AppError } from '@shared/errors/AppError'
 import type { Priority } from '../../domain/types/Priority'
+import { testDate } from '../../../../__tests__/utils/dateUtils'
 
 describe('UpdateTask', () => {
   let mockTaskRepository: ITaskRepository
@@ -163,7 +164,7 @@ describe('UpdateTask', () => {
 
   it('should update dueDate', async () => {
     const task = Task.create('user-1', 'Test Task')
-    const dueDate = new Date('2024-12-31')
+    const dueDate = testDate(2024, 12, 31)
     const updatedTask = Task.create('user-1', 'Test Task')
     ;(updatedTask as any)._dueDate = dueDate
 
