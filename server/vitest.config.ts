@@ -18,6 +18,7 @@ export default defineConfig({
       '@modules': path.resolve(__dirname, 'src/modules'),
       '@infra': path.resolve(__dirname, 'src/infra'),
       '@prisma': path.resolve(__dirname, 'src/infra/database/prisma'),
+      '@tests': path.resolve(__dirname, 'src/__tests__'),
     },
   },
 })

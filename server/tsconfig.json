@@ -19,7 +19,8 @@
       "@infra/*": ["infra/*"],
       "@shared/*": ["shared/*"],
       "@modules/*": ["modules/*"],
-      "@prisma/*": ["infra/database/prisma/*"]
+      "@prisma/*": ["infra/database/prisma/*"],
+      "@tests/*": ["__tests__/*"]
     }
   },
   "include": ["src/**/*"],
