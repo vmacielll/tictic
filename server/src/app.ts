@@ -4,6 +4,7 @@ import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
 import fastifyRateLimit from '@fastify/rate-limit'
 import fastifyCookie from '@fastify/cookie'
+import fastifySensible from '@fastify/sensible'
 import { prisma } from '@prisma/PrismaClient'
 import { isValidTimezone } from '@shared/utils/timezone'
 
@@ -83,6 +84,9 @@ app.register(fastifyCors, {
 
 // Cookie support
 app.register(fastifyCookie)
+
+// Sensible HTTP errors
+app.register(fastifySensible)
 
 // Rate limiting
 app.register(fastifyRateLimit, {
@@ -190,12 +194,22 @@ app.get('/health', async () => {
 })
 
 // Global error handler
-app.setErrorHandler((error, _request, reply) => {
-  app.log.error(error)
-  return reply.status(500).send({
-    message: 'Internal Server Error',
-    code: 'INTERNAL_SERVER_ERROR',
-    statusCode: 500,
+app.setErrorHandler((error, request, reply) => {
+  request.log.error({ err: error }, 'Request error')
+
+  if (error.validation) {
+    return reply.badRequest('Validation failed')
+  }
+
+  const statusCode = error.statusCode ?? 500
+
+  const message = statusCode >= 500 && process.env.NODE_ENV === 'production'
+    ? 'Internal Server Error'
+    : error.message
+
+  return reply.status(statusCode).send({
+    message,
+    code: error.code ?? 'INTERNAL_ERROR'
   })
 })
 
