@@ -284,7 +284,7 @@ export function TaskDetailModal({
           </div>
 
           {/* Pomodoro Section */}
-          <div className="pt-4 border-t border-border">
+          <div data-testid="task-detail-pomodoro" className="pt-4 border-t border-border">
             <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
               🍅 Pomodoro Focus
             </h3>

@@ -53,6 +53,7 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
       <div className="flex items-center gap-2">
         <input
           type="text"
+          data-testid="task-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onFocus={() => setShowDetails(true)}
@@ -62,6 +63,7 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
         />
         <button
           type="submit"
+          data-testid="task-add-button"
           disabled={!title.trim() || isSubmitting}
           className="px-4 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shadow-primary-600/20"
         >

@@ -72,6 +72,7 @@ export function Sidebar({ className = '' }: { className?: string }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  data-testid={`nav-${item.href.replace('/', '')}`}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150
                     ${isActive
                       ? 'bg-primary-600/10 text-primary-400'

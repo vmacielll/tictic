@@ -25,6 +25,7 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
     >
       {/* Checkbox */}
       <button
+        data-testid="task-complete-button"
         onClick={() => onToggle(task.id, task.completed)}
         className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200
           ${task.completed
@@ -73,6 +74,7 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
 
       {/* Delete button */}
       <button
+        data-testid="task-delete-button"
         onClick={() => onDelete(task.id)}
         className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-danger transition-all"
         aria-label="Delete task"

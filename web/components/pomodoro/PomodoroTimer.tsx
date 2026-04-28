@@ -103,7 +103,9 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
         {/* Controls */}
         <div className="flex items-center justify-center gap-2">
           {!session && (
-            <button onClick={handleStart} disabled={loading}
+            <button 
+              data-testid="pomodoro-start-button"
+              onClick={handleStart} disabled={loading}
               className="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 disabled:opacity-50 transition-all text-sm font-medium shadow-sm shadow-primary-600/20">
               Start Focus
             </button>
@@ -111,11 +113,15 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
 
           {session?.status === 'RUNNING' && (
             <>
-              <button onClick={handleComplete} disabled={loading}
+              <button 
+                data-testid="pomodoro-complete-button"
+                onClick={handleComplete} disabled={loading}
                 className="px-3 py-2 bg-success/10 text-success/80 rounded-lg hover:bg-success/20 disabled:opacity-50 transition-all text-sm font-medium">
                 Complete
               </button>
-              <button onClick={handleCancel} disabled={loading}
+              <button 
+                data-testid="pomodoro-cancel-button"
+                onClick={handleCancel} disabled={loading}
                 className="px-3 py-2 bg-surface-overlay text-text-secondary rounded-lg hover:bg-surface-overlay/80 disabled:opacity-50 transition-all text-sm">
                 Cancel
               </button>
@@ -123,7 +129,9 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
           )}
 
           {(session?.status === 'COMPLETED' || session?.status === 'CANCELLED') && (
-            <button onClick={handleReset} disabled={loading}
+            <button 
+              data-testid="pomodoro-new-session-button"
+              onClick={handleReset} disabled={loading}
               className="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 disabled:opacity-50 transition-all text-sm font-medium shadow-sm shadow-primary-600/20">
               New Session
             </button>
