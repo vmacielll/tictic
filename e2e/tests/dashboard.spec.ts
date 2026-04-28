@@ -11,21 +11,21 @@ test.describe('Dashboard', () => {
     await page.goto('/today')
     const sidebar = page.locator('aside')
     await expect(sidebar).toBeVisible()
-    await expect(sidebar.getByRole('link', { name: /Today/i })).toBeVisible()
-    await expect(sidebar.getByRole('link', { name: /Inbox/i })).toBeVisible()
-    await expect(sidebar.getByRole('link', { name: /Calendar/i })).toBeVisible()
+    await expect(sidebar.getByTestId('nav-today')).toBeVisible()
+    await expect(sidebar.getByTestId('nav-inbox')).toBeVisible()
+    await expect(sidebar.getByTestId('nav-calendar')).toBeVisible()
   })
 
   test('should navigate to inbox via sidebar', async ({ page }) => {
     await page.goto('/today')
-    await page.getByRole('link', { name: /Inbox/i }).click()
+    await page.getByTestId('nav-inbox').click()
     await expect(page).toHaveURL(/\/inbox/)
     await expect(page.getByRole('heading', { name: /Inbox/i })).toBeVisible()
   })
 
   test('should navigate to calendar via sidebar', async ({ page }) => {
     await page.goto('/today')
-    await page.getByRole('link', { name: /Calendar/i }).click()
+    await page.getByTestId('nav-calendar').click()
     await expect(page).toHaveURL(/\/calendar/)
   })
 

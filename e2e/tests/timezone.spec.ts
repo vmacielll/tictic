@@ -57,9 +57,9 @@ test.describe('Calendar - Timezone Validation', () => {
 
     // Create a task
     const taskTitle = `Timezone Test ${Date.now()}`
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.fill(taskTitle)
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByTestId('task-add-button').click()
     await page.waitForTimeout(3000)
 
     // Verify task was created

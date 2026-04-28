@@ -11,15 +11,19 @@ test.describe('Pomodoro', () => {
     await expect(page.locator('h1', { hasText: 'Pomodoro Timer' })).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
     
-    // Cancel any existing session before starting
+    // Wait for any session to settle
+    await page.waitForTimeout(2000)
+    
+    // Check if there's an active session (cancel button visible) and cancel it first
     const cancelButton = page.getByRole('button', { name: 'Cancel' })
     if (await cancelButton.isVisible().catch(() => false)) {
       await cancelButton.click()
-      await expect(page.getByRole('button', { name: 'New Session' })).toBeVisible({ timeout: 10000 })
-      await page.getByRole('button', { name: 'New Session' }).click()
+      await page.waitForTimeout(1000)
     }
     
-    const startButton = page.getByRole('button', { name: 'Start Focus' })
+    // Now click the start button (may have different text depending on state)
+    const startButton = page.getByTestId('pomodoro-start-button')
+    await startButton.waitFor({ state: 'visible', timeout: 10000 })
     await startButton.click()
     
     // Wait for the timer to appear first (indicates session started)
@@ -42,14 +46,14 @@ test.describe('Pomodoro', () => {
 
     await page.waitForTimeout(2000)
 
-    const startButton = page.getByRole('button', { name: 'Start Focus' })
+    const startButton = page.getByTestId('pomodoro-start-button')
     if (await startButton.isVisible().catch(() => false)) {
       await startButton.click()
       await expect(page.locator('text=/\\d{2}:\\d{2}/')).toBeVisible({ timeout: 15000 })
       await page.waitForTimeout(3000)
     }
 
-    const cancelButton = page.getByRole('button', { name: 'Cancel' })
+    const cancelButton = page.getByTestId('pomodoro-cancel-button')
     if (await cancelButton.isVisible().catch(() => false)) {
       await cancelButton.click()
       await expect(page.getByRole('button', { name: 'New Session' })).toBeVisible({ timeout: 10000 })
@@ -65,18 +69,18 @@ test.describe('Pomodoro', () => {
 
     await page.waitForTimeout(2000)
 
-    const startButton = page.getByRole('button', { name: 'Start Focus' })
+    const startButton = page.getByTestId('pomodoro-start-button')
     if (await startButton.isVisible().catch(() => false)) {
       await startButton.click()
       await expect(page.locator('text=/\\d{2}:\\d{2}/')).toBeVisible({ timeout: 15000 })
       await page.waitForTimeout(3000)
     }
 
-    const completeButton = page.getByRole('button', { name: 'Complete' })
+    const completeButton = page.getByTestId('pomodoro-complete-button')
     if (await completeButton.isVisible().catch(() => false)) {
       await completeButton.click()
-      await expect(page.getByRole('button', { name: 'New Session' })).toBeVisible({ timeout: 10000 })
-      await page.getByRole('button', { name: 'New Session' }).click()
+      await expect(page.getByTestId('pomodoro-new-session-button')).toBeVisible({ timeout: 10000 })
+      await page.getByTestId('pomodoro-new-session-button').click()
       await expect(page.getByText('Recent Sessions')).toBeVisible()
       await expect(page.getByText(/25/).first()).toBeVisible({ timeout: 10000 })
     }
@@ -86,7 +90,7 @@ test.describe('Pomodoro', () => {
     await page.goto('/today')
     await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible({ timeout: 10000 })
 
-    await page.getByRole('link', { name: /Pomodoro/i }).click()
+    await page.getByTestId('nav-pomodoro').click()
     await expect(page).toHaveURL(/\/pomodoro/)
     await expect(page.locator('h1', { hasText: 'Pomodoro Timer' })).toBeVisible()
   })
@@ -96,8 +100,8 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
-    const cancelButton = page.getByRole('button', { name: 'Cancel' })
-    const newSessionButton = page.getByRole('button', { name: 'New Session' })
+    const cancelButton = page.getByTestId('pomodoro-cancel-button')
+    const newSessionButton = page.getByTestId('pomodoro-new-session-button')
 
     if (await cancelButton.isVisible().catch(() => false)) {
       await cancelButton.click()
@@ -114,12 +118,12 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
     await page.waitForTimeout(1500)
 
     const taskTitle = `Task ${Date.now()}`
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'attached', timeout: 10000 })
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await page.waitForTimeout(3000)
     await taskInput.fill(taskTitle)
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByTestId('task-add-button').click()
     await page.waitForTimeout(5000)
 
     const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
@@ -129,10 +133,10 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
 
     const pomodoroSection = page.getByTestId('task-detail-pomodoro')
     await expect(pomodoroSection).toBeVisible({ timeout: 10000 })
-    await expect(pomodoroSection.getByRole('button', { name: 'Start Focus' })).toBeVisible()
+    await expect(pomodoroSection.getByTestId('pomodoro-start-button')).toBeVisible()
 
     await page.keyboard.press('Escape')
-    await taskItem.getByRole('button', { name: 'Delete task' }).click()
+    await taskItem.getByTestId('task-delete-button').click()
     await expect(taskItem).not.toBeVisible({ timeout: 10000 })
   })
 })

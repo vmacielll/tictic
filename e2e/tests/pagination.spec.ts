@@ -36,9 +36,9 @@ test.describe('Pagination', () => {
 
   test('should show pagination controls when tasks exceed limit', async ({ page }) => {
     for (let i = 0; i < 15; i++) {
-      const taskInput = page.locator('input[placeholder="Add a task..."]')
+      const taskInput = page.getByTestId('task-input')
       await taskInput.fill(`Page Test ${i}`)
-      await page.getByRole('button', { name: 'Add' }).click()
+      await page.getByTestId('task-add-button').click()
     }
 
     await page.waitForTimeout(500)
@@ -46,9 +46,9 @@ test.describe('Pagination', () => {
 
   test('should navigate between pages', async ({ page }) => {
     for (let i = 0; i < 25; i++) {
-      const taskInput = page.locator('input[placeholder="Add a task..."]')
+      const taskInput = page.getByTestId('task-input')
       await taskInput.fill(`PageNav ${i}`)
-      await page.getByRole('button', { name: 'Add' }).click()
+      await page.getByTestId('task-add-button').click()
     }
   })
 })

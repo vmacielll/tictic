@@ -17,26 +17,26 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await page.waitForTimeout(3000)
     const taskTitle = `E2E Test ${Date.now()}`
 
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'attached', timeout: 10000 })
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await page.waitForTimeout(3000)
     await taskInput.fill(taskTitle)
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByTestId('task-add-button').click()
     await page.waitForTimeout(5000)
 
     const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
     await expect(taskItem).toBeVisible({ timeout: 10000 })
 
-    await taskItem.getByRole('button', { name: 'Mark as complete' }).click()
+    await taskItem.getByTestId('task-complete-button').click()
     await page.waitForTimeout(500)
     await expect(taskItem.locator('p')).toHaveClass(/line-through/)
 
-    await taskItem.getByRole('button', { name: 'Mark as incomplete' }).click()
+    await taskItem.getByTestId('task-complete-button').click()
     await page.waitForTimeout(500)
     await expect(taskItem.locator('p')).not.toHaveClass(/line-through/)
 
-    await taskItem.getByRole('button', { name: 'Delete task' }).click()
+    await taskItem.getByTestId('task-delete-button').click()
     await expect(taskItem).not.toBeVisible({ timeout: 10000 })
   })
 
@@ -51,12 +51,12 @@ test.describe('Tasks - Full CRUD Flow', () => {
   })
 
   test('should create multiple tasks and verify ordering', async ({ page }) => {
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible' })
 
     for (let i = 1; i <= 3; i++) {
       await taskInput.fill(`Task ${i} ${Date.now()}`)
-      await page.getByRole('button', { name: 'Add' }).click()
+      await page.getByTestId('task-add-button').click()
       await page.waitForTimeout(800)
     }
 
@@ -66,7 +66,7 @@ test.describe('Tasks - Full CRUD Flow', () => {
     expect(taskItems).toBeGreaterThanOrEqual(3)
 
     const task2Item = page.locator('[data-testid^="task-item-"]').nth(1)
-    await task2Item.getByRole('button', { name: 'Mark as complete' }).click()
+    await task2Item.getByTestId('task-complete-button').click()
     await expect(task2Item.locator('p')).toHaveClass(/line-through/)
   })
 
@@ -75,12 +75,12 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible({ timeout: 10000 })
 
     // Navigate to today via sidebar
-    await page.getByRole('link', { name: /Today/i }).click()
+    await page.getByTestId('nav-today').click()
     await expect(page).toHaveURL(/\/today/)
     await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
 
     // Navigate to inbox via sidebar
-    await page.getByRole('link', { name: /Inbox/i }).click()
+    await page.getByTestId('nav-inbox').click()
     await expect(page).toHaveURL(/\/inbox/)
     await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible()
   })
@@ -102,9 +102,9 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskTitle = `Toggle Test ${Date.now()}`
 
     // Create task
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.fill(taskTitle)
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByTestId('task-add-button').click()
 
     const taskText = page.getByText(taskTitle)
     await expect(taskText).toBeVisible()
@@ -114,20 +114,20 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await expect(taskItem.locator('p')).not.toHaveClass(/line-through/)
 
     // Complete -> Uncomplete -> Complete (multiple toggles)
-    await taskItem.getByRole('button', { name: 'Mark as complete' }).click()
+    await taskItem.getByTestId('task-complete-button').click()
     await expect(taskItem.locator('p')).toHaveClass(/line-through/)
 
-    await taskItem.getByRole('button', { name: 'Mark as incomplete' }).click()
+    await taskItem.getByTestId('task-complete-button').click()
     await expect(taskItem.locator('p')).not.toHaveClass(/line-through/)
 
-    await taskItem.getByRole('button', { name: 'Mark as complete' }).click()
+    await taskItem.getByTestId('task-complete-button').click()
     await expect(taskItem.locator('p')).toHaveClass(/line-through/)
 
     // Final state: completed
     await expect(taskItem.locator('p')).toHaveClass(/line-through/)
 
     // Cleanup: delete the task
-    await taskItem.getByRole('button', { name: 'Delete task' }).click()
+    await taskItem.getByTestId('task-delete-button').click()
     await expect(taskText).not.toBeVisible({ timeout: 10000 })
   })
 
@@ -138,9 +138,9 @@ test('should complete tasks from today view', async ({ page }) => {
     await page.waitForTimeout(1000)
 
     const taskTitle = `Today Task ${Date.now()}`
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.fill(taskTitle)
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByTestId('task-add-button').click()
 
     await page.waitForTimeout(2000)
 
@@ -148,10 +148,10 @@ test('should complete tasks from today view', async ({ page }) => {
     await expect(taskText).toBeVisible({ timeout: 15000 })
     const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
 
-    await taskItem.getByRole('button', { name: 'Mark as complete' }).click()
+    await taskItem.getByTestId('task-complete-button').click()
     await expect(taskItem.locator('p')).toHaveClass(/line-through/)
 
-    await taskItem.getByRole('button', { name: 'Delete task' }).click()
+    await taskItem.getByTestId('task-delete-button').click()
     await expect(taskText).not.toBeVisible({ timeout: 10000 })
   })
 })
