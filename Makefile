@@ -1,4 +1,4 @@
-.PHONY: dev db-up db-down db-migrate db-reset setup help test test-all e2e
+.PHONY: dev db-up db-down db-migrate db-reset setup help test test-all e2e down
 
 # Default target
 help:
@@ -15,16 +15,17 @@ help:
 	@echo "  make test        Run unit tests (server + web)"
 	@echo "  make test-all   Run all tests + E2E"
 	@echo "  make e2e         Run E2E tests"
+	@echo "  make down        Stop all services (server + web + DB)"
 	@echo ""
 
-# First-time setup: install deps + generate Prisma client
+# First-time setup: install deps and generate Prisma client
 setup:
 	@echo "Installing dependencies..."
-	@cd apps/server && npm install
-	@cd apps/web && npm install
-	@cd apps/e2e && npm install
+	@cd server && npm install
+	@cd web && npm install
+	@cd e2e && npm install
 	@echo "Generating Prisma client..."
-	@cd apps/server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma
+	@cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma
 	@echo "Done! Run 'make dev' to start everything."
 
 # Start everything: Postgres (Docker) + server + web with hot reload
@@ -35,12 +36,12 @@ dev:
 	@until docker compose exec postgres pg_isready -U postgres -q 2>/dev/null; do sleep 1; done
 	@echo "Database ready!"
 	@echo "Generating Prisma client..."
-	@cd apps/server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma 2>/dev/null
+	@cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma 2>/dev/null
 	@echo ""
 	@echo "Starting server and web..."
 	@echo ""
-	@cd apps/server && npm run dev 2>&1 | sed 's/^/[API] /' & \
-	 cd apps/web && npm run dev 2>&1 | sed 's/^/[WEB] /' & \
+	@cd server && npm run dev 2>&1 | sed 's/^/[API] /' & \
+	 cd web && npm run dev 2>&1 | sed 's/^/[WEB] /' & \
 	 wait
 
 # Start database only
@@ -57,17 +58,17 @@ db-down:
 
 # Run Prisma migrations
 db-migrate:
-	@npx prisma migrate dev --schema=apps/server/src/infra/database/prisma/schema.prisma
+	@cd server && npx prisma migrate dev --schema=src/infra/database/prisma/schema.prisma
 
 # Open Prisma Studio
 db-studio:
-	@npx prisma studio --schema=apps/server/src/infra/database/prisma/schema.prisma
+	@cd server && npx prisma studio --schema=src/infra/database/prisma/schema.prisma
 
 # Reset database (WARNING: drops all data)
 db-reset:
 	@echo "WARNING: This will drop all data!"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
-	@npx prisma migrate reset --schema=apps/server/src/infra/database/prisma/schema.prisma --force
+	@cd server && npx prisma migrate reset --schema=src/infra/database/prisma/schema.prisma --force
 
 # Run unit tests (server + web)
 test:
@@ -76,5 +77,31 @@ test:
 	@echo "Running web tests..."
 	@cd web && npm run test
 
+# Run E2E tests
+e2e:
+	@echo "Starting services for E2E tests..."
+	@docker compose up -d postgres
+	@echo "Waiting for database..."
+	@until docker compose exec postgres pg_isready -U postgres -q 2>/dev/null; do sleep 1; done
+	@echo "Starting server and web..."
+	/bin/bash -c 'export NODE_ENV=test && cd server && npm run dev 2>&1 | sed "s/^/[API] /" &' &
+	/bin/bash -c 'cd web && npm run dev 2>&1 | sed "s/^/[WEB] /" &' &
+	sleep 8
+	@echo "Running E2E tests..."
+	@cd e2e && npx playwright test
+	@sleep 2
+	@pkill -f "tsx watch src/app.ts" || true
+	@pkill -f "next dev" || true
+
 # Run all tests + E2E
 test-all: test e2e
+
+# Stop all services (server + web + database)
+down:
+	@echo "Stopping server..."
+	@pkill -f "tsx watch" || true
+	@echo "Stopping web..."
+	@pkill -f "next dev" || true
+	@echo "Stopping database..."
+	@docker compose down
+	@echo "All services stopped."

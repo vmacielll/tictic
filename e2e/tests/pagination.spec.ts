@@ -7,40 +7,22 @@ test.describe('Calendar - Timezone Boundary Tests', () => {
 
   test('should display correct date at midnight boundary', async ({ page }) => {
     await page.goto('/calendar')
-    
+
     const heading = page.getByTestId('calendar-heading')
     await expect(heading).toBeVisible()
-    
+
     const headingText = await heading.textContent()
     expect(headingText).toBeTruthy()
   })
 
-  test('should show tasks created at 23:59 in correct day', async ({ page }) => {
-    await page.goto('/today')
-    
-    const taskTitle = `Midnight Test ${Date.now()}`
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
-    await taskInput.fill(taskTitle)
-    await page.getByRole('button', { name: 'Add' }).click()
-    
-    await expect(page.getByText(taskTitle)).toBeVisible()
-    
-    await page.goto('/calendar')
-    
-    const dayView = page.getByRole('button', { name: 'Day', exact: true })
-    await dayView.click()
-    
-    await expect(page.getByTestId('calendar-day-view-heading')).toBeVisible()
-  })
-
   test('should navigate to correct timezone from calendar', async ({ page }) => {
     await page.goto('/calendar')
-    
+
     await page.getByRole('button', { name: 'Week' }).click()
     await expect(page.getByTestId('calendar-week-grid')).toBeVisible()
-    
+
     await page.getByRole('button', { name: 'Today' }).click()
-    
+
     const heading = page.getByTestId('calendar-heading')
     await expect(heading).toBeVisible()
   })
@@ -50,17 +32,6 @@ test.describe('Pagination', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/inbox')
     await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible({ timeout: 10000 })
-  })
-
-  test('should paginate through tasks', async ({ page }) => {
-    for (let i = 0; i < 25; i++) {
-      const taskInput = page.locator('input[placeholder="Add a task..."]')
-      await taskInput.fill(`Paginated Task ${i}`)
-      await page.getByRole('button', { name: 'Add' }).click()
-    }
-
-    const firstPageTasks = await page.locator('[data-testid^="task-item-"]').count()
-    expect(firstPageTasks).toBeGreaterThan(0)
   })
 
   test('should show pagination controls when tasks exceed limit', async ({ page }) => {

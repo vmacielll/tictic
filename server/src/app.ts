@@ -86,7 +86,7 @@ app.register(fastifyCookie)
 
 // Rate limiting
 app.register(fastifyRateLimit, {
-  max: 100,
+  max: process.env.NODE_ENV === 'test' ? 1000 : 100,
   timeWindow: '1 minute',
 })
 
