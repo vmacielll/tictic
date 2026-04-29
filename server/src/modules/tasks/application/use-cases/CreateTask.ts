@@ -7,8 +7,9 @@ interface CreateTaskRequest {
   title: string
   description?: string
   priority?: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone: string
   listId?: string
 }
 
@@ -17,8 +18,9 @@ interface CreateTaskResponse {
   title: string
   description?: string
   priority: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone?: string
   completed: boolean
   listId?: string
   userId: string
@@ -37,6 +39,7 @@ export class CreateTask {
       request.priority,
       request.dueDate,
       request.dueTime,
+      request.dueTimezone,
       request.listId,
     )
 
@@ -47,6 +50,7 @@ export class CreateTask {
       priority: task.priority,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
+      dueTimezone: task.dueTimezone,
       completed: task.completed,
       listId: task.listId,
       userId: task.userId,
@@ -63,6 +67,7 @@ export class CreateTask {
       priority: task.priority,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
+      dueTimezone: task.dueTimezone,
       completed: task.completed,
       listId: task.listId,
       userId: task.userId,

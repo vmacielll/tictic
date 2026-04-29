@@ -16,6 +16,7 @@ describe('CreateTask', () => {
       findByUserId: vi.fn(),
       findByUserIdAndDate: vi.fn(),
       findByUserIdAndDateRange: vi.fn(),
+      findByDueDate: vi.fn(),
       findInboxByUserId: vi.fn(),
       save: vi.fn(),
       delete: vi.fn(),
@@ -29,7 +30,7 @@ describe('CreateTask', () => {
 
     vi.spyOn(mockTaskRepository, 'create').mockResolvedValue(task)
 
-    const result = await useCase.execute({ userId: 'user-1', title: 'Test Task' })
+    const result = await useCase.execute({ userId: 'user-1', title: 'Test Task', dueTimezone: 'UTC' })
 
     expect(result.title).toBe('Test Task')
     expect(result.userId).toBe('user-1')
@@ -46,6 +47,7 @@ describe('CreateTask', () => {
       userId: 'user-1',
       title: 'Test Task',
       description: 'Task description',
+      dueTimezone: 'UTC',
     })
 
     expect(result.description).toBe('Task description')
@@ -60,28 +62,29 @@ describe('CreateTask', () => {
       userId: 'user-1',
       title: 'Test Task',
       priority: 'HIGH' as Priority,
+      dueTimezone: 'UTC',
     })
 
     expect(result.priority).toBe('HIGH')
   })
 
   it('should create a task with dueDate', async () => {
-    const dueDate = testDate(2024, 12, 31)
-    const task = Task.create('user-1', 'Test Task', undefined, undefined, dueDate)
+    const task = Task.create('user-1', 'Test Task', undefined, undefined, '2024-12-31')
 
     vi.spyOn(mockTaskRepository, 'create').mockResolvedValue(task)
 
     const result = await useCase.execute({
       userId: 'user-1',
       title: 'Test Task',
-      dueDate,
+      dueDate: '2024-12-31',
+      dueTimezone: 'UTC',
     })
 
-    expect(result.dueDate).toEqual(dueDate)
+    expect(result.dueDate).toBe('2024-12-31')
   })
 
   it('should create a task with listId', async () => {
-    const task = Task.create('user-1', 'Test Task', undefined, undefined, undefined, undefined, 'list-1')
+    const task = Task.create('user-1', 'Test Task', undefined, undefined, undefined, undefined, undefined, 'list-1')
 
     vi.spyOn(mockTaskRepository, 'create').mockResolvedValue(task)
 
@@ -89,6 +92,7 @@ describe('CreateTask', () => {
       userId: 'user-1',
       title: 'Test Task',
       listId: 'list-1',
+      dueTimezone: 'UTC',
     })
 
     expect(result.listId).toBe('list-1')

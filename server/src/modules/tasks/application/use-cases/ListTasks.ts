@@ -11,8 +11,9 @@ interface ListTasksResponse {
   title: string
   description?: string
   priority: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone?: string
   completed: boolean
   completedAt?: Date
   listId?: string
@@ -48,7 +49,7 @@ export class ListTasks {
     }
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: Date; dueTime?: Date; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -56,6 +57,7 @@ export class ListTasks {
       priority: task.priority,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
+      dueTimezone: task.dueTimezone,
       completed: task.completed,
       completedAt: task.completedAt,
       listId: task.listId,

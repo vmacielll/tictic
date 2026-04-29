@@ -4,8 +4,11 @@ import {
   TaskParamsSchema,
   TaskResponseSchema,
   TaskListResponseSchema,
+  TaskArrayResponseSchema,
   PaginationQuerySchema,
   ErrorResponseSchema,
+  CreateTaskBodySchema,
+  UpdateTaskBodySchema,
 } from './schemas'
 
 export async function tasksRoutes(app: FastifyInstance) {
@@ -23,6 +26,7 @@ export async function tasksRoutes(app: FastifyInstance) {
 
   app.post('/tasks', {
     schema: {
+      body: CreateTaskBodySchema,
       response: {
         201: TaskResponseSchema,
       },
@@ -32,6 +36,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   app.patch('/tasks/:id', {
     schema: {
       params: TaskParamsSchema,
+      body: UpdateTaskBodySchema,
       response: {
         200: TaskResponseSchema,
       },
@@ -74,7 +79,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   app.get('/tasks/today', {
     schema: {
       response: {
-        200: TaskListResponseSchema,
+        200: TaskArrayResponseSchema,
       },
     },
   }, controller.listToday.bind(controller))
@@ -82,7 +87,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   app.get('/tasks/inbox', {
     schema: {
       response: {
-        200: TaskListResponseSchema,
+        200: TaskArrayResponseSchema,
       },
     },
   }, controller.listInbox.bind(controller))

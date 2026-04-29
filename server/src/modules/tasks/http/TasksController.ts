@@ -9,7 +9,6 @@ import { ListTasks } from '../application/use-cases/ListTasks'
 import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
 import { ListInboxTasks } from '../application/use-cases/ListInboxTasks'
 import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
-import type { CreateTaskInput, UpdateTaskInput, PaginationInput } from './schemas'
 
 export class TasksController {
   constructor(
@@ -25,15 +24,16 @@ export class TasksController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const body = request.body as CreateTaskInput
+    const body = request.body as any
 
     const result = await this.createTask.execute({
       userId: req.userId,
       title: body.title,
       description: body.description,
       priority: body.priority,
-      dueDate: body.dueDate ? DateTime.fromISO(body.dueDate, { zone: req.userTimezone }).toUTC().toJSDate() : undefined,
-      dueTime: body.dueTime ? DateTime.fromISO(body.dueTime, { zone: req.userTimezone }).toUTC().toJSDate() : undefined,
+      dueDate: body.dueDate,
+      dueTime: body.dueTime,
+      dueTimezone: req.userTimezone,
       listId: body.listId,
     })
     return reply.status(201).send(result)
@@ -42,7 +42,7 @@ export class TasksController {
   async update(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
     const params = request.params as { id: string }
-    const body = request.body as UpdateTaskInput
+    const body = request.body as any
 
     const result = await this.updateTask.execute({
       taskId: params.id,
@@ -50,8 +50,9 @@ export class TasksController {
       title: body.title,
       description: body.description,
       priority: body.priority,
-      dueDate: body.dueDate ? DateTime.fromISO(body.dueDate, { zone: req.userTimezone }).toUTC().toJSDate() : undefined,
-      dueTime: body.dueTime ? DateTime.fromISO(body.dueTime, { zone: req.userTimezone }).toUTC().toJSDate() : undefined,
+      dueDate: body.dueDate,
+      dueTime: body.dueTime,
+      dueTimezone: req.userTimezone,
       listId: body.listId,
     })
     return reply.send(result)
@@ -70,7 +71,7 @@ export class TasksController {
 
   async list(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const query = request.query as PaginationInput
+    const query = request.query as any
 
     const pagination = { skip: (query.page - 1) * query.size, take: query.size }
     const result = await this.listTasks.execute({ userId: req.userId, pagination })
@@ -81,7 +82,7 @@ export class TasksController {
     const req = request as AuthenticatedRequest
 
     const now = DateTime.now().setZone(req.userTimezone)
-    const today = now.toJSDate()
+    const today = now.toFormat('yyyy-MM-dd')
 
     const result = await this.listTasksByDate.execute({
       userId: req.userId,

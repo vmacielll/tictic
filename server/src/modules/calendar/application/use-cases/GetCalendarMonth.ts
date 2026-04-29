@@ -19,7 +19,7 @@ interface CalendarTask {
   title: string
   priority: Priority
   completed: boolean
-  dueDate: string // ISO 8601 UTC timestamp
+  dueDate: string // YYYY-MM-DD
 }
 
 interface GetCalendarMonthResponse {
@@ -34,10 +34,8 @@ export class GetCalendarMonth {
 
     // Create date in user's timezone to calculate month boundaries
     const localDate = DateTime.fromObject({ year, month, day: 1, hour: 12 }, { zone: timezone })
-
-    // Get start and end of month in user's timezone, converted to UTC for DB query
-    const startDate = localDate.startOf('month').toUTC().toJSDate()
-    const endDate = localDate.endOf('month').toUTC().toJSDate()
+    const startDate = localDate.startOf('month').toFormat('yyyy-MM-dd')
+    const endDate = localDate.endOf('month').toFormat('yyyy-MM-dd')
 
     const tasks = await this.taskRepository.findByUserIdAndDateRange(
       userId,
@@ -56,23 +54,20 @@ export class GetCalendarMonth {
       daysMap.set(dateStr, [])
     }
 
-    // Assign tasks to their respective days in user's timezone
+    // Assign tasks to their respective days
     for (const task of tasksWithDate) {
-      // Convert UTC timestamp to user's timezone to determine which day it belongs to
-      const taskDate = DateTime.fromJSDate(task.dueDate!, { zone: 'UTC' }).setZone(timezone)
-      const dateStr = taskDate.toFormat('yyyy-MM-dd')
+      const dateStr = task.dueDate!
 
       if (!daysMap.has(dateStr)) {
         daysMap.set(dateStr, [])
       }
 
-      // Return full ISO timestamp so frontend can use new Date() directly
       daysMap.get(dateStr)!.push({
         id: task.id,
         title: task.title.value,
         priority: task.priority,
         completed: task.completed,
-        dueDate: task.dueDate!.toISOString(), // Full ISO UTC timestamp
+        dueDate: task.dueDate!,
       })
     }
 

@@ -20,8 +20,9 @@ export class PrismaTaskRepository implements ITaskRepository {
     title: string
     description?: string
     priority: Priority
-    dueDate?: Date
-    dueTime?: Date
+    dueDate?: string
+    dueTime?: string
+    dueTimezone?: string
     completed: boolean
     completedAt?: Date
     listId?: string
@@ -35,6 +36,7 @@ export class PrismaTaskRepository implements ITaskRepository {
         priority: data.priority,
         dueDate: data.dueDate ?? null,
         dueTime: data.dueTime ?? null,
+        dueTimezone: data.dueTimezone ?? null,
         completed: Boolean(data.completed),
         completedAt: data.completedAt ?? null,
         listId: data.listId ?? null,
@@ -60,20 +62,11 @@ export class PrismaTaskRepository implements ITaskRepository {
     return prismaTasks.map(prismaTaskToDomain)
   }
 
-  async findByUserIdAndDate(userId: string, date: Date, pagination?: PaginationParams): Promise<Task[]> {
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
-
+  async findByUserIdAndDate(userId: string, date: string, pagination?: PaginationParams): Promise<Task[]> {
     const prismaTasks = await this.prisma.task.findMany({
       where: {
         userId,
-        dueDate: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
+        dueDate: date,
       },
       orderBy: { createdAt: 'desc' },
       ...normalizePagination(pagination),
@@ -81,22 +74,27 @@ export class PrismaTaskRepository implements ITaskRepository {
     return prismaTasks.map(prismaTaskToDomain)
   }
 
-  async findByUserIdAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<Task[]> {
-    const start = new Date(startDate)
-    start.setHours(0, 0, 0, 0)
-
-    const end = new Date(endDate)
-    end.setHours(23, 59, 59, 999)
-
+  async findByUserIdAndDateRange(userId: string, startDate: string, endDate: string): Promise<Task[]> {
     const prismaTasks = await this.prisma.task.findMany({
       where: {
         userId,
         dueDate: {
-          gte: start,
-          lte: end,
+          gte: startDate,
+          lte: endDate,
         },
       },
       orderBy: { dueDate: 'asc' },
+    })
+    return prismaTasks.map(prismaTaskToDomain)
+  }
+
+  async findByDueDate(userId: string, date: string): Promise<Task[]> {
+    const prismaTasks = await this.prisma.task.findMany({
+      where: {
+        userId,
+        dueDate: date,
+      },
+      orderBy: { createdAt: 'desc' },
     })
     return prismaTasks.map(prismaTaskToDomain)
   }
@@ -121,6 +119,7 @@ export class PrismaTaskRepository implements ITaskRepository {
         priority: task.priority,
         dueDate: task.dueDate ?? null,
         dueTime: task.dueTime ?? null,
+        dueTimezone: task.dueTimezone ?? null,
         completed: Boolean(task.completed),
         completedAt: task.completedAt ?? null,
         listId: task.listId ?? null,

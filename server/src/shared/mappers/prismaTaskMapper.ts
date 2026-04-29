@@ -7,8 +7,9 @@ interface PrismaTask {
   title: string
   description: string | null
   priority: Priority
-  dueDate: Date | null
-  dueTime: Date | null
+  dueDate: string | null
+  dueTime: string | null
+  dueTimezone: string | null
   completed: boolean
   completedAt: Date | null
   listId: string | null
@@ -25,6 +26,7 @@ export function prismaTaskToDomain(prismaTask: PrismaTask): Task {
     priority: prismaTask.priority,
     dueDate: prismaTask.dueDate ?? undefined,
     dueTime: prismaTask.dueTime ?? undefined,
+    dueTimezone: prismaTask.dueTimezone ?? undefined,
     completed: prismaTask.completed,
     completedAt: prismaTask.completedAt ?? undefined,
     listId: prismaTask.listId ?? undefined,

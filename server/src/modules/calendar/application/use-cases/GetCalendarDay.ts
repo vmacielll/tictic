@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 
 interface GetCalendarDayRequest {
   userId: string
-  date: Date
+  date: string
   timezone: string
 }
 
@@ -14,8 +14,8 @@ interface CalendarTask {
   description?: string
   priority: Priority
   completed: boolean
-  dueDate: string // ISO 8601 UTC timestamp
-  dueTime?: string // ISO 8601 UTC timestamp
+  dueDate: string // YYYY-MM-DD
+  dueTime?: string // HH:mm:ss
   listId?: string
 }
 
@@ -31,17 +31,9 @@ export class GetCalendarDay {
     const { userId, date, timezone } = request
 
     // Convert input date to user's timezone
-    const localDate = DateTime.fromJSDate(date, { zone: 'UTC' }).setZone(timezone)
+    const localDate = DateTime.fromISO(date, { zone: timezone })
 
-    // Get start and end of day in user's timezone
-    const startDate = localDate.startOf('day').toUTC().toJSDate()
-    const endDate = localDate.endOf('day').toUTC().toJSDate()
-
-    const tasks = await this.taskRepository.findByUserIdAndDateRange(
-      userId,
-      startDate,
-      endDate,
-    )
+    const tasks = await this.taskRepository.findByDueDate(userId, date)
 
     const tasksWithDate = tasks.filter((t) => t.dueDate !== undefined && t.dueDate !== null)
 
@@ -53,8 +45,8 @@ export class GetCalendarDay {
         description: task.description,
         priority: task.priority,
         completed: task.completed,
-        dueDate: task.dueDate!.toISOString(), // Full ISO UTC timestamp
-        dueTime: task.dueTime?.toISOString(), // Full ISO UTC timestamp
+        dueDate: task.dueDate!,
+        dueTime: task.dueTime,
         listId: task.listId,
       })),
     }

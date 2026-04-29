@@ -1,10 +1,9 @@
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import type { Priority } from '../../domain/types/Priority'
-import { DateTime } from 'luxon'
 
 interface ListTasksByDateRequest {
   userId: string
-  date: Date
+  date: string
   timezone: string
 }
 
@@ -13,8 +12,9 @@ interface ListTasksByDateResponse {
   title: string
   description?: string
   priority: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone?: string
   completed: boolean
   completedAt?: Date
   listId?: string
@@ -26,24 +26,13 @@ export class ListTasksByDate {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
   async execute(request: ListTasksByDateRequest): Promise<ListTasksByDateResponse[]> {
-    const { userId, date, timezone } = request
+    const { userId, date } = request
 
-    // Convert input date to user's timezone
-    const localDate = DateTime.fromJSDate(date, { zone: 'UTC' }).setZone(timezone)
-    
-    // Get start and end of day in user's timezone
-    const startOfDay = localDate.startOf('day').toUTC().toJSDate()
-    const endOfDay = localDate.endOf('day').toUTC().toJSDate()
-
-    const tasks = await this.taskRepository.findByUserIdAndDateRange(
-      userId,
-      startOfDay,
-      endOfDay,
-    )
+    const tasks = await this.taskRepository.findByDueDate(userId, date)
     return tasks.map(this.toResponse)
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: Date; dueTime?: Date; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksByDateResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksByDateResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -51,6 +40,7 @@ export class ListTasksByDate {
       priority: task.priority,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
+      dueTimezone: task.dueTimezone,
       completed: task.completed,
       completedAt: task.completedAt,
       listId: task.listId,

@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 
 interface GetCalendarWeekRequest {
   userId: string
-  date: Date
+  date: string
   timezone: string
 }
 
@@ -18,7 +18,7 @@ interface CalendarTask {
   title: string
   priority: Priority
   completed: boolean
-  dueDate: string // ISO 8601 UTC timestamp
+  dueDate: string // YYYY-MM-DD
 }
 
 interface GetCalendarWeekResponse {
@@ -32,14 +32,12 @@ export class GetCalendarWeek {
     const { userId, date, timezone } = request
 
     // Convert input date to user's timezone
-    const localDate = DateTime.fromJSDate(date, { zone: 'UTC' }).setZone(timezone)
-
-    // Get start and end of week in user's timezone
+    const localDate = DateTime.fromISO(date, { zone: timezone })
     const startOfWeek = localDate.startOf('week') // Monday
     const endOfWeek = localDate.endOf('week') // Sunday
 
-    const startDate = startOfWeek.toUTC().toJSDate()
-    const endDate = endOfWeek.toUTC().toJSDate()
+    const startDate = startOfWeek.toFormat('yyyy-MM-dd')
+    const endDate = endOfWeek.toFormat('yyyy-MM-dd')
 
     const tasks = await this.taskRepository.findByUserIdAndDateRange(
       userId,
@@ -61,8 +59,7 @@ export class GetCalendarWeek {
 
     // Assign tasks to their respective days
     for (const task of tasksWithDate) {
-      const taskDate = DateTime.fromJSDate(task.dueDate!, { zone: 'UTC' }).setZone(timezone)
-      const dateStr = taskDate.toFormat('yyyy-MM-dd')
+      const dateStr = task.dueDate!
       const day = days.find((d) => d.date === dateStr)
       if (day) {
         day.tasks.push({
@@ -70,7 +67,7 @@ export class GetCalendarWeek {
           title: task.title.value,
           priority: task.priority,
           completed: task.completed,
-          dueDate: task.dueDate!.toISOString(), // Full ISO UTC timestamp
+          dueDate: task.dueDate!,
         })
       }
     }

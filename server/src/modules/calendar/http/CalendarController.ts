@@ -46,13 +46,10 @@ export class CalendarController {
     }
     const { date: dateString } = queryResult.data
 
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = DateTime.fromObject({ year, month, day, hour: 12 }, { zone: req.userTimezone }).toJSDate()
-
     try {
       const result = await this.getCalendarWeek.execute({
         userId: req.userId,
-        date,
+        date: dateString,
         timezone: req.userTimezone,
       })
       return reply.send(result)
@@ -70,13 +67,10 @@ export class CalendarController {
     }
     const { date: dateString } = queryResult.data
 
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = DateTime.fromObject({ year, month, day, hour: 12 }, { zone: req.userTimezone }).toJSDate()
-
     try {
       const result = await this.getCalendarDay.execute({
         userId: req.userId,
-        date,
+        date: dateString,
         timezone: req.userTimezone,
       })
       return reply.send(result)

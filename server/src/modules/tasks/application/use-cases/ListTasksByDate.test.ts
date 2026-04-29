@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { type ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { ListTasksByDate } from './ListTasksByDate'
 import { Task } from '../../domain/entities/Task'
-import { testDate } from '../../../../__tests__/utils/dateUtils'
 
 describe('ListTasksByDate', () => {
   let mockTaskRepository: ITaskRepository
@@ -15,6 +14,7 @@ describe('ListTasksByDate', () => {
       findByUserId: vi.fn(),
       findByUserIdAndDate: vi.fn(),
       findByUserIdAndDateRange: vi.fn(),
+      findByDueDate: vi.fn(),
       findInboxByUserId: vi.fn(),
       save: vi.fn(),
       delete: vi.fn(),
@@ -25,13 +25,13 @@ describe('ListTasksByDate', () => {
 
   it('should list tasks for a specific date', async () => {
     const task = Task.create('user-1', 'Task 1')
-    ;(task as any)._dueDate = testDate(2024, 12, 25)
+    ;(task as any)._dueDate = '2024-12-25'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 12, 25),
+      date: '2024-12-25',
       timezone: 'UTC',
     })
 
@@ -40,59 +40,24 @@ describe('ListTasksByDate', () => {
   })
 
   it('should return empty list when no tasks for date', async () => {
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 12, 25),
+      date: '2024-12-25',
       timezone: 'UTC',
     })
 
     expect(result).toHaveLength(0)
   })
 
-  it('should convert date to user timezone', async () => {
-    const task = Task.create('user-1', 'Task 1')
-    const findByDateRangeSpy = vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([])
-
-    await useCase.execute({
-      userId: 'user-1',
-      date: testDate(2024, 12, 25),
-      timezone: 'America/New_York',
-    })
-
-    expect(findByDateRangeSpy).toHaveBeenCalled()
-    const [userId, startDate, endDate] = findByDateRangeSpy.mock.calls[0]
-    expect(userId).toBe('user-1')
-    expect(startDate).toBeInstanceOf(Date)
-    expect(endDate).toBeInstanceOf(Date)
-  })
-
-  it('should call repository with date range', async () => {
-    const task = Task.create('user-1', 'Task 1')
-    const findByDateRangeSpy = vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
-
-    const inputDate = testDate(2024, 12, 25)
-    await useCase.execute({
-      userId: 'user-1',
-      date: inputDate,
-      timezone: 'UTC',
-    })
-
-    expect(findByDateRangeSpy).toHaveBeenCalledWith(
-      'user-1',
-      expect.any(Date),
-      expect.any(Date)
-    )
-  })
-
   it('should throw when repository fails', async () => {
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockRejectedValue(new Error('Database error'))
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockRejectedValue(new Error('Database error'))
 
     await expect(
       useCase.execute({
         userId: 'user-1',
-        date: testDate(2024, 12, 25),
+        date: '2024-12-25',
         timezone: 'UTC',
       }),
     ).rejects.toThrow('Database error')
@@ -100,18 +65,23 @@ describe('ListTasksByDate', () => {
 
   it('should map tasks to response format', async () => {
     const task = Task.create('user-1', 'Task 1', 'Description', 'HIGH')
-    ;(task as any)._dueDate = testDate(2024, 12, 25)
+    ;(task as any)._dueDate = '2024-12-25'
+    ;(task as any)._dueTime = '14:30:00'
+    ;(task as any)._dueTimezone = 'America/Sao_Paulo'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 12, 25),
+      date: '2024-12-25',
       timezone: 'UTC',
     })
 
     expect(result[0].title).toBe('Task 1')
     expect(result[0].description).toBe('Description')
     expect(result[0].priority).toBe('HIGH')
+    expect(result[0].dueDate).toBe('2024-12-25')
+    expect(result[0].dueTime).toBe('14:30:00')
+    expect(result[0].dueTimezone).toBe('America/Sao_Paulo')
   })
 })

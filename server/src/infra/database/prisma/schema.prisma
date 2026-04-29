@@ -56,8 +56,9 @@ model Task {
   title       String
   description String?
   priority    Priority  @default(MEDIUM)
-  dueDate     DateTime? @map("due_date")
-  dueTime     DateTime? @map("due_time")
+  dueDate     String?   @map("due_date")
+  dueTime     String?   @map("due_time")
+  dueTimezone String?   @map("due_timezone")
   completed   Boolean   @default(false)
   completedAt DateTime? @map("completed_at")
   listId      String?   @map("list_id")

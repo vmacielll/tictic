@@ -6,8 +6,9 @@ export interface TaskProps {
   title: TaskTitle
   description?: string
   priority: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone?: string
   completed: boolean
   completedAt?: Date
   listId?: string
@@ -21,8 +22,9 @@ export class Task {
   private _title: TaskTitle
   private _description?: string
   private _priority: Priority
-  private _dueDate?: Date
-  private _dueTime?: Date
+  private _dueDate?: string
+  private _dueTime?: string
+  private _dueTimezone?: string
   private _completed: boolean
   private _completedAt?: Date
   private _listId?: string
@@ -37,6 +39,7 @@ export class Task {
     this._priority = props.priority
     this._dueDate = props.dueDate
     this._dueTime = props.dueTime
+    this._dueTimezone = props.dueTimezone
     this._completed = props.completed
     this._completedAt = props.completedAt
     this._listId = props.listId
@@ -50,8 +53,9 @@ export class Task {
     title: string,
     description?: string,
     priority?: Priority,
-    dueDate?: Date,
-    dueTime?: Date,
+    dueDate?: string,
+    dueTime?: string,
+    dueTimezone?: string,
     listId?: string,
   ): Task {
     return new Task({
@@ -61,6 +65,7 @@ export class Task {
       priority: priority ?? 'MEDIUM',
       dueDate,
       dueTime,
+      dueTimezone,
       completed: false,
       listId,
       userId,
@@ -91,7 +96,15 @@ export class Task {
     this._updatedAt = new Date()
   }
 
-  update(title?: string, description?: string, priority?: Priority, dueDate?: Date, dueTime?: Date, listId?: string): void {
+  update(
+    title?: string,
+    description?: string,
+    priority?: Priority,
+    dueDate?: string,
+    dueTime?: string,
+    dueTimezone?: string,
+    listId?: string,
+  ): void {
     if (title !== undefined) {
       this._title = new TaskTitle(title)
     }
@@ -107,6 +120,9 @@ export class Task {
     if (dueTime !== undefined) {
       this._dueTime = dueTime
     }
+    if (dueTimezone !== undefined) {
+      this._dueTimezone = dueTimezone
+    }
     if (listId !== undefined) {
       this._listId = listId
     }
@@ -117,8 +133,9 @@ export class Task {
   get title(): TaskTitle { return this._title }
   get description(): string | undefined { return this._description }
   get priority(): Priority { return this._priority }
-  get dueDate(): Date | undefined { return this._dueDate }
-  get dueTime(): Date | undefined { return this._dueTime }
+  get dueDate(): string | undefined { return this._dueDate }
+  get dueTime(): string | undefined { return this._dueTime }
+  get dueTimezone(): string | undefined { return this._dueTimezone }
   get completed(): boolean { return this._completed }
   get completedAt(): Date | undefined { return this._completedAt }
   get listId(): string | undefined { return this._listId }
@@ -130,13 +147,10 @@ export class Task {
     return this._dueDate === undefined || this._dueDate === null
   }
 
-  isDueToday(today: Date): boolean {
+  isDueToday(reference?: Date): boolean {
     if (!this._dueDate) return false
-    return (
-      this._dueDate.getFullYear() === today.getFullYear() &&
-      this._dueDate.getMonth() === today.getMonth() &&
-      this._dueDate.getDate() === today.getDate()
-    )
+    const today = reference ? reference.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    return this._dueDate === today
   }
 
   toJSON(): Record<string, unknown> {
@@ -147,6 +161,7 @@ export class Task {
       priority: this._priority,
       dueDate: this._dueDate,
       dueTime: this._dueTime,
+      dueTimezone: this._dueTimezone,
       completed: this._completed,
       completedAt: this._completedAt,
       listId: this._listId,

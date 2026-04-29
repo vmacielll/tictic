@@ -1,41 +1,3 @@
-import { z } from 'zod'
-
-const isoDateSchema = z.string().refine((v) => !v || !isNaN(Date.parse(v)), {
-  message: 'Invalid ISO date',
-})
-
-export const PaginationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  size: z.coerce.number().int().min(1).max(100).default(20),
-})
-
-export const CreateTaskSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
-  dueDate: isoDateSchema.optional(),
-  dueTime: isoDateSchema.optional(),
-  listId: z.string().uuid().optional(),
-})
-
-export const UpdateTaskSchema = z.object({
-  title: z.string().min(1).optional(),
-  description: z.string().optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
-  dueDate: isoDateSchema.optional(),
-  dueTime: isoDateSchema.optional(),
-  listId: z.string().uuid().optional(),
-})
-
-export const TaskIdSchema = z.object({
-  id: z.string().uuid('Invalid task ID'),
-})
-
-export type PaginationInput = z.infer<typeof PaginationSchema>
-export type CreateTaskInput = z.infer<typeof CreateTaskSchema>
-export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>
-export type TaskIdInput = z.infer<typeof TaskIdSchema>
-
 export const PaginationQuerySchema = {
   type: 'object',
   properties: {
@@ -52,6 +14,31 @@ export const TaskParamsSchema = {
   required: ['id'],
 }
 
+export const CreateTaskBodySchema = {
+  type: 'object',
+  required: ['title'],
+  properties: {
+    title: { type: 'string', minLength: 1 },
+    description: { type: 'string' },
+    priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+    dueDate: { type: 'string' },
+    dueTime: { type: 'string' },
+    listId: { type: 'string', format: 'uuid' },
+  },
+}
+
+export const UpdateTaskBodySchema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string', minLength: 1 },
+    description: { type: 'string' },
+    priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+    dueDate: { type: 'string' },
+    dueTime: { type: 'string' },
+    listId: { type: 'string', format: 'uuid' },
+  },
+}
+
 export const TaskResponseSchema = {
   type: 'object',
   properties: {
@@ -59,8 +46,9 @@ export const TaskResponseSchema = {
     title: { type: 'string' },
     description: { type: 'string' },
     priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
-    dueDate: { type: 'string', format: 'date-time' },
-    dueTime: { type: 'string', format: 'date-time' },
+    dueDate: { type: 'string' },
+    dueTime: { type: 'string' },
+    dueTimezone: { type: 'string' },
     completed: { type: 'boolean' },
     completedAt: { type: 'string', format: 'date-time' },
     listId: { type: 'string', format: 'uuid' },
@@ -68,6 +56,11 @@ export const TaskResponseSchema = {
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
   },
+}
+
+export const TaskArrayResponseSchema = {
+  type: 'array',
+  items: TaskResponseSchema,
 }
 
 export const TaskListResponseSchema = {

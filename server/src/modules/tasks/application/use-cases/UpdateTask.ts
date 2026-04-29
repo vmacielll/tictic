@@ -8,8 +8,9 @@ interface UpdateTaskRequest {
   title?: string
   description?: string
   priority?: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone: string
   listId?: string
 }
 
@@ -18,8 +19,9 @@ interface UpdateTaskResponse {
   title: string
   description?: string
   priority: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone?: string
   completed: boolean
   listId?: string
   userId: string
@@ -46,15 +48,16 @@ export class UpdateTask {
       request.priority,
       request.dueDate,
       request.dueTime,
+      request.dueTimezone,
       request.listId,
     )
 
-    const updated = await this.taskRepository.save(task)
+    const saved = await this.taskRepository.save(task)
 
-    return this.toResponse(updated)
+    return this.toResponse(saved)
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: Date; dueTime?: Date; completed: boolean; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): UpdateTaskResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): UpdateTaskResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -62,6 +65,7 @@ export class UpdateTask {
       priority: task.priority,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
+      dueTimezone: task.dueTimezone,
       completed: task.completed,
       listId: task.listId,
       userId: task.userId,

@@ -10,8 +10,9 @@ interface ListInboxTasksResponse {
   title: string
   description?: string
   priority: Priority
-  dueDate?: Date
-  dueTime?: Date
+  dueDate?: string
+  dueTime?: string
+  dueTimezone?: string
   completed: boolean
   completedAt?: Date
   listId?: string
@@ -27,7 +28,7 @@ export class ListInboxTasks {
     return tasks.map(this.toResponse)
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: Date; dueTime?: Date; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListInboxTasksResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListInboxTasksResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -35,6 +36,7 @@ export class ListInboxTasks {
       priority: task.priority,
       dueDate: task.dueDate,
       dueTime: task.dueTime,
+      dueTimezone: task.dueTimezone,
       completed: task.completed,
       completedAt: task.completedAt,
       listId: task.listId,

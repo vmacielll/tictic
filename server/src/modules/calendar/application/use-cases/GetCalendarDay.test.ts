@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { type ITaskRepository } from '../../../tasks/domain/repositories/ITaskRepository'
 import { GetCalendarDay } from './GetCalendarDay'
 import { Task } from '../../../tasks/domain/entities/Task'
-import { testDate } from '../../../../__tests__/utils/dateUtils'
 
 describe('GetCalendarDay', () => {
   let mockTaskRepository: ITaskRepository
@@ -15,6 +14,7 @@ describe('GetCalendarDay', () => {
       findByUserId: vi.fn(),
       findByUserIdAndDate: vi.fn(),
       findByUserIdAndDateRange: vi.fn(),
+      findByDueDate: vi.fn(),
       findInboxByUserId: vi.fn(),
       save: vi.fn(),
       delete: vi.fn(),
@@ -25,13 +25,13 @@ describe('GetCalendarDay', () => {
 
   it('should return tasks for a specific day', async () => {
     const task = Task.create('user-1', 'Task')
-    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
+    ;(task as any)._dueDate = '2024-03-15'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
@@ -40,11 +40,11 @@ describe('GetCalendarDay', () => {
   })
 
   it('should return empty tasks array when no tasks', async () => {
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
@@ -52,23 +52,23 @@ describe('GetCalendarDay', () => {
   })
 
   it('should throw when repository fails', async () => {
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockRejectedValue(new Error('Database error'))
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockRejectedValue(new Error('Database error'))
 
     await expect(
       useCase.execute({
         userId: 'user-1',
-        date: testDate(2024, 3, 15),
+        date: '2024-03-15',
         timezone: 'America/Sao_Paulo',
       }),
     ).rejects.toThrow('Database error')
   })
 
   it('should return date in YYYY-MM-DD format', async () => {
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
@@ -77,13 +77,13 @@ describe('GetCalendarDay', () => {
 
   it('should include task description when present', async () => {
     const task = Task.create('user-1', 'Task', 'Description')
-    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
+    ;(task as any)._dueDate = '2024-03-15'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
@@ -92,28 +92,29 @@ describe('GetCalendarDay', () => {
 
   it('should include listId when task has list', async () => {
     const task = Task.create('user-1', 'Task')
-    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
+    ;(task as any)._dueDate = '2024-03-15'
+    ;(task as any)._listId = 'list-1'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
-    expect(result.tasks[0].listId).toBeUndefined()
+    expect(result.tasks[0].listId).toBe('list-1')
   })
 
   it('should include priority', async () => {
     const task = Task.create('user-1', 'Task', undefined, 'HIGH')
-    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
+    ;(task as any)._dueDate = '2024-03-15'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
@@ -122,31 +123,32 @@ describe('GetCalendarDay', () => {
 
   it('should include completed status', async () => {
     const task = Task.create('user-1', 'Task')
-    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
+    ;(task as any)._dueDate = '2024-03-15'
+    task.complete()
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
-    expect(result.tasks[0].completed).toBe(false)
+    expect(result.tasks[0].completed).toBe(true)
   })
 
-  it('should convert dueDate to ISO string', async () => {
+  it('should return dueDate as YYYY-MM-DD string', async () => {
     const task = Task.create('user-1', 'Task')
-    task.update(undefined, undefined, undefined, testDate(2024, 3, 15))
+    ;(task as any)._dueDate = '2024-03-15'
 
-    vi.spyOn(mockTaskRepository, 'findByUserIdAndDateRange').mockResolvedValue([task])
+    vi.spyOn(mockTaskRepository, 'findByDueDate').mockResolvedValue([task])
 
     const result = await useCase.execute({
       userId: 'user-1',
-      date: testDate(2024, 3, 15),
+      date: '2024-03-15',
       timezone: 'America/Sao_Paulo',
     })
 
-    expect(result.tasks[0].dueDate).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    expect(result.tasks[0].dueDate).toBe('2024-03-15')
   })
 })

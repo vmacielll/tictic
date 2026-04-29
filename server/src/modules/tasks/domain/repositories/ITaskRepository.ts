@@ -14,8 +14,9 @@ export interface ITaskRepository {
     title: string
     description?: string
     priority: Priority
-    dueDate?: Date
-    dueTime?: Date
+    dueDate?: string
+    dueTime?: string
+    dueTimezone?: string
     completed: boolean
     completedAt?: Date
     listId?: string
@@ -23,8 +24,9 @@ export interface ITaskRepository {
   }): Promise<Task>
   findById(id: string, userId: string): Promise<Task | null>
   findByUserId(userId: string, pagination?: PaginationParams): Promise<Task[]>
-  findByUserIdAndDate(userId: string, date: Date, pagination?: PaginationParams): Promise<Task[]>
-  findByUserIdAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<Task[]>
+  findByUserIdAndDate(userId: string, date: string, pagination?: PaginationParams): Promise<Task[]>
+  findByUserIdAndDateRange(userId: string, startDate: string, endDate: string): Promise<Task[]>
+  findByDueDate(userId: string, date: string): Promise<Task[]>
   findInboxByUserId(userId: string): Promise<Task[]>
   save(task: Task): Promise<Task>
   delete(id: string, userId: string): Promise<void>
