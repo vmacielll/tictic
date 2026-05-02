@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react'
 import { type Task, type UpdateTaskInput, parseTask } from '@/domain/tasks/types'
-import { updateTask, completeTask, uncompleteTask } from '@/lib/api'
+import { updateTask } from '@/lib/api'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
 
 interface TaskDetailModalProps {
@@ -26,7 +26,7 @@ export function TaskDetailModal({
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>(task.priority)
   const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.toISOString().split('T')[0] : '')
-  const [dueTime, setDueTime] = useState(task.dueTime ? task.dueTime.toISOString().slice(11, 16) : '')
+  const [dueTime, setDueTime] = useState(typeof task.dueTime === 'string' ? task.dueTime : '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,7 +36,7 @@ export function TaskDetailModal({
     setDescription(task.description || '')
     setPriority(task.priority)
     setDueDate(task.dueDate ? task.dueDate.toISOString().split('T')[0] : '')
-    setDueTime(task.dueTime ? task.dueTime.toISOString().slice(11, 16) : '')
+    setDueTime(typeof task.dueTime === 'string' ? task.dueTime : '')
     setError(null)
   }, [task])
 
@@ -92,12 +92,9 @@ export function TaskDetailModal({
 
   const handleToggleComplete = async () => {
     try {
-      if (task.completed) {
-        await uncompleteTask(task.id)
-      } else {
-        await completeTask(task.id)
-      }
-      onToggleComplete(task.id, task.completed)
+      const newCompleted = !task.completed
+      await updateTask(task.id, { completed: newCompleted })
+      onToggleComplete(task.id, newCompleted)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update task')
     }
@@ -189,6 +186,7 @@ export function TaskDetailModal({
             </label>
             <input
               type="text"
+              data-testid="modal-title-input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-lg border border-border-light bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent placeholder-text-muted"
@@ -203,6 +201,7 @@ export function TaskDetailModal({
               Description
             </label>
             <textarea
+              data-testid="modal-description-input"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg border border-border-light bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent resize-none placeholder-text-muted"
@@ -260,6 +259,13 @@ export function TaskDetailModal({
             </div>
           </div>
 
+          {/* Timezone (read-only) */}
+          {task.dueTimezone && (
+            <div className="text-sm text-text-muted">
+              Timezone: {task.dueTimezone}
+            </div>
+          )}
+
           {/* Metadata (read-only) */}
           <div className="pt-4 border-t border-border">
             <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
@@ -310,6 +316,7 @@ export function TaskDetailModal({
               Cancel
             </button>
             <button
+              data-testid="modal-save-button"
               onClick={handleSubmit}
               disabled={isSubmitting || !title.trim()}
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

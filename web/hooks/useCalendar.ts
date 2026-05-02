@@ -5,8 +5,7 @@ import {
   getCalendarMonth,
   getCalendarWeek,
   getCalendarDay,
-  completeTask,
-  uncompleteTask,
+  updateTask,
 } from '@/lib/api'
 import {
   type CalendarDay,
@@ -110,12 +109,7 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
 
   const onToggleTask = useCallback(async (id: string, completed: boolean) => {
     try {
-      if (completed) {
-        await uncompleteTask(id)
-      } else {
-        await completeTask(id)
-      }
-      // Refresh calendar data after toggle
+      await updateTask(id, { completed: !completed })
       await fetchData()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle task')

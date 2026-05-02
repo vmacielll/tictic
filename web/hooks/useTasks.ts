@@ -6,8 +6,6 @@ import {
   listTodayTasks,
   createTask,
   updateTask,
-  completeTask,
-  uncompleteTask,
   deleteTask,
 } from '@/lib/api'
 import {
@@ -81,21 +79,17 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
   }, [])
 
   const toggleTask = useCallback(async (id: string, currentCompleted: boolean) => {
-    // Optimistic update
+    const newCompleted = !currentCompleted
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? { ...t, completed: !currentCompleted, completedAt: currentCompleted ? undefined : new Date() }
+          ? { ...t, completed: newCompleted, completedAt: newCompleted ? new Date() : undefined }
           : t
       )
     )
 
     try {
-      if (currentCompleted) {
-        await uncompleteTask(id)
-      } else {
-        await completeTask(id)
-      }
+      await updateTask(id, { completed: newCompleted })
     } catch (err) {
       // Revert on error
       setTasks((prev) =>

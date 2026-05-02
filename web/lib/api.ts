@@ -5,6 +5,22 @@ interface RequestOptions extends RequestInit {
   _retry?: boolean
 }
 
+function parseServerError(error: unknown): string {
+  if (!error || typeof error !== 'object') return 'Unknown error'
+
+  const e = error as Record<string, unknown>
+
+  if (e.details && typeof e.details === 'object') {
+    const details = e.details as Record<string, string[]>
+    const messages = Object.entries(details).flatMap(([field, msgs]) =>
+      msgs.map((msg) => `${field}: ${msg}`)
+    )
+    return messages.join(', ')
+  }
+
+  return (e.message as string) || 'Request failed'
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestOptions = {},
@@ -35,8 +51,8 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.message || `HTTP ${response.status}`)
+    const error = await response.json().catch(() => ({ message: 'Request failed', code: 'UNKNOWN' }))
+    throw new Error(parseServerError(error))
   }
 
   if (response.status === 204 || response.headers.get('content-length') === '0') {
@@ -96,6 +112,10 @@ export async function getCalendarDay(date: string): Promise<unknown> {
 }
 
 // ── Tasks ──
+export async function getTask(id: string): Promise<unknown> {
+  return apiRequest(`/tasks/${id}`, { requiresAuth: true })
+}
+
 export async function createTask(data: unknown): Promise<unknown> {
   return apiRequest('/tasks', {
     method: 'POST',
@@ -108,20 +128,6 @@ export async function updateTask(id: string, data: unknown): Promise<unknown> {
   return apiRequest(`/tasks/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
-    requiresAuth: true,
-  })
-}
-
-export async function completeTask(id: string): Promise<unknown> {
-  return apiRequest(`/tasks/${id}/complete`, {
-    method: 'PATCH',
-    requiresAuth: true,
-  })
-}
-
-export async function uncompleteTask(id: string): Promise<unknown> {
-  return apiRequest(`/tasks/${id}/uncomplete`, {
-    method: 'PATCH',
     requiresAuth: true,
   })
 }
@@ -185,6 +191,7 @@ export async function startPomodoro(data: unknown = {}): Promise<unknown> {
 export async function completePomodoro(id: string): Promise<unknown> {
   return apiRequest(`/pomodoro/${id}/complete`, {
     method: 'PATCH',
+    body: JSON.stringify({}),
     requiresAuth: true,
   })
 }
@@ -192,6 +199,7 @@ export async function completePomodoro(id: string): Promise<unknown> {
 export async function cancelPomodoro(id: string): Promise<unknown> {
   return apiRequest(`/pomodoro/${id}/cancel`, {
     method: 'PATCH',
+    body: JSON.stringify({}),
     requiresAuth: true,
   })
 }
