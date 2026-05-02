@@ -129,6 +129,15 @@ export class Task {
     this._updatedAt = new Date()
   }
 
+  setCompleted(value: boolean): void {
+    if (this._completed === value) {
+      return
+    }
+    this._completed = value
+    this._completedAt = value ? new Date() : undefined
+    this._updatedAt = new Date()
+  }
+
   get id(): string { return this._id }
   get title(): TaskTitle { return this._title }
   get description(): string | undefined { return this._description }

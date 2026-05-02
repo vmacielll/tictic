@@ -20,9 +20,8 @@ import { PrismaUserRepository } from './modules/auth/infra/repositories/PrismaUs
 import { AuthController } from './modules/auth/http/AuthController'
 import { authRoutes } from './modules/auth/http/auth.routes'
 import { CreateTask } from './modules/tasks/application/use-cases/CreateTask'
+import { GetTask } from './modules/tasks/application/use-cases/GetTask'
 import { UpdateTask } from './modules/tasks/application/use-cases/UpdateTask'
-import { CompleteTask } from './modules/tasks/application/use-cases/CompleteTask'
-import { UncompleteTask } from './modules/tasks/application/use-cases/UncompleteTask'
 import { DeleteTask } from './modules/tasks/application/use-cases/DeleteTask'
 import { ListTasks } from './modules/tasks/application/use-cases/ListTasks'
 import { ListTasksByDate } from './modules/tasks/application/use-cases/ListTasksByDate'
@@ -65,17 +64,6 @@ app.addHook('preHandler', async (request, _reply) => {
   ;(request as any).userTimezone = timezone
 })
 
-// Allow empty body for JSON requests (needed for PATCH/PUT endpoints without body)
-app.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body: string, done) {
-  try {
-    const parsed = body === '' ? {} : JSON.parse(body)
-    done(null, parsed)
-  } catch (err: any) {
-    err.statusCode = 400
-    done(err, undefined)
-  }
-})
-
 // CORS
 app.register(fastifyCors, {
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -88,9 +76,12 @@ app.register(fastifyCookie)
 // Sensible HTTP errors
 app.register(fastifySensible)
 
-// Rate limiting
+// Rate limiting - disabled for E2E tests
+const isTestEnv = process.env.NODE_ENV === 'test'
+
 app.register(fastifyRateLimit, {
-  max: process.env.NODE_ENV === 'test' ? 1000 : 100,
+  global: !isTestEnv,  // Disable globally in test env
+  max: 100,
   timeWindow: '1 minute',
 })
 
@@ -136,14 +127,13 @@ app.decorate('authController', authController)
 // Register tasks use cases
 const taskRepository = new PrismaTaskRepository(prisma)
 const createTask = new CreateTask(taskRepository)
+const getTask = new GetTask(taskRepository)
 const updateTask = new UpdateTask(taskRepository)
-const completeTask = new CompleteTask(taskRepository)
-const uncompleteTask = new UncompleteTask(taskRepository)
 const deleteTask = new DeleteTask(taskRepository)
 const listTasks = new ListTasks(taskRepository)
 const listTasksByDate = new ListTasksByDate(taskRepository)
 const listInboxTasks = new ListInboxTasks(taskRepository)
-const tasksController = new TasksController(createTask, updateTask, completeTask, uncompleteTask, deleteTask, listTasks, listTasksByDate, listInboxTasks)
+const tasksController = new TasksController(createTask, getTask, updateTask, deleteTask, listTasks, listTasksByDate, listInboxTasks)
 app.decorate('tasksController', tasksController)
 
 // Register lists use cases
@@ -178,15 +168,15 @@ const pomodoroController = new PomodoroController(
 )
 app.decorate('pomodoroController', pomodoroController)
 
+// Register Swagger documentation BEFORE routes so it can capture schemas
+app.register(swaggerPlugin)
+
 // Register routes
 app.register(authRoutes)
 app.register(tasksRoutes)
 app.register(listsRoutes)
 app.register(calendarRoutes)
 app.register(pomodoroRoutes)
-
-// Register Swagger documentation
-app.register(swaggerPlugin)
 
 // Health check
 app.get('/health', async () => {

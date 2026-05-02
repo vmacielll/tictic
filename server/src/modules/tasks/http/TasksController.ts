@@ -1,9 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { DateTime } from 'luxon'
 import { CreateTask } from '../application/use-cases/CreateTask'
+import { GetTask } from '../application/use-cases/GetTask'
 import { UpdateTask } from '../application/use-cases/UpdateTask'
-import { CompleteTask } from '../application/use-cases/CompleteTask'
-import { UncompleteTask } from '../application/use-cases/UncompleteTask'
 import { DeleteTask } from '../application/use-cases/DeleteTask'
 import { ListTasks } from '../application/use-cases/ListTasks'
 import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
@@ -13,9 +12,8 @@ import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
 export class TasksController {
   constructor(
     private readonly createTask: CreateTask,
+    private readonly getTask: GetTask,
     private readonly updateTask: UpdateTask,
-    private readonly completeTask: CompleteTask,
-    private readonly uncompleteTask: UncompleteTask,
     private readonly deleteTask: DeleteTask,
     private readonly listTasks: ListTasks,
     private readonly listTasksByDate: ListTasksByDate,
@@ -39,6 +37,17 @@ export class TasksController {
     return reply.status(201).send(result)
   }
 
+  async get(request: FastifyRequest, reply: FastifyReply) {
+    const req = request as AuthenticatedRequest
+    const params = request.params as { id: string }
+
+    const result = await this.getTask.execute({
+      taskId: params.id,
+      userId: req.userId,
+    })
+    return reply.send(result)
+  }
+
   async update(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
     const params = request.params as { id: string }
@@ -47,24 +56,14 @@ export class TasksController {
     const result = await this.updateTask.execute({
       taskId: params.id,
       userId: req.userId,
-      title: body.title,
-      description: body.description,
-      priority: body.priority,
-      dueDate: body.dueDate,
-      dueTime: body.dueTime,
+      title: body?.title,
+      description: body?.description,
+      priority: body?.priority,
+      dueDate: body?.dueDate,
+      dueTime: body?.dueTime,
       dueTimezone: req.userTimezone,
-      listId: body.listId,
-    })
-    return reply.send(result)
-  }
-
-  async complete(request: FastifyRequest, reply: FastifyReply) {
-    const req = request as AuthenticatedRequest
-    const params = request.params as { id: string }
-
-    const result = await this.completeTask.execute({
-      taskId: params.id,
-      userId: req.userId,
+      listId: body?.listId,
+      completed: body?.completed,
     })
     return reply.send(result)
   }
@@ -96,17 +95,6 @@ export class TasksController {
     const req = request as AuthenticatedRequest
 
     const result = await this.listInboxTasks.execute({ userId: req.userId })
-    return reply.send(result)
-  }
-
-  async uncomplete(request: FastifyRequest, reply: FastifyReply) {
-    const req = request as AuthenticatedRequest
-    const params = request.params as { id: string }
-
-    const result = await this.uncompleteTask.execute({
-      taskId: params.id,
-      userId: req.userId,
-    })
     return reply.send(result)
   }
 
