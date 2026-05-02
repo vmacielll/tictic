@@ -36,6 +36,7 @@ export const UpdateTaskBodySchema = {
     dueDate: { type: 'string' },
     dueTime: { type: 'string' },
     listId: { type: 'string', format: 'uuid' },
+    completed: { type: 'boolean' },
   },
 }
 
@@ -66,13 +67,18 @@ export const TaskArrayResponseSchema = {
 export const TaskListResponseSchema = {
   type: 'object',
   properties: {
-    tasks: {
+    items: {
       type: 'array',
       items: TaskResponseSchema,
     },
-    total: { type: 'integer' },
-    page: { type: 'integer' },
-    size: { type: 'integer' },
+    meta: {
+      type: 'object',
+      properties: {
+        page: { type: 'integer' },
+        size: { type: 'integer' },
+        totalCount: { type: 'integer' },
+      },
+    },
   },
 }
 

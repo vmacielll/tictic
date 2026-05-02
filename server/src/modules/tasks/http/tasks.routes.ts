@@ -33,40 +33,6 @@ export async function tasksRoutes(app: FastifyInstance) {
     },
   }, controller.create.bind(controller))
 
-  app.patch('/tasks/:id', {
-    schema: {
-      params: TaskParamsSchema,
-      body: UpdateTaskBodySchema,
-      response: {
-        200: TaskResponseSchema,
-      },
-    },
-  }, controller.update.bind(controller))
-
-  app.patch('/tasks/:id/complete', {
-    schema: {
-      params: TaskParamsSchema,
-      response: {
-        200: TaskResponseSchema,
-      },
-    },
-  }, controller.complete.bind(controller))
-
-  app.patch('/tasks/:id/uncomplete', {
-    schema: {
-      params: TaskParamsSchema,
-      response: {
-        200: TaskResponseSchema,
-      },
-    },
-  }, controller.uncomplete.bind(controller))
-
-  app.delete('/tasks/:id', {
-    schema: {
-      params: TaskParamsSchema,
-    },
-  }, controller.delete.bind(controller))
-
   app.get('/tasks', {
     schema: {
       querystring: PaginationQuerySchema,
@@ -91,4 +57,26 @@ export async function tasksRoutes(app: FastifyInstance) {
       },
     },
   }, controller.listInbox.bind(controller))
+
+  app.get('/tasks/:id', {
+    schema: {
+      params: TaskParamsSchema,
+      response: {
+        200: TaskResponseSchema,
+      },
+    },
+  }, controller.get.bind(controller))
+
+  app.patch('/tasks/:id', {
+    schema: {
+      params: TaskParamsSchema,
+      body: UpdateTaskBodySchema,
+    },
+  }, controller.update.bind(controller))
+
+  app.delete('/tasks/:id', {
+    schema: {
+      params: TaskParamsSchema,
+    },
+  }, controller.delete.bind(controller))
 }

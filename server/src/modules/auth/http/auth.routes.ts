@@ -4,17 +4,9 @@ import { AuthController } from './AuthController'
 export async function authRoutes(app: FastifyInstance) {
   const controller = (app as any).authController as AuthController
 
-  app.post('/auth/register', {
-    config: {
-      rateLimit: { max: 5, timeWindow: '1 minute' },
-    }
-  }, controller.register.bind(controller))
-  
-  app.post('/auth/login', {
-    config: {
-      rateLimit: { max: 5, timeWindow: '1 minute' },
-    }
-  }, controller.login.bind(controller))
+  app.post('/auth/register', controller.register.bind(controller))
+
+  app.post('/auth/login', controller.login.bind(controller))
   
   app.post('/auth/refresh', controller.refresh.bind(controller))
 
