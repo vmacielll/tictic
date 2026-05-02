@@ -4,7 +4,7 @@ test.describe('Dashboard', () => {
   test('should load today page after login', async ({ page }) => {
     await page.goto('/today')
     await expect(page).toHaveURL(/\/today/)
-    await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
+    await expect(page.getByTestId('page-heading')).toBeVisible()
   })
 
   test('should have sidebar with navigation links', async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe('Dashboard', () => {
     await page.goto('/today')
     await page.getByTestId('nav-inbox').click()
     await expect(page).toHaveURL(/\/inbox/)
-    await expect(page.getByRole('heading', { name: /Inbox/i })).toBeVisible()
+    await expect(page.getByTestId('page-heading')).toBeVisible()
   })
 
   test('should navigate to calendar via sidebar', async ({ page }) => {

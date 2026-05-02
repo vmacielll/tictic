@@ -18,10 +18,10 @@ test.describe('Calendar - Timezone Boundary Tests', () => {
   test('should navigate to correct timezone from calendar', async ({ page }) => {
     await page.goto('/calendar')
 
-    await page.getByRole('button', { name: 'Week' }).click()
+    await page.getByTestId('calendar-view-week').click()
     await expect(page.getByTestId('calendar-week-grid')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Today' }).click()
+    await page.getByTestId('calendar-today-btn').click()
 
     const heading = page.getByTestId('calendar-heading')
     await expect(heading).toBeVisible()
@@ -31,7 +31,7 @@ test.describe('Calendar - Timezone Boundary Tests', () => {
 test.describe('Pagination', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/inbox')
-    await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
   })
 
   test('should show pagination controls when tasks exceed limit', async ({ page }) => {

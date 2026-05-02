@@ -4,12 +4,12 @@ test.describe('Calendar - Timezone Validation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/calendar')
     // Wait for the calendar header to be visible
-    await expect(page.getByRole('button', { name: 'Today' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('calendar-today-btn')).toBeVisible({ timeout: 10000 })
   })
 
   test('should display day view with correct heading', async ({ page }) => {
     // Navigate to day view
-    await page.getByRole('button', { name: 'Day', exact: true }).click()
+    await page.getByTestId('calendar-view-day').click()
 
     // Wait for day view to load
     await page.waitForTimeout(1000)
@@ -20,10 +20,10 @@ test.describe('Calendar - Timezone Validation', () => {
   })
 
   test('should show correct day names in week view', async ({ page }) => {
-    await page.getByRole('button', { name: 'Week', exact: true }).click()
+    await page.getByTestId('calendar-view-week').click()
 
     // Wait for week view to load
-    await expect(page.getByRole('button', { name: 'Week' })).toHaveClass(/bg-primary-600/)
+    await expect(page.getByTestId('calendar-view-week')).toHaveClass(/bg-primary-600/)
 
     // Check that we have 7 columns (one for each day)
     const weekGrid = page.locator('[data-testid="calendar-week-grid"]')
@@ -35,23 +35,23 @@ test.describe('Calendar - Timezone Validation', () => {
     const expectedDay = today.getDate()
 
     // Navigate to a different month first
-    await page.getByRole('button', { name: 'Month', exact: true }).click()
-    await page.locator('button').filter({ has: page.locator('svg path[d="M8.25 4.5l7.5 7.5-7.5 7.5"]') }).click()
+    await page.getByTestId('calendar-view-month').click()
+    await page.getByTestId('calendar-next-btn').click()
 
     // Click "Today" button
-    await page.getByRole('button', { name: 'Today' }).click()
+    await page.getByTestId('calendar-today-btn').click()
 
     // Should be back to current month with today highlighted
     await page.waitForTimeout(1000)
-    await page.getByRole('button', { name: 'Week', exact: true }).click()
-    const todayButton = page.getByRole('button', { name: 'Today' })
+    await page.getByTestId('calendar-view-week').click()
+    const todayButton = page.getByTestId('calendar-today-btn')
     await expect(todayButton).toBeVisible()
   })
 
   test('should create task and see it in calendar', async ({ page }) => {
     // Go to Today page to create a task
     await page.goto('/today')
-    await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
@@ -69,7 +69,7 @@ test.describe('Calendar - Timezone Validation', () => {
     // Go to calendar day view to verify task appears there
     await page.goto('/calendar')
     await page.waitForLoadState('networkidle')
-    await page.getByRole('button', { name: 'Day', exact: true }).click()
+    await page.getByTestId('calendar-view-day').click()
     await page.waitForTimeout(2000)
 
     // Task should be visible in calendar day view if it has today's date

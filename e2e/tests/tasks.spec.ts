@@ -8,33 +8,33 @@ test.describe('Tasks - Full CRUD Flow', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/inbox')
-    await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
   })
 
   test('should create, complete, and delete a task via UI', async ({ page }) => {
-    await page.waitForTimeout(3000)
     const taskTitle = `E2E Test ${Date.now()}`
 
     const taskInput = page.getByTestId('task-input')
-    await taskInput.waitFor({ state: 'attached', timeout: 10000 })
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
-    await page.waitForTimeout(3000)
     await taskInput.fill(taskTitle)
     await page.getByTestId('task-add-button').click()
-    await page.waitForTimeout(5000)
 
-    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    // Wait for task to be created
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    const taskText = page.getByText(taskTitle)
+    await expect(taskText).toBeVisible({ timeout: 15000 })
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ has: taskText }).first()
     await expect(taskItem).toBeVisible({ timeout: 10000 })
 
     await taskItem.getByTestId('task-complete-button').click()
-    await page.waitForTimeout(500)
-    await expect(taskItem.locator('p')).toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).toHaveClass(/line-through/)
 
     await taskItem.getByTestId('task-complete-button').click()
-    await page.waitForTimeout(500)
-    await expect(taskItem.locator('p')).not.toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).not.toHaveClass(/line-through/)
 
     await taskItem.getByTestId('task-delete-button').click()
     await expect(taskItem).not.toBeVisible({ timeout: 10000 })
@@ -65,37 +65,39 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskItems = await page.locator('[data-testid^="task-item-"]').count()
     expect(taskItems).toBeGreaterThanOrEqual(3)
 
-    const task2Item = page.locator('[data-testid^="task-item-"]').nth(1)
+    await page.waitForTimeout(1000)
+    const task2Item = page.locator('[data-testid^="task-item-"]').filter({ hasText: 'Task 2' }).first()
+    await expect(task2Item).toBeVisible({ timeout: 5000 })
     await task2Item.getByTestId('task-complete-button').click()
-    await expect(task2Item.locator('p')).toHaveClass(/line-through/)
+    await expect(task2Item.getByTestId('task-item-title')).toHaveClass(/line-through/)
   })
 
   test('should navigate between inbox and today', async ({ page }) => {
     await page.goto('/inbox')
-    await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
 
     // Navigate to today via sidebar
     await page.getByTestId('nav-today').click()
     await expect(page).toHaveURL(/\/today/)
-    await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
+    await expect(page.getByTestId('page-heading')).toBeVisible()
 
     // Navigate to inbox via sidebar
     await page.getByTestId('nav-inbox').click()
     await expect(page).toHaveURL(/\/inbox/)
-    await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible()
+    await expect(page.getByTestId('page-heading')).toBeVisible()
   })
 
   test('should show priority selector on focus', async ({ page }) => {
     await page.goto('/inbox')
-    await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
 
-    const taskInput = page.locator('input[placeholder="Add a task..."]')
+    const taskInput = page.getByTestId('task-input')
     await taskInput.click()
 
-    // Priority buttons should appear (use exact match to avoid ambiguity)
-    await expect(page.getByRole('button', { name: 'L', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'M', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'H', exact: true })).toBeVisible()
+    // Priority buttons should appear
+    await expect(page.getByTestId('priority-L')).toBeVisible()
+    await expect(page.getByTestId('priority-M')).toBeVisible()
+    await expect(page.getByTestId('priority-H')).toBeVisible()
   })
 
   test('should complete and uncomplete a task multiple times', async ({ page }) => {
@@ -111,29 +113,72 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskItem = page.locator('[data-testid^="task-item-"]').filter({ has: taskText }).first()
 
     // Verify initial state: not completed
-    await expect(taskItem.locator('p')).not.toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).not.toHaveClass(/line-through/)
 
     // Complete -> Uncomplete -> Complete (multiple toggles)
     await taskItem.getByTestId('task-complete-button').click()
-    await expect(taskItem.locator('p')).toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).toHaveClass(/line-through/)
 
     await taskItem.getByTestId('task-complete-button').click()
-    await expect(taskItem.locator('p')).not.toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).not.toHaveClass(/line-through/)
 
     await taskItem.getByTestId('task-complete-button').click()
-    await expect(taskItem.locator('p')).toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).toHaveClass(/line-through/)
 
     // Final state: completed
-    await expect(taskItem.locator('p')).toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).toHaveClass(/line-through/)
 
     // Cleanup: delete the task
     await taskItem.getByTestId('task-delete-button').click()
     await expect(taskText).not.toBeVisible({ timeout: 10000 })
   })
 
-test('should complete tasks from today view', async ({ page }) => {
+  test('should update task via detail modal', async ({ page }) => {
+    const taskTitle = `Original Title ${Date.now()}`
+    const newTitle = `Updated Title ${Date.now()}`
+    const newDescription = 'This is the updated description'
+
+    const taskInput = page.getByTestId('task-input')
+    await taskInput.fill(taskTitle)
+    await page.getByTestId('task-add-button').click()
+    await page.waitForTimeout(2000)
+
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    await expect(taskItem).toBeVisible({ timeout: 10000 })
+
+    await taskItem.hover()
+    await taskItem.getByLabel('View task details').click()
+    await page.waitForTimeout(1500)
+
+    const titleInput = page.getByTestId('modal-title-input')
+    await expect(titleInput).toBeVisible({ timeout: 10000 })
+    await titleInput.click()
+    await titleInput.selectText()
+    await titleInput.fill(newTitle)
+
+    const descInput = page.getByTestId('modal-description-input')
+    await descInput.fill(newDescription)
+
+    await page.getByTestId('modal-save-button').click()
+    await page.waitForTimeout(3000)
+
+    const updatedTaskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: newTitle }).first()
+    await expect(updatedTaskItem).toBeVisible({ timeout: 10000 })
+
+    await updatedTaskItem.hover()
+    await updatedTaskItem.getByLabel('View task details').click()
+    await page.waitForTimeout(1500)
+
+    const savedDescription = page.getByTestId('modal-description-input')
+    await expect(savedDescription).toHaveValue(newDescription)
+
+    const updatedTaskTitle = updatedTaskItem.getByTestId('task-item-title')
+    await expect(updatedTaskTitle).toHaveText(newTitle)
+  })
+
+  test('should complete tasks from today view', async ({ page }) => {
     await page.goto('/today')
-    await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
@@ -149,7 +194,7 @@ test('should complete tasks from today view', async ({ page }) => {
     const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
 
     await taskItem.getByTestId('task-complete-button').click()
-    await expect(taskItem.locator('p')).toHaveClass(/line-through/)
+    await expect(taskItem.getByTestId('task-item-title')).toHaveClass(/line-through/)
 
     await taskItem.getByTestId('task-delete-button').click()
     await expect(taskText).not.toBeVisible({ timeout: 10000 })
