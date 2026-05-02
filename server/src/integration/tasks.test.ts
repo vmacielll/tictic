@@ -3,9 +3,8 @@ import Fastify, { FastifyInstance } from 'fastify'
 import fastifyJwt from '@fastify/jwt'
 import fastifyCors from '@fastify/cors'
 import { CreateTask } from '@modules/tasks/application/use-cases/CreateTask'
+import { GetTask } from '@modules/tasks/application/use-cases/GetTask'
 import { UpdateTask } from '@modules/tasks/application/use-cases/UpdateTask'
-import { CompleteTask } from '@modules/tasks/application/use-cases/CompleteTask'
-import { UncompleteTask } from '@modules/tasks/application/use-cases/UncompleteTask'
 import { DeleteTask } from '@modules/tasks/application/use-cases/DeleteTask'
 import { ListTasks } from '@modules/tasks/application/use-cases/ListTasks'
 import { ListTasksByDate } from '@modules/tasks/application/use-cases/ListTasksByDate'
@@ -37,7 +36,13 @@ const mockTasks: MockTask[] = []
 const mockPrisma = {
   task: {
     findUnique: async ({ where }: { where: { id: string } }) => {
-      return mockTasks.find((t) => t.id === where.id) || null
+      const task = mockTasks.find((t) => t.id === where.id)
+      if (!task) return null
+      return {
+        ...task,
+        priority: task.priority ?? 'MEDIUM',
+        dueTimezone: task.dueTimezone,
+      }
     },
     findMany: async ({ where, orderBy, skip, take }: any) => {
       let results = mockTasks.filter((t) => t.userId === where?.userId)
@@ -115,18 +120,16 @@ async function buildTestApp() {
 
   const taskRepository = new PrismaTaskRepository(mockPrisma as any)
   const createTask = new CreateTask(taskRepository)
+  const getTask = new GetTask(taskRepository)
   const updateTask = new UpdateTask(taskRepository)
-  const completeTask = new CompleteTask(taskRepository)
-  const uncompleteTask = new UncompleteTask(taskRepository)
   const deleteTask = new DeleteTask(taskRepository)
   const listTasks = new ListTasks(taskRepository)
   const listTasksByDate = new ListTasksByDate(taskRepository)
   const listInboxTasks = new ListInboxTasks(taskRepository)
   const tasksController = new TasksController(
     createTask,
+    getTask,
     updateTask,
-    completeTask,
-    uncompleteTask,
     deleteTask,
     listTasks,
     listTasksByDate,
@@ -241,8 +244,75 @@ describe('Tasks Integration Tests', () => {
     })
   })
 
-  describe('GET /tasks', () => {
+describe('GET /tasks/:id', () => {
+    it('should return task with dueTimezone', async () => {
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        headers: {
+          authorization: `Bearer ${userToken}`,
+          'x-timezone': 'America/Sao_Paulo',
+        },
+        payload: {
+          title: 'Task with timezone',
+          dueDate: '2024-03-15',
+          dueTime: '14:30:00',
+        },
+      })
+      const task = JSON.parse(createResponse.body)
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/tasks/${task.id}`,
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+      })
+
+      expect(response.statusCode).toBe(200)
+      const body = JSON.parse(response.body)
+      expect(body).toHaveProperty('dueTimezone')
+    })
+
+    it('should return 404 for non-existent task', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/tasks/00000000-0000-0000-0000-000000000000',
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+      })
+
+      expect(response.statusCode).toBe(404)
+    })
+
+    it('should return 400 for invalid task id format', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/tasks/invalid-id',
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+  })
+
+describe('GET /tasks', () => {
     it('should list tasks for user', async () => {
+      await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+        payload: {
+          title: 'Test Task',
+          priority: 'MEDIUM',
+        },
+      })
+
       const response = await app.inject({
         method: 'GET',
         url: '/tasks?page=1&size=10',
@@ -252,18 +322,14 @@ describe('Tasks Integration Tests', () => {
       })
 
       expect(response.statusCode).toBe(200)
-    })
-
-    it('should support pagination params', async () => {
-      const response = await app.inject({
-        method: 'GET',
-        url: '/tasks?page=1&size=1',
-        headers: {
-          authorization: `Bearer ${userToken}`,
-        },
-      })
-
-      expect(response.statusCode).toBe(200)
+      const body = JSON.parse(response.body)
+      expect(body).toHaveProperty('items')
+      expect(body).toHaveProperty('meta')
+      expect(body.items.length).toBeGreaterThan(0)
+      expect(body.meta).toEqual(expect.objectContaining({
+        page: 1,
+        size: 10,
+      }))
     })
   })
 
@@ -374,7 +440,7 @@ describe('Tasks Integration Tests', () => {
     })
   })
 
-  describe('PATCH /tasks/:id/complete', () => {
+  describe('PATCH /tasks/:id with completed', () => {
     it('should complete a task', async () => {
       const createResponse = await app.inject({
         method: 'POST',
@@ -388,10 +454,11 @@ describe('Tasks Integration Tests', () => {
 
       const response = await app.inject({
         method: 'PATCH',
-        url: `/tasks/${task.id}/complete`,
+        url: `/tasks/${task.id}`,
         headers: {
           authorization: `Bearer ${userToken}`,
         },
+        payload: { completed: true },
       })
 
       expect(response.statusCode).toBe(200)
@@ -399,20 +466,6 @@ describe('Tasks Integration Tests', () => {
       expect(body.completed).toBe(true)
     })
 
-    it('should return 400 for invalid task id', async () => {
-      const response = await app.inject({
-        method: 'PATCH',
-        url: '/tasks/invalid-id/complete',
-        headers: {
-          authorization: `Bearer ${userToken}`,
-        },
-      })
-
-      expect(response.statusCode).toBe(400)
-    })
-  })
-
-  describe('PATCH /tasks/:id/uncomplete', () => {
     it('should uncomplete a task', async () => {
       const createResponse = await app.inject({
         method: 'POST',
@@ -426,23 +479,52 @@ describe('Tasks Integration Tests', () => {
 
       await app.inject({
         method: 'PATCH',
-        url: `/tasks/${task.id}/complete`,
+        url: `/tasks/${task.id}`,
         headers: {
           authorization: `Bearer ${userToken}`,
         },
+        payload: { completed: true },
       })
 
       const response = await app.inject({
         method: 'PATCH',
-        url: `/tasks/${task.id}/uncomplete`,
+        url: `/tasks/${task.id}`,
         headers: {
           authorization: `Bearer ${userToken}`,
         },
+        payload: { completed: false },
       })
 
       expect(response.statusCode).toBe(200)
       const body = JSON.parse(response.body)
       expect(body.completed).toBe(false)
+    })
+
+    it('should update task with multiple fields including completed', async () => {
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+        payload: { title: 'Task Multi Update' },
+      })
+      const task = JSON.parse(createResponse.body)
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/tasks/${task.id}`,
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+        payload: { title: 'Updated Title', completed: true, priority: 'HIGH' },
+      })
+
+      expect(response.statusCode).toBe(200)
+      const body = JSON.parse(response.body)
+      expect(body.title).toBe('Updated Title')
+      expect(body.completed).toBe(true)
+      expect(body.priority).toBe('HIGH')
     })
   })
 
