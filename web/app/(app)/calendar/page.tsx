@@ -7,22 +7,22 @@ import { MonthView } from '@/components/calendar/MonthView'
 import { WeekView } from '@/components/calendar/WeekView'
 import { DayView } from '@/components/calendar/DayView'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
-import { type CalendarSummaryTask } from '@/domain/calendar/types'
+import { type CalendarDetailTask } from '@/domain/calendar/types'
 import { type Task } from '@/domain/tasks/types'
 import { updateTask, deleteTask } from '@/lib/api'
 
-function calendarTaskToTask(task: CalendarSummaryTask): Task {
+function toTask(task: CalendarDetailTask): Task {
   const now = new Date()
   return {
     id: task.id,
     title: task.title,
-    description: undefined,
+    description: task.description,
     priority: task.priority,
     dueDate: task.dueDate,
-    dueTime: undefined,
+    dueTime: task.dueTime,
     completed: task.completed,
     completedAt: undefined,
-    listId: undefined,
+    listId: task.listId,
     userId: '',
     createdAt: now,
     updatedAt: now,
@@ -63,7 +63,7 @@ export default function CalendarPage() {
         description: updatedTask.description,
         priority: updatedTask.priority,
         dueDate: updatedTask.dueDate ? updatedTask.dueDate.toISOString().split('T')[0] : undefined,
-        dueTime: updatedTask.dueTime ? updatedTask.dueTime.toISOString().slice(11, 16) : undefined,
+        dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
       setCalendarRefreshKey(prev => prev + 1)
@@ -78,8 +78,8 @@ export default function CalendarPage() {
     }
   )
 
-  const handleViewTask = (task: CalendarSummaryTask) => {
-    openModal(calendarTaskToTask(task))
+  const handleViewTask = (task: CalendarDetailTask) => {
+    openModal(task.id)
   }
 
   const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -92,13 +92,13 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={goToPrev} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
+          <button data-testid="calendar-prev-btn" onClick={goToPrev} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           </button>
-          <button onClick={goToToday} className="px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-500 transition-all shadow-sm shadow-primary-600/20">
+          <button data-testid="calendar-today-btn" onClick={goToToday} className="px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-500 transition-all shadow-sm shadow-primary-600/20">
             Today
           </button>
-          <button onClick={goToNext} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
+          <button data-testid="calendar-next-btn" onClick={goToNext} className="px-3 py-2 bg-surface-raised border border-border-light rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-all">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
           <h1 className="text-base sm:text-xl font-semibold text-text-primary capitalize ml-2" data-testid="calendar-heading">
@@ -110,6 +110,7 @@ export default function CalendarPage() {
           {(['month', 'week', 'day'] as const).map((v) => (
             <button
               key={v}
+              data-testid={`calendar-view-${v}`}
               onClick={() => setView(v)}
               className={`px-3 py-1.5 text-sm rounded-md font-medium transition-all ${
                 view === v ? 'bg-primary-600 text-white shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface-overlay'

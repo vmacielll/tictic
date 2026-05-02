@@ -90,7 +90,7 @@ export function PomodoroTimer({ taskId, onSessionComplete }: PomodoroTimerProps)
         {/* Status Badge */}
         {session && (
           <div className="mb-3">
-            <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
+            <span data-testid="pomodoro-status" className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
               session.status === 'RUNNING' ? 'bg-primary-600/10 text-primary-400' :
               session.status === 'COMPLETED' ? 'bg-success/10 text-success/80' :
               'bg-surface-overlay text-text-muted'

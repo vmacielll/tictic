@@ -2,11 +2,13 @@
 
 import { useState, useCallback } from 'react'
 import { type Task } from '@/domain/tasks/types'
+import { getTask } from '@/lib/api'
+import { parseTask } from '@/domain/tasks/types'
 
 interface UseTaskDetailReturn {
   selectedTask: Task | null
   isModalOpen: boolean
-  openModal: (task: Task) => void
+  openModal: (taskId: string) => Promise<void>
   closeModal: () => void
   handleSave: (updatedTask: Task) => void
   handleDelete: (taskId: string) => void
@@ -21,9 +23,15 @@ export function useTaskDetail(
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const openModal = useCallback((task: Task) => {
-    setSelectedTask(task)
-    setIsModalOpen(true)
+  const openModal = useCallback(async (taskId: string) => {
+    try {
+      const raw = await getTask(taskId)
+      const task = parseTask(raw)
+      setSelectedTask(task)
+      setIsModalOpen(true)
+    } catch (error) {
+      console.error('Failed to fetch task:', error)
+    }
   }, [])
 
   const closeModal = useCallback(() => {

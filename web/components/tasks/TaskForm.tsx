@@ -101,6 +101,7 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
               return (
                 <button
                   key={p}
+                  data-testid={`priority-${p[0]}`}
                   type="button"
                   onClick={() => setPriority(p)}
                   className={`w-7 h-7 text-xs rounded-lg font-semibold transition-all

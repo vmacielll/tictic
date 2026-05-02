@@ -27,7 +27,7 @@ export default function PomodoroPage() {
     <div className="max-w-4xl animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Pomodoro Timer</h1>
+        <h1 data-testid="page-heading" className="text-2xl font-bold text-text-primary">Pomodoro Timer</h1>
         <p className="text-sm text-text-muted mt-1">Stay focused and productive</p>
       </div>
 
@@ -46,7 +46,7 @@ export default function PomodoroPage() {
         {/* Session History */}
         <div className="lg:col-span-2">
           <div className="bg-surface-raised border border-border-light rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-text-primary mb-4">Recent Sessions</h3>
+            <h3 data-testid="recent-sessions-heading" className="text-lg font-semibold text-text-primary mb-4">Recent Sessions</h3>
 
             {loading ? (
               <div className="flex items-center justify-center py-8">

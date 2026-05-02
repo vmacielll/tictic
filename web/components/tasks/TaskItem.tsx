@@ -12,7 +12,7 @@ interface TaskItemProps {
   task: Task
   onToggle: (id: string, completed: boolean) => void
   onDelete: (id: string) => void
-  onViewDetails?: (task: Task) => void
+  onViewDetails?: (taskId: string) => void
 }
 
 export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemProps) {
@@ -35,7 +35,7 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
         aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
       >
         {task.completed && (
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         )}
@@ -43,10 +43,11 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
 
       {/* Content */}
       <div
+        data-testid="task-item-content"
         className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => onViewDetails?.(task)}
+        onClick={() => onViewDetails?.(task.id)}
       >
-        <p className={`text-sm truncate transition-colors ${task.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>
+        <p data-testid="task-item-title" className={`text-sm truncate transition-colors ${task.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>
           {task.title}
         </p>
         {task.description && (
@@ -62,11 +63,11 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
       {/* View details button */}
       {onViewDetails && (
         <button
-          onClick={() => onViewDetails(task)}
+          onClick={() => onViewDetails(task.id)}
           className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-text-primary transition-all"
           aria-label="View task details"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
           </svg>
         </button>
@@ -79,7 +80,7 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
         className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-danger transition-all"
         aria-label="Delete task"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>

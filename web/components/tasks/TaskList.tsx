@@ -13,7 +13,7 @@ interface TaskListProps {
   onToggleTask: (id: string, completed: boolean) => void
   onDeleteTask: (id: string) => void
   defaultDueDate?: string
-  onViewDetails?: (task: Task) => void
+  onViewDetails?: (taskId: string) => void
 }
 
 export function TaskList({

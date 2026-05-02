@@ -23,7 +23,7 @@ export default function InboxPage() {
         description: updatedTask.description,
         priority: updatedTask.priority,
         dueDate: updatedTask.dueDate ? updatedTask.dueDate.toISOString().split('T')[0] : undefined,
-        dueTime: updatedTask.dueTime ? updatedTask.dueTime.toISOString().slice(11, 16) : undefined,
+        dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
     },
@@ -38,7 +38,7 @@ export default function InboxPage() {
   return (
     <div className="max-w-2xl animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Inbox</h1>
+        <h1 data-testid="page-heading" className="text-2xl font-bold text-text-primary">Inbox</h1>
         <p className="text-sm text-text-muted mt-1">Quick capture your tasks</p>
       </div>
 
