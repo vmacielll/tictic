@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { uuidSchema, datetimeString, dateIsoString, prioritySchema } from '../shared/schemas'
+import { uuidSchema, datetimeString, dateIsoString, timeString, prioritySchema } from '../shared/schemas'
 
 // ── Tarefa resumida — usada nas views month/week ──
 export const calendarSummaryTaskSchema = z.object({
@@ -7,7 +7,7 @@ export const calendarSummaryTaskSchema = z.object({
   title: z.string(),
   priority: prioritySchema,
   completed: z.boolean(),
-  dueDate: datetimeString.transform((d) => new Date(d)),
+  dueDate: dateIsoString.transform((d) => new Date(d + 'T00:00:00.000Z')),
 })
 
 export type CalendarSummaryTask = z.output<typeof calendarSummaryTaskSchema>
@@ -19,8 +19,8 @@ export const calendarDetailTaskSchema = z.object({
   description: z.string().optional(),
   priority: prioritySchema,
   completed: z.boolean(),
-  dueDate: datetimeString.transform((d) => new Date(d)),
-  dueTime: datetimeString.optional().transform((d) => (d ? new Date(d) : undefined)),
+  dueDate: dateIsoString.transform((d) => new Date(d + 'T00:00:00.000Z')),
+  dueTime: timeString.optional(),
   listId: uuidSchema.optional(),
 })
 

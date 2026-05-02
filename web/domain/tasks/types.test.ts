@@ -16,14 +16,15 @@ const validTaskPayload: TaskResponse = {
   title: 'Test task',
   description: 'A test task description',
   priority: 'MEDIUM',
-  dueDate: '2026-04-10T12:00:00Z',
-  dueTime: '2026-04-10T14:00:00Z',
+  dueDate: '2026-04-10',
+  dueTime: '14:00',
+  dueTimezone: 'America/Sao_Paulo',
   completed: false,
   completedAt: undefined,
   listId: 'b2c3d4e5-f6a7-4901-8cde-f12345678901',
   userId: 'c3d4e5f6-a7b8-4012-8def-123456789012',
-  createdAt: '2026-04-09T10:00:00Z',
-  updatedAt: '2026-04-10T08:00:00Z',
+  createdAt: '2026-04-09T10:00:00.000Z',
+  updatedAt: '2026-04-10T08:00:00.000Z',
 }
 
 describe('parseTask', () => {
@@ -34,8 +35,8 @@ describe('parseTask', () => {
     expect(task.title).toBe('Test task')
     expect(task.priority).toBe('MEDIUM')
     expect(task.dueDate).toBeInstanceOf(Date)
-    expect(task.dueDate?.toISOString()).toBe('2026-04-10T12:00:00.000Z')
-    expect(task.dueTime).toBeInstanceOf(Date)
+    expect(task.dueDate?.toISOString().split('T')[0]).toBe('2026-04-10')
+    expect(task.dueTime).toBe('14:00')
     expect(task.createdAt).toBeInstanceOf(Date)
     expect(task.updatedAt).toBeInstanceOf(Date)
     expect(task.completed).toBe(false)
@@ -47,6 +48,7 @@ describe('parseTask', () => {
       description: undefined,
       dueDate: undefined,
       dueTime: undefined,
+      dueTimezone: undefined,
       completedAt: undefined,
       listId: undefined,
     }
@@ -55,8 +57,15 @@ describe('parseTask', () => {
     expect(task.description).toBeUndefined()
     expect(task.dueDate).toBeUndefined()
     expect(task.dueTime).toBeUndefined()
+    expect(task.dueTimezone).toBeUndefined()
     expect(task.completedAt).toBeUndefined()
     expect(task.listId).toBeUndefined()
+  })
+
+  it('parses dueTimezone correctly', () => {
+    const task = parseTask(validTaskPayload)
+
+    expect(task.dueTimezone).toBe('America/Sao_Paulo')
   })
 
   it('throws on missing required field', () => {
@@ -104,21 +113,23 @@ describe('isInbox', () => {
 
 describe('isDueToday', () => {
   it('returns true when task is due today', () => {
-    const today = new Date()
     const task = parseTask({
       ...validTaskPayload,
-      dueDate: today.toISOString(),
+      dueDate: '2026-04-10',
     })
-    expect(isDueToday(task, today)).toBe(true)
+    // The validTaskPayload has dueDate: '2026-04-10', create a matching reference
+    const ref = new Date('2026-04-10T00:00:00.000Z')
+    expect(isDueToday(task, ref)).toBe(true)
   })
 
   it('returns false when task is due yesterday', () => {
     const today = new Date()
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
     const task = parseTask({
       ...validTaskPayload,
-      dueDate: yesterday.toISOString(),
+      dueDate: yesterdayStr,
     })
     expect(isDueToday(task, today)).toBe(false)
   })
@@ -134,9 +145,10 @@ describe('isOverdue', () => {
     const today = new Date()
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
     const task = parseTask({
       ...validTaskPayload,
-      dueDate: yesterday.toISOString(),
+      dueDate: yesterdayStr,
       completed: false,
     })
     expect(isOverdue(task, today)).toBe(true)
@@ -146,9 +158,10 @@ describe('isOverdue', () => {
     const today = new Date()
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
     const task = parseTask({
       ...validTaskPayload,
-      dueDate: yesterday.toISOString(),
+      dueDate: yesterdayStr,
       completed: true,
     })
     expect(isOverdue(task, today)).toBe(false)
@@ -158,9 +171,10 @@ describe('isOverdue', () => {
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowStr = tomorrow.toISOString().split('T')[0]
     const task = parseTask({
       ...validTaskPayload,
-      dueDate: tomorrow.toISOString(),
+      dueDate: tomorrowStr,
       completed: false,
     })
     expect(isOverdue(task, today)).toBe(false)

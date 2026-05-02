@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { uuidSchema, datetimeString, dateIsoString, timeString, prioritySchema } from '../shared/schemas'
+import { uuidSchema, datetimeString, dateIsoString, timeString, timezoneSchema, prioritySchema } from '../shared/schemas'
 
 // ── Schema que valida E converte o que vem do servidor ──
 export const taskSchema = z.object({
@@ -7,8 +7,9 @@ export const taskSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   priority: prioritySchema,
-  dueDate: datetimeString.optional().transform((d) => (d ? new Date(d) : undefined)),
-  dueTime: datetimeString.optional().transform((d) => (d ? new Date(d) : undefined)),
+  dueDate: dateIsoString.optional().transform((d) => (d ? new Date(d + 'T00:00:00.000Z') : undefined)),
+  dueTime: timeString.optional(),
+  dueTimezone: timezoneSchema.optional(),
   completed: z.boolean(),
   completedAt: datetimeString.optional().transform((d) => (d ? new Date(d) : undefined)),
   listId: uuidSchema.optional(),
