@@ -70,9 +70,11 @@ export class TasksController {
 
   async list(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const query = request.query as any
+    const query = request.query as { page?: string; size?: string }
 
-    const pagination = { skip: (query.page - 1) * query.size, take: query.size }
+    const page = Number(query.page) || 1
+    const size = Number(query.size) || 20
+    const pagination = { skip: (page - 1) * size, take: size }
     const result = await this.listTasks.execute({ userId: req.userId, pagination })
     return reply.send(result)
   }
