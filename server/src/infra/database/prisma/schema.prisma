@@ -23,16 +23,17 @@ enum PomodoroStatus {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String
-  passwordHash  String    @map("password_hash")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  lists         List[]
-  tasks         Task[]
+  lists            List[]
+  tasks            Task[]
   pomodoroSessions PomodoroSession[]
+  refreshTokens    RefreshToken[]
 
   @@map("users")
 }
@@ -44,8 +45,8 @@ model List {
   userId    String   @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks     Task[]
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
 
   @@index([userId])
   @@map("lists")
@@ -62,36 +63,48 @@ model Task {
   completed   Boolean   @default(false)
   completedAt DateTime? @map("completed_at")
   listId      String?   @map("list_id")
-  userId      String   @map("user_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  userId      String    @map("user_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  list        List?     @relation(fields: [listId], references: [id], onDelete: SetNull)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  list             List?             @relation(fields: [listId], references: [id], onDelete: SetNull)
   pomodoroSessions PomodoroSession[]
 
   @@index([userId])
   @@index([userId, completed])
   @@index([userId, dueDate])
   @@index([userId, priority])
-
   @@map("tasks")
 }
 
 model PomodoroSession {
-  id          String          @id @default(uuid())
-  userId      String          @map("user_id")
-  taskId      String?         @map("task_id")
+  id          String         @id @default(uuid())
+  userId      String         @map("user_id")
+  taskId      String?        @map("task_id")
   duration    Int
-  startedAt   DateTime        @map("started_at")
-  completedAt DateTime?       @map("completed_at")
+  startedAt   DateTime       @map("started_at")
+  completedAt DateTime?      @map("completed_at")
   status      PomodoroStatus
 
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  task        Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([userId, status])
-
   @@map("pomodoro_sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique @map("token_hash")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }

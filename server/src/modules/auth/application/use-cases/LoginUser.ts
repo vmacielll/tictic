@@ -1,4 +1,5 @@
-import type { FastifyInstance, FastifyReply } from 'fastify'
+import crypto from 'crypto'
+import type { IRefreshTokenRepository } from '../../domain/repositories/IRefreshTokenRepository'
 import { AppError } from '@shared/errors/AppError'
 import { Password } from '../../domain/value-objects/Password'
 import type { IUserRepository } from '../../domain/repositories/IUserRepository'
@@ -14,15 +15,18 @@ interface LoginUserResponse {
     name: string
     email: string
   }
+  accessToken: string
+  refreshToken: string
 }
 
 export class LoginUser {
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly app: FastifyInstance,
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
+    private readonly jwtSign: (payload: object, options?: object) => string,
   ) {}
 
-  async execute({ email, password }: LoginUserRequest, reply: FastifyReply): Promise<LoginUserResponse> {
+  async execute({ email, password }: LoginUserRequest): Promise<LoginUserResponse> {
     const user = await this.userRepository.findByEmail(email)
     if (!user) {
       throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS')
@@ -33,27 +37,22 @@ export class LoginUser {
       throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS')
     }
 
-    const accessToken = this.app.jwt.sign({ sub: user.id })
+    const accessToken = this.jwtSign({ sub: user.id })
 
-    const refreshToken = this.app.jwt.sign(
+    const refreshToken = this.jwtSign(
       { sub: user.id },
       { expiresIn: '7d' },
     )
 
-    reply.setCookie('accessToken', accessToken, {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
-    })
+    // Hash and store refresh token
+    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-    reply.setCookie('refreshToken', refreshToken, {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+    await this.refreshTokenRepository.create({
+      id: crypto.randomUUID(),
+      tokenHash,
+      userId: user.id,
+      expiresAt,
     })
 
     return {
@@ -62,6 +61,8 @@ export class LoginUser {
         name: user.name,
         email: user.email,
       },
+      accessToken,
+      refreshToken,
     }
   }
 }

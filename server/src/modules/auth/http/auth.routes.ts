@@ -12,9 +12,5 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get('/auth/me', { preHandler: [(app as any).authenticate] }, controller.me.bind(controller))
 
-  app.post('/auth/logout', async (_request: FastifyRequest, reply: FastifyReply) => {
-    reply.clearCookie('accessToken', { path: '/' })
-    reply.clearCookie('refreshToken', { path: '/' })
-    return reply.status(200).send({ message: 'Logged out' })
-  })
+  app.post('/auth/logout', controller.logout.bind(controller))
 }
