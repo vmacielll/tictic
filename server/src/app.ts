@@ -17,6 +17,7 @@ requiredEnv.forEach((v) => {
 import { RegisterUser } from './modules/auth/application/use-cases/RegisterUser'
 import { LoginUser } from './modules/auth/application/use-cases/LoginUser'
 import { PrismaUserRepository } from './modules/auth/infra/repositories/PrismaUserRepository'
+import { PrismaRefreshTokenRepository } from './modules/auth/infra/repositories/PrismaRefreshTokenRepository'
 import { AuthController } from './modules/auth/http/AuthController'
 import { authRoutes } from './modules/auth/http/auth.routes'
 import { CreateTask } from './modules/tasks/application/use-cases/CreateTask'
@@ -117,9 +118,14 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
 
 // Register auth use cases
 const userRepository = new PrismaUserRepository(prisma)
+const refreshTokenRepository = new PrismaRefreshTokenRepository(prisma)
 const registerUser = new RegisterUser(userRepository)
-const loginUser = new LoginUser(userRepository, app)
-const authController = new AuthController(registerUser, loginUser, userRepository)
+const loginUser = new LoginUser(
+  userRepository,
+  refreshTokenRepository,
+  (payload: object, options?: object) => app.jwt.sign(payload, options),
+)
+const authController = new AuthController(registerUser, loginUser, userRepository, refreshTokenRepository)
 
 // Decorate app with auth controller
 app.decorate('authController', authController)
