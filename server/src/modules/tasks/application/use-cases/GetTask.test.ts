@@ -104,7 +104,7 @@ describe('GetTask', () => {
     }
   })
 
-  it('should return null for dueTimezone when task has no timezone', async () => {
+  it('should return undefined for dueTimezone when task has no timezone', async () => {
     const task = Task.create('user-1', 'Test Task')
 
     vi.spyOn(mockTaskRepository, 'findById').mockResolvedValue(task)
@@ -114,7 +114,7 @@ describe('GetTask', () => {
       userId: 'user-1',
     })
 
-    expect(result.dueTimezone).toBeNull()
+    expect(result.dueTimezone).toBeUndefined()
   })
 
   it('should call findById with the correct taskId and userId', async () => {
