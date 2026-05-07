@@ -25,6 +25,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   })
 
   app.post('/tasks', {
+    preHandler: [(app as any).authenticate],
     schema: {
       body: CreateTaskBodySchema,
       response: {
@@ -68,6 +69,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.get.bind(controller))
 
   app.patch('/tasks/:id', {
+    preHandler: [(app as any).authenticate],
     schema: {
       params: TaskParamsSchema,
       body: UpdateTaskBodySchema,
@@ -75,6 +77,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.update.bind(controller))
 
   app.delete('/tasks/:id', {
+    preHandler: [(app as any).authenticate],
     schema: {
       params: TaskParamsSchema,
     },

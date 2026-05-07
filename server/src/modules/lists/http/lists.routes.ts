@@ -14,8 +14,14 @@ export async function listsRoutes(app: FastifyInstance) {
     }
   })
 
-  app.post('/lists', {}, controller.create.bind(controller))
+  app.post('/lists', {
+    preHandler: [(app as any).authenticate],
+  }, controller.create.bind(controller))
   app.get('/lists', {}, controller.list.bind(controller))
-  app.patch('/lists/:id', {}, controller.update.bind(controller))
-  app.delete('/lists/:id', {}, controller.delete.bind(controller))
+  app.patch('/lists/:id', {
+    preHandler: [(app as any).authenticate],
+  }, controller.update.bind(controller))
+  app.delete('/lists/:id', {
+    preHandler: [(app as any).authenticate],
+  }, controller.delete.bind(controller))
 }

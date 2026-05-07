@@ -34,7 +34,6 @@ export class UpdateTask {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
   async execute(request: UpdateTaskRequest): Promise<UpdateTaskResponse> {
-    console.log('[UpdateTask.execute] START - title:', request.title)
     const task = await this.taskRepository.findById(request.taskId, request.userId)
     if (!task) {
       throw new AppError('Task not found', 404, 'TASK_NOT_FOUND')
@@ -58,14 +57,8 @@ export class UpdateTask {
       task.setCompleted(request.completed)
     }
 
-    console.log('[UpdateTask.execute] After task.update, task.title:', task.title.value)
-
     const saved = await this.taskRepository.save(task)
-    console.log('[UpdateTask.execute] After save, saved:', saved.toJSON())
-
-    const response = this.toResponse(saved)
-    console.log('[UpdateTask.execute] toResponse result:', response)
-    return response
+    return this.toResponse(saved)
   }
 
   private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): UpdateTaskResponse {
