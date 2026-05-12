@@ -4,6 +4,7 @@ import { CreateTask } from './CreateTask'
 import { Task } from '../../domain/entities/Task'
 import type { Priority } from '../../domain/types/Priority'
 import { testDate } from '../../../../__tests__/utils/dateUtils'
+import { resetLogger } from '@shared/utils/logger'
 
 describe('CreateTask', () => {
   let mockTaskRepository: ITaskRepository
@@ -23,6 +24,7 @@ describe('CreateTask', () => {
       countByUserId: vi.fn(),
     }
     useCase = new CreateTask(mockTaskRepository)
+    resetLogger() // Reset logger for each test
   })
 
   it('should create a task successfully', async () => {

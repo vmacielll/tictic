@@ -7,6 +7,7 @@ import { LoginUser } from '@modules/auth/application/use-cases/LoginUser'
 import { PrismaUserRepository } from '@modules/auth/infra/repositories/PrismaUserRepository'
 import { AuthController } from '@modules/auth/http/AuthController'
 import { authRoutes } from '@modules/auth/http/auth.routes'
+import { resetLogger } from '@shared/utils/logger'
 
 const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
 
@@ -76,6 +77,7 @@ describe('Auth Integration Tests', () => {
 
   beforeAll(async () => {
     mockUsers.length = 0
+    resetLogger()
     app = await buildTestApp()
     await app.ready()
   })

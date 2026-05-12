@@ -5,6 +5,7 @@ import { AppError } from '@shared/errors/AppError'
 import { Password } from '../../domain/value-objects/Password'
 import type { IUser } from '../../domain/repositories/IUserRepository'
 import type { IRefreshTokenRepository } from '../../domain/repositories/IRefreshTokenRepository'
+import { resetLogger } from '@shared/utils/logger'
 
 describe('LoginUser Use Case', () => {
   const mockRepository = createMockUserRepository()
@@ -18,6 +19,7 @@ describe('LoginUser Use Case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    resetLogger() // Reset logger for each test
   })
 
   it('should login successfully with correct credentials', async () => {

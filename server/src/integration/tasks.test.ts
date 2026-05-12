@@ -12,6 +12,7 @@ import { ListInboxTasks } from '@modules/tasks/application/use-cases/ListInboxTa
 import { PrismaTaskRepository } from '@modules/tasks/infra/repositories/PrismaTaskRepository'
 import { TasksController } from '@modules/tasks/http/TasksController'
 import { tasksRoutes } from '@modules/tasks/http/tasks.routes'
+import { resetLogger } from '@shared/utils/logger'
 
 const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
 
@@ -160,6 +161,7 @@ describe('Tasks Integration Tests', () => {
 
   beforeAll(async () => {
     mockTasks.length = 0
+    resetLogger()
     app = await buildTestApp()
     await app.ready()
     userToken = generateToken(app, 'test-user-1')
