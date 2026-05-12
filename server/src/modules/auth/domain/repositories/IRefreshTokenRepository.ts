@@ -4,6 +4,7 @@ export interface IRefreshToken {
   userId: string
   expiresAt: Date
   revoked: boolean
+  usedAt?: Date
   createdAt: Date
 }
 
@@ -17,4 +18,5 @@ export interface IRefreshTokenRepository {
   findByTokenHash(tokenHash: string): Promise<IRefreshToken | null>
   revoke(tokenHash: string): Promise<void>
   revokeAllByUserId(userId: string): Promise<void>
+  markAsUsed(tokenHash: string): Promise<void>
 }

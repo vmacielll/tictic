@@ -12,20 +12,20 @@ import {
 } from './schemas'
 
 export async function tasksRoutes(app: FastifyInstance) {
-  const controller = (app as any).tasksController as TasksController
+  const controller = app.tasksController as TasksController
 
   app.addHook('preHandler', async (request, reply) => {
     try {
       await request.jwtVerify()
       const token = request.user as { sub: string }
-      ;(request as any).userId = token.sub
+      request.userTimezone = request.userTimezone
     } catch {
       return reply.unauthorized('Unauthorized')
     }
   })
 
   app.post('/tasks', {
-    preHandler: [(app as any).authenticate],
+    preHandler: [app.authenticate],
     schema: {
       body: CreateTaskBodySchema,
       response: {
@@ -69,7 +69,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.get.bind(controller))
 
   app.patch('/tasks/:id', {
-    preHandler: [(app as any).authenticate],
+    preHandler: [app.authenticate],
     schema: {
       params: TaskParamsSchema,
       body: UpdateTaskBodySchema,
@@ -77,7 +77,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.update.bind(controller))
 
   app.delete('/tasks/:id', {
-    preHandler: [(app as any).authenticate],
+    preHandler: [app.authenticate],
     schema: {
       params: TaskParamsSchema,
     },

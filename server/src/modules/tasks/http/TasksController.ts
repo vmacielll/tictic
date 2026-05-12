@@ -9,6 +9,25 @@ import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
 import { ListInboxTasks } from '../application/use-cases/ListInboxTasks'
 import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
 
+interface CreateTaskBody {
+  title: string
+  description?: string
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH'
+  dueDate?: string
+  dueTime?: string
+  listId?: string
+}
+
+interface UpdateTaskBody {
+  title?: string
+  description?: string
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH'
+  dueDate?: string
+  dueTime?: string
+  listId?: string
+  completed?: boolean
+}
+
 export class TasksController {
   constructor(
     private readonly createTask: CreateTask,
@@ -22,7 +41,7 @@ export class TasksController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const body = request.body as any
+    const body = request.body as CreateTaskBody
 
     const result = await this.createTask.execute({
       userId: req.userId,
@@ -51,7 +70,7 @@ export class TasksController {
   async update(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
     const params = request.params as { id: string }
-    const body = request.body as any
+    const body = request.body as UpdateTaskBody
 
     const result = await this.updateTask.execute({
       taskId: params.id,

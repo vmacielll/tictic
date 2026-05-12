@@ -39,6 +39,13 @@ export class PrismaRefreshTokenRepository implements IRefreshTokenRepository {
     })
   }
 
+  async markAsUsed(tokenHash: string): Promise<void> {
+    await this.prisma.refreshToken.update({
+      where: { tokenHash },
+      data: { usedAt: new Date() },
+    })
+  }
+
   private toDomain(prisma: PrismaRefreshToken): IRefreshToken {
     return {
       id: prisma.id,
@@ -46,6 +53,7 @@ export class PrismaRefreshTokenRepository implements IRefreshTokenRepository {
       userId: prisma.userId,
       expiresAt: prisma.expiresAt,
       revoked: prisma.revoked,
+      usedAt: prisma.usedAt ?? undefined,
       createdAt: prisma.createdAt,
     }
   }

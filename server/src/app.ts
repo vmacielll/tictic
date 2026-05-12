@@ -7,6 +7,7 @@ import fastifyCookie from '@fastify/cookie'
 import fastifySensible from '@fastify/sensible'
 import { prisma } from '@prisma/PrismaClient'
 import { isValidTimezone } from '@shared/utils/timezone'
+import { initializeLogger } from '@shared/utils/logger'
 
 const requiredEnv = ['JWT_SECRET', 'DATABASE_URL', 'FRONTEND_URL']
 requiredEnv.forEach((v) => {
@@ -16,6 +17,7 @@ requiredEnv.forEach((v) => {
 })
 import { RegisterUser } from './modules/auth/application/use-cases/RegisterUser'
 import { LoginUser } from './modules/auth/application/use-cases/LoginUser'
+import { RefreshToken } from './modules/auth/application/use-cases/RefreshToken'
 import { PrismaUserRepository } from './modules/auth/infra/repositories/PrismaUserRepository'
 import { PrismaRefreshTokenRepository } from './modules/auth/infra/repositories/PrismaRefreshTokenRepository'
 import { AuthController } from './modules/auth/http/AuthController'
@@ -58,11 +60,14 @@ const app: FastifyInstance = Fastify({
   },
 })
 
+// Initialize logger for use cases
+initializeLogger(app.log)
+
 // Middleware: Extract timezone from request headers
 app.addHook('preHandler', async (request, _reply) => {
   const timezoneHeader = request.headers['x-timezone'] as string
   const timezone = timezoneHeader && isValidTimezone(timezoneHeader) ? timezoneHeader : 'UTC'
-  ;(request as any).userTimezone = timezone
+  request.userTimezone = timezone
 })
 
 // CORS
@@ -101,13 +106,20 @@ app.register(fastifyJwt, {
 // Auth decorator for protected routes
 app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
   try {
-    // Skip CSRF check for requests without Origin header (like curl)
+    // CSRF validation for state-changing requests
     const origin = request.headers.origin
     if (origin) {
       const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'
       if (origin !== allowedOrigin) {
         return reply.code(403).send({ message: 'Forbidden', code: 'CSRF', statusCode: 403 })
       }
+    }
+
+    // Double-submit CSRF pattern: validate cookie matches header
+    const cookieToken = request.cookies.csrf_token
+    const headerToken = request.headers['x-csrf-token']
+    if (cookieToken && headerToken && cookieToken !== headerToken) {
+      return reply.code(403).send({ message: 'CSRF: Token mismatch', code: 'CSRF_MISMATCH', statusCode: 403 })
     }
 
     await request.jwtVerify()
@@ -125,7 +137,13 @@ const loginUser = new LoginUser(
   refreshTokenRepository,
   (payload: object, options?: object) => app.jwt.sign(payload, options),
 )
-const authController = new AuthController(registerUser, loginUser, userRepository, refreshTokenRepository)
+const refreshToken = new RefreshToken(
+  refreshTokenRepository,
+  (payload: object, options?: object) => app.jwt.sign(payload, options),
+  (token: string) => app.jwt.verify(token) as { sub: string },
+  prisma,
+)
+const authController = new AuthController(registerUser, loginUser, refreshToken, userRepository, refreshTokenRepository)
 
 // Decorate app with auth controller
 app.decorate('authController', authController)

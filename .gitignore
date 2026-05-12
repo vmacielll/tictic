@@ -62,7 +62,7 @@ plans
 .agents
 
 # planning
-.planning
+.planning/
 
 skills-lock.json
 

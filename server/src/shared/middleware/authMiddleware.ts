@@ -22,7 +22,7 @@ export async function authMiddleware(
 
     await request.jwtVerify()
     const token = request.user as { sub: string }
-    ;(request as AuthenticatedRequest).userId = token.sub
+    ;(request as unknown as AuthenticatedRequest).userId = token.sub
   } catch (error) {
     if (error instanceof AppError) {
       throw error

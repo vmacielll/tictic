@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import crypto from 'crypto'
 import { RegisterUser } from '../application/use-cases/RegisterUser'
 import { LoginUser } from '../application/use-cases/LoginUser'
+import { RefreshToken } from '../application/use-cases/RefreshToken'
 import { AppError } from '../../../shared/errors/AppError'
 import { handleError } from '../../../shared/utils/handleError'
 import { validationError } from '../../../shared/utils/validationError'
@@ -12,17 +13,20 @@ import type { IRefreshTokenRepository } from '../domain/repositories/IRefreshTok
 export class AuthController {
   private registerUser: RegisterUser
   private loginUser: LoginUser
+  private refreshToken: RefreshToken
   private userRepository: IUserRepository
   private refreshTokenRepository: IRefreshTokenRepository
 
   constructor(
     registerUser: RegisterUser,
     loginUser: LoginUser,
+    refreshToken: RefreshToken,
     userRepository: IUserRepository,
     refreshTokenRepository: IRefreshTokenRepository,
   ) {
     this.registerUser = registerUser
     this.loginUser = loginUser
+    this.refreshToken = refreshToken
     this.userRepository = userRepository
     this.refreshTokenRepository = refreshTokenRepository
   }
@@ -69,8 +73,19 @@ export class AuthController {
 
     try {
       const result = await this.loginUser.execute({ email, password })
+      
+      // Set CSRF token cookie
+      const csrfToken = crypto.randomBytes(32).toString('hex')
+      reply.setCookie('csrf_token', csrfToken, {
+        path: '/',
+        httpOnly: false,  // Must be readable by JavaScript
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24, // 24 hours
+      })
+      
       this.setAuthCookies(reply, result.accessToken, result.refreshToken)
-      return reply.status(200).send({ user: result.user })
+      return reply.status(200).send({ user: result.user, csrfToken })
     } catch (error) {
       return handleError(error, reply)
     }
@@ -84,40 +99,21 @@ export class AuthController {
         throw new AppError('Refresh token required', 401, 'UNAUTHORIZED')
       }
 
-      // Verify token signature
-      const decoded = request.server.jwt.verify(refreshToken) as { sub: string }
-
-      // Check if token exists in database and is not revoked
-      const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
-      const storedToken = await this.refreshTokenRepository.findByTokenHash(tokenHash)
-
-      if (!storedToken || storedToken.revoked) {
-        throw new AppError('Invalid refresh token', 401, 'UNAUTHORIZED')
-      }
-
-      if (new Date() > storedToken.expiresAt) {
-        await this.refreshTokenRepository.revoke(tokenHash)
-        throw new AppError('Refresh token expired', 401, 'UNAUTHORIZED')
-      }
-
-      // Generate new tokens
-      const newAccessToken = request.server.jwt.sign({ sub: decoded.sub })
-      const newRefreshToken = request.server.jwt.sign({ sub: decoded.sub }, { expiresIn: '7d' })
-
-      // Revoke old token and store new one (rotation)
-      await this.refreshTokenRepository.revoke(tokenHash)
-      const newTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex')
-      const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      await this.refreshTokenRepository.create({
-        id: crypto.randomUUID(),
-        tokenHash: newTokenHash,
-        userId: decoded.sub,
-        expiresAt: newExpiresAt,
+      const result = await this.refreshToken.execute(refreshToken)
+      
+      // Set CSRF token cookie
+      const csrfToken = crypto.randomBytes(32).toString('hex')
+      reply.setCookie('csrf_token', csrfToken, {
+        path: '/',
+        httpOnly: false,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24,
       })
+      
+      this.setAuthCookies(reply, result.accessToken, result.refreshToken)
 
-      this.setAuthCookies(reply, newAccessToken, newRefreshToken)
-
-      return reply.status(200).send({ accessToken: newAccessToken })
+      return reply.status(200).send({ accessToken: result.accessToken, csrfToken })
     } catch (error) {
       return handleError(error, reply)
     }
