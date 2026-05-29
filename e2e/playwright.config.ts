@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') })
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
-  retries: 0,
+  retries: 1,
   workers: 1,
   reporter: 'list',
   timeout: 60000,

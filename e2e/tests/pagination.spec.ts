@@ -19,7 +19,7 @@ test.describe('Calendar - Timezone Boundary Tests', () => {
     await page.goto('/calendar')
 
     await page.getByTestId('calendar-view-week').click()
-    await expect(page.getByTestId('calendar-week-grid')).toBeVisible()
+    await expect(page.getByTestId('calendar-week-grid')).toBeVisible({ timeout: 10000 })
 
     await page.getByTestId('calendar-today-btn').click()
 
@@ -39,9 +39,11 @@ test.describe('Pagination', () => {
       const taskInput = page.getByTestId('task-input')
       await taskInput.fill(`Page Test ${i}`)
       await page.getByTestId('task-add-button').click()
+      await page.waitForTimeout(500)
     }
 
-    await page.waitForTimeout(500)
+    // Wait for all tasks to be created
+    await page.waitForTimeout(2000)
   })
 
   test('should navigate between pages', async ({ page }) => {
@@ -49,6 +51,7 @@ test.describe('Pagination', () => {
       const taskInput = page.getByTestId('task-input')
       await taskInput.fill(`PageNav ${i}`)
       await page.getByTestId('task-add-button').click()
+      await page.waitForTimeout(500)
     }
   })
 })

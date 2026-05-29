@@ -12,7 +12,7 @@ test.describe('Calendar', () => {
     await expect(page.getByTestId('calendar-view-week')).toBeVisible()
     await expect(page.getByTestId('calendar-view-day')).toBeVisible()
     await expect(page.getByTestId('calendar-today-btn')).toBeVisible()
-    await expect(page.getByTestId('calendar-month-grid')).toBeVisible()
+    await expect(page.getByTestId('calendar-month-grid')).toBeVisible({ timeout: 10000 })
   })
 
   test('should switch between month, week, and day views', async ({ page }) => {
@@ -32,11 +32,9 @@ test.describe('Calendar', () => {
     await expect(heading).toBeVisible()
     const initialContent = await heading.textContent()
     await page.getByTestId('calendar-next-btn').click()
-    const nextContent = await heading.textContent()
-    expect(nextContent).not.toBe(initialContent)
+    await expect(heading).not.toHaveText(initialContent || '')
     await page.getByTestId('calendar-prev-btn').click()
-    const backContent = await heading.textContent()
-    expect(backContent).toBe(initialContent)
+    await expect(heading).toHaveText(initialContent || '')
   })
 
   test('should go to today with Today button', async ({ page }) => {

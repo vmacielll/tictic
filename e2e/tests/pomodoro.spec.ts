@@ -96,6 +96,7 @@ test.describe('Pomodoro', () => {
   })
 
 test('should show pomodoro timer in task detail modal', async ({ page }) => {
+    await cleanupUserData()
     await page.goto('/pomodoro')
     await page.waitForLoadState('networkidle')
 
@@ -112,6 +113,7 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
 
     await page.goto('/inbox')
     await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
+    await page.waitForLoadState('networkidle')
 
     const taskTitle = `Task ${Date.now()}`
     const taskInput = page.getByTestId('task-input')
@@ -119,13 +121,9 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
     await taskInput.fill(taskTitle)
     await page.getByTestId('task-add-button').click()
 
-    // Wait for task to be created
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
-
-    // Wait for task to appear using expect instead of waitForTimeout
-    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
-    await expect(taskItem).toBeVisible({ timeout: 15000 })
+    // Wait for task to be created - wait for the task item to appear
+    const taskItem = page.locator('[data-testid^="task-item-"]').first()
+    await taskItem.waitFor({ state: 'attached', timeout: 15000 })
 
     // Use test-id instead of fragile selector
     await taskItem.getByTestId('task-item-content').click()

@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { cleanupUserData } from './utils/cleanup'
 
 test.describe('Calendar - Timezone Validation', () => {
+  test.beforeEach(async () => {
+    await cleanupUserData()
+  })
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/calendar')
     // Wait for the calendar header to be visible
@@ -11,19 +16,18 @@ test.describe('Calendar - Timezone Validation', () => {
     // Navigate to day view
     await page.getByTestId('calendar-view-day').click()
 
-    // Wait for day view to load
-    await page.waitForTimeout(1000)
+    // Wait for day view to load (API call needed for singleDay data)
+    await expect(page.getByTestId('calendar-day-view')).toBeVisible({ timeout: 10000 })
 
-    // Check that the day view heading is visible
-    const dayViewHeading = page.locator('[data-testid="calendar-day-view-heading"]')
-    await expect(dayViewHeading).toBeVisible({ timeout: 5000 })
+    // Wait for the day view heading to appear (requires API data)
+    await expect(page.getByTestId('calendar-day-view-heading')).toBeVisible({ timeout: 15000 })
   })
 
   test('should show correct day names in week view', async ({ page }) => {
     await page.getByTestId('calendar-view-week').click()
 
     // Wait for week view to load
-    await expect(page.getByTestId('calendar-view-week')).toHaveClass(/bg-primary-600/)
+    await expect(page.getByTestId('calendar-week-grid')).toBeVisible({ timeout: 10000 })
 
     // Check that we have 7 columns (one for each day)
     const weekGrid = page.locator('[data-testid="calendar-week-grid"]')
@@ -53,14 +57,17 @@ test.describe('Calendar - Timezone Validation', () => {
     await page.goto('/today')
     await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
 
     // Create a task
     const taskTitle = `Timezone Test ${Date.now()}`
     const taskInput = page.getByTestId('task-input')
+    await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
     await page.getByTestId('task-add-button').click()
-    await page.waitForTimeout(3000)
+
+    // Wait for task to appear
+    const taskItem = page.locator('[data-testid^="task-item-"]').first()
+    await taskItem.waitFor({ state: 'attached', timeout: 15000 })
 
     // Verify task was created
     const taskText = page.getByText(taskTitle)
@@ -70,8 +77,6 @@ test.describe('Calendar - Timezone Validation', () => {
     await page.goto('/calendar')
     await page.waitForLoadState('networkidle')
     await page.getByTestId('calendar-view-day').click()
-    await page.waitForTimeout(2000)
-
-    // Task should be visible in calendar day view if it has today's date
+    await expect(page.getByTestId('calendar-day-view')).toBeVisible({ timeout: 10000 })
   })
 })
