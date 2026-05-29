@@ -14,16 +14,6 @@ import {
 export async function tasksRoutes(app: FastifyInstance) {
   const controller = app.tasksController as TasksController
 
-  app.addHook('preHandler', async (request, reply) => {
-    try {
-      await request.jwtVerify()
-      const token = request.user as { sub: string }
-      request.userTimezone = request.userTimezone
-    } catch {
-      return reply.unauthorized('Unauthorized')
-    }
-  })
-
   app.post('/tasks', {
     preHandler: [app.authenticate],
     schema: {
@@ -35,6 +25,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.create.bind(controller))
 
   app.get('/tasks', {
+    preHandler: [app.authenticate],
     schema: {
       querystring: PaginationQuerySchema,
       response: {
@@ -44,6 +35,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.list.bind(controller))
 
   app.get('/tasks/today', {
+    preHandler: [app.authenticate],
     schema: {
       response: {
         200: TaskArrayResponseSchema,
@@ -52,6 +44,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.listToday.bind(controller))
 
   app.get('/tasks/inbox', {
+    preHandler: [app.authenticate],
     schema: {
       response: {
         200: TaskArrayResponseSchema,
@@ -60,6 +53,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   }, controller.listInbox.bind(controller))
 
   app.get('/tasks/:id', {
+    preHandler: [app.authenticate],
     schema: {
       params: TaskParamsSchema,
       response: {
