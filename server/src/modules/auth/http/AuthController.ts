@@ -9,6 +9,7 @@ import { validationError } from '../../../shared/utils/validationError'
 import { RegisterSchema, LoginSchema } from './schemas'
 import type { IUserRepository } from '../domain/repositories/IUserRepository'
 import type { IRefreshTokenRepository } from '../domain/repositories/IRefreshTokenRepository'
+import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class AuthController {
   private registerUser: RegisterUser
@@ -139,10 +140,8 @@ export class AuthController {
 
   async me(request: FastifyRequest, reply: FastifyReply) {
     try {
-      await request.jwtVerify()
-      const userId = (request.user as { sub: string }).sub
-      
-      const user = await this.userRepository.findById(userId)
+      const req = request as AuthenticatedRequest
+      const user = await this.userRepository.findById(req.userId)
       if (!user) {
         throw new AppError('User not found', 404, 'NOT_FOUND')
       }
@@ -150,7 +149,7 @@ export class AuthController {
       return reply.status(200).send({
         id: user.id,
         name: user.name,
-        email: user.email,
+        email: user.email.toString(),
       })
     } catch (error) {
       return handleError(error, reply)

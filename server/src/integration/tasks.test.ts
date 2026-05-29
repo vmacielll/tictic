@@ -208,14 +208,14 @@ describe('Tasks Integration Tests', () => {
         payload: {
           title: 'Task with due date',
           dueDate: '2024-03-15',
-          dueTime: '14:30:00',
+          dueTime: '14:30',
         },
       })
 
       expect(response.statusCode).toBe(201)
       const body = JSON.parse(response.body)
       expect(body.dueDate).toBe('2024-03-15')
-      expect(body.dueTime).toBe('14:30:00')
+      expect(body.dueTime).toBe('14:30')
     })
 
     it('should return 400 for missing title', async () => {
@@ -258,7 +258,7 @@ describe('GET /tasks/:id', () => {
         payload: {
           title: 'Task with timezone',
           dueDate: '2024-03-15',
-          dueTime: '14:30:00',
+          dueTime: '14:30',
         },
       })
       const task = JSON.parse(createResponse.body)

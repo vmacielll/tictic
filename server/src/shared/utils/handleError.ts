@@ -9,10 +9,10 @@ import { toHttpError } from '../errors/HttpError';
  * - Returns the appropriate HTTP status code.
  */
 export function handleError(error: unknown, reply: FastifyReply) {
-  const httpError = toHttpError(error as Error);
+  const httpError = toHttpError(error);
   const response = {
     ...httpError,
-    ...(process.env.NODE_ENV === 'development' && (error as Error).stack ? { stack: (error as Error).stack } : {}),
+    ...(process.env.NODE_ENV === 'development' && error instanceof Error && error.stack ? { stack: error.stack } : {}),
   };
   return reply.status(httpError.statusCode).send(response);
 }

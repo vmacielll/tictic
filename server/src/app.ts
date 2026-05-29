@@ -8,6 +8,7 @@ import fastifySensible from '@fastify/sensible'
 import { prisma } from '@prisma/PrismaClient'
 import { isValidTimezone } from '@shared/utils/timezone'
 import { initializeLogger } from '@shared/utils/logger'
+import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
 
 const requiredEnv = ['JWT_SECRET', 'DATABASE_URL', 'FRONTEND_URL']
 requiredEnv.forEach((v) => {
@@ -115,14 +116,19 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
       }
     }
 
-    // Double-submit CSRF pattern: validate cookie matches header
+    // Double-submit CSRF pattern: for state-changing methods, require header to match cookie
+    const isStateChanging = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method)
     const cookieToken = request.cookies.csrf_token
-    const headerToken = request.headers['x-csrf-token']
-    if (cookieToken && headerToken && cookieToken !== headerToken) {
-      return reply.code(403).send({ message: 'CSRF: Token mismatch', code: 'CSRF_MISMATCH', statusCode: 403 })
+    const headerToken = request.headers['x-csrf-token'] as string | undefined
+    if (isStateChanging && cookieToken) {
+      if (!headerToken || cookieToken !== headerToken) {
+        return reply.code(403).send({ message: 'CSRF: Token mismatch', code: 'CSRF_MISMATCH', statusCode: 403 })
+      }
     }
 
     await request.jwtVerify()
+    const token = request.user as { sub: string }
+    ;(request as unknown as AuthenticatedRequest).userId = token.sub
   } catch (err) {
     return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
   }
