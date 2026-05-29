@@ -8,25 +8,9 @@ import { ListTasks } from '../application/use-cases/ListTasks'
 import { ListTasksByDate } from '../application/use-cases/ListTasksByDate'
 import { ListInboxTasks } from '../application/use-cases/ListInboxTasks'
 import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
-
-interface CreateTaskBody {
-  title: string
-  description?: string
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH'
-  dueDate?: string
-  dueTime?: string
-  listId?: string
-}
-
-interface UpdateTaskBody {
-  title?: string
-  description?: string
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH'
-  dueDate?: string
-  dueTime?: string
-  listId?: string
-  completed?: boolean
-}
+import { validationError } from '@shared/utils/validationError'
+import { CreateTaskSchema, UpdateTaskSchema, TaskParamsSchema } from './schemas/tasks.zod'
+import type { z } from 'zod'
 
 export class TasksController {
   constructor(
@@ -41,27 +25,37 @@ export class TasksController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const body = request.body as CreateTaskBody
+
+    const parseResult = CreateTaskSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const data = parseResult.data as z.infer<typeof CreateTaskSchema>
 
     const result = await this.createTask.execute({
       userId: req.userId,
-      title: body.title,
-      description: body.description,
-      priority: body.priority,
-      dueDate: body.dueDate,
-      dueTime: body.dueTime,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      dueDate: data.dueDate ?? undefined,
+      dueTime: data.dueTime ?? undefined,
       dueTimezone: req.userTimezone,
-      listId: body.listId,
+      listId: data.listId ?? undefined,
     })
     return reply.status(201).send(result)
   }
 
   async get(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const params = request.params as { id: string }
+
+    const paramsResult = TaskParamsSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const paramsData = paramsResult.data as z.infer<typeof TaskParamsSchema>
 
     const result = await this.getTask.execute({
-      taskId: params.id,
+      taskId: paramsData.id,
       userId: req.userId,
     })
     return reply.send(result)
@@ -69,20 +63,31 @@ export class TasksController {
 
   async update(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const params = request.params as { id: string }
-    const body = request.body as UpdateTaskBody
+
+    const paramsResult = TaskParamsSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const paramsData = paramsResult.data as z.infer<typeof TaskParamsSchema>
+    const id = paramsData.id
+
+    const parseResult = UpdateTaskSchema.safeParse(request.body)
+    if (!parseResult.success) {
+      return validationError(reply, parseResult.error)
+    }
+    const data = parseResult.data as z.infer<typeof UpdateTaskSchema>
 
     const result = await this.updateTask.execute({
-      taskId: params.id,
+      taskId: id,
       userId: req.userId,
-      title: body?.title,
-      description: body?.description,
-      priority: body?.priority,
-      dueDate: body?.dueDate,
-      dueTime: body?.dueTime,
-      dueTimezone: req.userTimezone,
-      listId: body?.listId,
-      completed: body?.completed,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      dueDate: data.dueDate ?? undefined,
+      dueTime: data.dueTime ?? undefined,
+      dueTimezone: data.dueTimezone ?? req.userTimezone,
+      listId: data.listId ?? undefined,
+      completed: data.completed,
     })
     return reply.send(result)
   }
@@ -121,10 +126,15 @@ export class TasksController {
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const req = request as AuthenticatedRequest
-    const params = request.params as { id: string }
+
+    const paramsResult = TaskParamsSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const paramsData = paramsResult.data as z.infer<typeof TaskParamsSchema>
 
     await this.deleteTask.execute({
-      taskId: params.id,
+      taskId: paramsData.id,
       userId: req.userId,
     })
     return reply.status(204).send()

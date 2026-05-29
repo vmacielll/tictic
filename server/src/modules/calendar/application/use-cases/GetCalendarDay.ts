@@ -1,22 +1,11 @@
 import type { ITaskRepository } from '../../../tasks/domain/repositories/ITaskRepository'
-import type { Priority } from '../../../tasks/domain/types/Priority'
+import type { CalendarTask } from '../../domain/types/CalendarTypes'
 import { DateTime } from 'luxon'
 
 interface GetCalendarDayRequest {
   userId: string
   date: string
   timezone: string
-}
-
-interface CalendarTask {
-  id: string
-  title: string
-  description?: string
-  priority: Priority
-  completed: boolean
-  dueDate: string // YYYY-MM-DD
-  dueTime?: string // HH:mm:ss
-  listId?: string
 }
 
 interface GetCalendarDayResponse {

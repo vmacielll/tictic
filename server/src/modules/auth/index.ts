@@ -1,0 +1,11 @@
+// Auth module barrel file
+export * from './application/use-cases/RegisterUser'
+export * from './application/use-cases/LoginUser'
+export * from './application/use-cases/RefreshToken'
+export * from './http/AuthController'
+export * from './domain/entities/User'
+export * from './domain/repositories/IUserRepository'
+export * from './domain/value-objects/Email'
+export * from './domain/value-objects/Password'
+export * from './infra/repositories/PrismaUserRepository'
+export * from './infra/repositories/PrismaRefreshTokenRepository'

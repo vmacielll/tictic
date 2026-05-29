@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
-import type { ITaskRepository, PaginationParams } from '../../domain/repositories/ITaskRepository'
+import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
+import type { PaginationParams } from '@shared/types/pagination'
 import { Task } from '../../domain/entities/Task'
 import type { Priority } from '../../domain/types/Priority'
 import { prismaTaskToDomain } from '@shared/mappers/prismaTaskMapper'

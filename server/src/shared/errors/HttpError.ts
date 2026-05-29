@@ -1,21 +1,30 @@
+import { AppError } from './AppError'
+
 export interface HttpErrorResponse {
   message: string
   code: string
   statusCode: number
 }
 
-export function toHttpError(error: Error): HttpErrorResponse {
-  if ('statusCode' in error && 'code' in error) {
-    const appError = error as { message: string; statusCode: number; code: string }
+export function toHttpError(error: unknown): HttpErrorResponse {
+  if (error instanceof AppError) {
     return {
-      message: appError.message,
-      code: appError.code,
-      statusCode: appError.statusCode,
+      message: error.message,
+      code: error.code,
+      statusCode: error.statusCode,
+    }
+  }
+
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      code: 'INTERNAL_SERVER_ERROR',
+      statusCode: 500,
     }
   }
 
   return {
-    message: error.message,
+    message: 'Unknown error',
     code: 'INTERNAL_SERVER_ERROR',
     statusCode: 500,
   }

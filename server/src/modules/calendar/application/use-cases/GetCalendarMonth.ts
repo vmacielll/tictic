@@ -1,5 +1,5 @@
 import type { ITaskRepository } from '../../../tasks/domain/repositories/ITaskRepository'
-import type { Priority } from '../../../tasks/domain/types/Priority'
+import type { CalendarDay, CalendarTask } from '../../domain/types/CalendarTypes'
 import { DateTime } from 'luxon'
 
 interface GetCalendarMonthRequest {
@@ -7,19 +7,6 @@ interface GetCalendarMonthRequest {
   month: number
   year: number
   timezone: string
-}
-
-interface CalendarDay {
-  date: string // YYYY-MM-DD in user's timezone
-  tasks: CalendarTask[]
-}
-
-interface CalendarTask {
-  id: string
-  title: string
-  priority: Priority
-  completed: boolean
-  dueDate: string // YYYY-MM-DD
 }
 
 interface GetCalendarMonthResponse {

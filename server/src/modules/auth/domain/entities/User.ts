@@ -1,4 +1,5 @@
 import { Email } from '../value-objects/Email'
+import { AppError } from '@shared/errors/AppError'
 
 export interface UserProps {
   id: string
@@ -6,10 +7,7 @@ export interface UserProps {
   email: Email
   passwordHash: string
   createdAt: Date
-  updatedAt?: Date
-  lists?: Array<unknown>
-  tasks?: Array<unknown>
-  pomodoroSessions?: Array<unknown>
+  updatedAt: Date
 }
 
 export class User {
@@ -84,8 +82,8 @@ export class User {
   }
 
   changeName(newName: string): void {
-    if (newName.trim().length === 0) {
-      throw new Error('Name cannot be empty')
+    if (!newName || newName.trim().length === 0) {
+      throw new AppError('Name cannot be empty', 400, 'INVALID_NAME')
     }
     this._name = newName.trim()
     this._updatedAt = new Date()

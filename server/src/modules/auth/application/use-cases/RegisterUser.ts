@@ -37,7 +37,7 @@ export class RegisterUser {
     return {
       id: created.id,
       name: created.name,
-      email: created.email,
+      email: created.email.toString(),
     }
   }
 }

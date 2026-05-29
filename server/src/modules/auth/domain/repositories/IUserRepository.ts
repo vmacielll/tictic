@@ -1,3 +1,6 @@
+import { User } from '../entities/User'
+
+// Legacy interface for backward compatibility
 export interface IUser {
   id: string
   email: string
@@ -8,13 +11,13 @@ export interface IUser {
 }
 
 export interface IUserRepository {
-  findByEmail(email: string): Promise<IUser | null>
-  findById(id: string): Promise<IUser | null>
+  findByEmail(email: string): Promise<User | null>
+  findById(id: string): Promise<User | null>
   create(data: {
     id: string
     name: string
     email: string
     passwordHash: string
-  }): Promise<IUser>
-  save(user: IUser): Promise<IUser>
+  }): Promise<User>
+  save(user: User): Promise<User>
 }

@@ -1,4 +1,7 @@
-export type PomodoroStatus = 'RUNNING' | 'COMPLETED' | 'CANCELLED'
+import { AppError } from '@shared/errors/AppError'
+import { PomodoroStatus } from '../types/PomodoroStatus'
+
+export { PomodoroStatus }
 
 export interface PomodoroSessionProps {
   id: string
@@ -53,7 +56,7 @@ export class PomodoroSession {
 
   complete(): void {
     if (this._status !== 'RUNNING') {
-      throw new Error('Cannot complete a session that is not running')
+      throw new AppError('Cannot complete a session that is not running', 400, 'INVALID_STATE')
     }
     this._status = 'COMPLETED'
     this._completedAt = new Date()
@@ -61,7 +64,7 @@ export class PomodoroSession {
 
   cancel(): void {
     if (this._status !== 'RUNNING') {
-      throw new Error('Cannot cancel a session that is not running')
+      throw new AppError('Cannot cancel a session that is not running', 400, 'INVALID_STATE')
     }
     this._status = 'CANCELLED'
   }

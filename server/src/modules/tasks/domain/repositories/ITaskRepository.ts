@@ -1,12 +1,6 @@
 import type { Task } from '../entities/Task'
 import type { Priority } from '../types/Priority'
-
-interface PaginationParams {
-  skip?: number
-  take?: number
-}
-
-export type { PaginationParams }
+import type { PaginationParams } from '@shared/types/pagination'
 
 export interface ITaskRepository {
   create(task: {

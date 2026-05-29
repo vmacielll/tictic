@@ -1,5 +1,6 @@
 import { TaskTitle } from '../value-objects/TaskTitle'
 import { Priority } from '../types/Priority'
+import { AppError } from '@shared/errors/AppError'
 
 export interface TaskProps {
   id: string
@@ -105,6 +106,12 @@ export class Task {
     dueTimezone?: string,
     listId?: string,
   ): void {
+    if (title !== undefined && (!title || title.trim().length === 0)) {
+      throw new AppError('Title cannot be empty', 400, 'INVALID_TITLE')
+    }
+    if (priority !== undefined && !['LOW', 'MEDIUM', 'HIGH'].includes(priority)) {
+      throw new AppError('Invalid priority', 400, 'INVALID_PRIORITY')
+    }
     if (title !== undefined) {
       this._title = new TaskTitle(title)
     }
