@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { DateTime } from 'luxon'
 import { type Task } from '@/domain/tasks/types'
 import { getTask } from '@/lib/api'
 import { parseTask } from '@/domain/tasks/types'
@@ -58,7 +59,7 @@ export function useTaskDetail(
       setSelectedTask({
         ...selectedTask,
         completed: !wasCompleted,
-        completedAt: !wasCompleted ? new Date() : undefined
+        completedAt: !wasCompleted ? DateTime.now().toJSDate() : undefined
       })
     }
   }, [onToggleTask, selectedTask])

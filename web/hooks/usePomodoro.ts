@@ -41,6 +41,7 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
   const [isRunning, setIsRunning] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [startedAt, setStartedAt] = useState<number | null>(null)
 
   // Load sessions on mount
   useEffect(() => {
@@ -56,22 +57,30 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
     init()
   }, [])
 
-  // Timer countdown
+  // Timer countdown - uses startedAt for accurate calculation (no drift)
   useEffect(() => {
-    if (!isRunning || timeLeft <= 0) return
+    if (!isRunning || !startedAt || !activeSession) return
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1000) {
-          setIsRunning(false)
-          return 0
-        }
-        return prev - 1000
-      })
-    }, 1000)
+    const updateTimer = () => {
+      const totalMs = activeSession.duration * 60 * 1000
+      const elapsed = Date.now() - startedAt
+      const remaining = Math.max(0, totalMs - elapsed)
+      
+      if (remaining <= 0) {
+        setIsRunning(false)
+        setTimeLeft(0)
+      } else {
+        setTimeLeft(remaining)
+      }
+    }
 
+    // Update immediately
+    updateTimer()
+    
+    // Then update every second
+    const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [isRunning, timeLeft])
+  }, [isRunning, startedAt, activeSession])
 
   // Auto-complete when timer reaches 0
   useEffect(() => {
@@ -87,16 +96,19 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
       const session = parseActivePomodoro(raw)
       if (session && session.status === 'RUNNING') {
         setActiveSession(session)
+        setStartedAt(session.startedAt.getTime())
         const remaining = getTimeLeft(session)
         setTimeLeft(remaining)
         setIsRunning(true)
       } else {
         setActiveSession(null)
+        setStartedAt(null)
         setTimeLeft(0)
         setIsRunning(false)
       }
     } catch {
       setActiveSession(null)
+      setStartedAt(null)
       setTimeLeft(0)
       setIsRunning(false)
     }
@@ -123,6 +135,7 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
       const raw = await startPomodoro(validated)
       const newSession = parsePomodoro(raw)
       setActiveSession(newSession)
+      setStartedAt(Date.now())
       setTimeLeft(newSession.duration * 60 * 1000)
       setIsRunning(true)
       await loadSessions()

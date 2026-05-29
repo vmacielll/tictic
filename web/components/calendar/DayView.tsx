@@ -3,14 +3,24 @@
 import { type CalendarDetailTask } from '@/domain/calendar/types'
 
 interface DayViewProps {
-  date: string
-  tasks: CalendarDetailTask[]
+  date?: string
+  tasks?: CalendarDetailTask[]
   loading: boolean
   onToggleTask?: (id: string, completed: boolean) => void
   onViewTask?: (task: CalendarDetailTask) => void
 }
 
-export function DayView({ date, tasks, loading, onToggleTask, onViewTask }: DayViewProps) {
+export function DayView({ date, tasks = [], loading, onToggleTask, onViewTask }: DayViewProps) {
+  if (!date) {
+    return (
+      <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden w-full" data-testid="calendar-day-view">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+        </div>
+      </div>
+    )
+  }
+
   const [year, month, day] = date.split('-').map(Number)
   const displayDate = new Date(year, month - 1, day)
   const weekday = displayDate.toLocaleDateString('en-US', { weekday: 'long' })
@@ -18,8 +28,10 @@ export function DayView({ date, tasks, loading, onToggleTask, onViewTask }: DayV
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+      <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden w-full" data-testid="calendar-day-view">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+        </div>
       </div>
     )
   }

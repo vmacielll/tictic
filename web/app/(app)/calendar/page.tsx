@@ -10,9 +10,10 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { type CalendarDetailTask } from '@/domain/calendar/types'
 import { type Task } from '@/domain/tasks/types'
 import { updateTask, deleteTask } from '@/lib/api'
+import { DateTime } from 'luxon'
 
 function toTask(task: CalendarDetailTask): Task {
-  const now = new Date()
+  const now = DateTime.now().toJSDate()
   return {
     id: task.id,
     title: task.title,
@@ -82,9 +83,11 @@ export default function CalendarPage() {
     openModal(task.id)
   }
 
-  const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const weekLabel = `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-  const dayLabel = currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  // Use Luxon for date formatting (FR-02)
+  const currentDateTime = DateTime.fromJSDate(currentDate)
+  const monthLabel = currentDateTime.toFormat('MMMM yyyy')
+  const weekLabel = `Week of ${currentDateTime.toFormat('MMM d')}`
+  const dayLabel = currentDateTime.toFormat('MMMM d, yyyy')
   const headingLabel = view === 'month' ? monthLabel : view === 'week' ? weekLabel : dayLabel
 
   return (
@@ -147,10 +150,10 @@ export default function CalendarPage() {
           onViewTask={handleViewTask}
         />
       )}
-      {view === 'day' && singleDay && (
+      {view === 'day' && (
         <DayView
-          date={singleDay.date}
-          tasks={singleDay.tasks}
+          date={singleDay?.date}
+          tasks={singleDay?.tasks}
           loading={loading}
           onToggleTask={onToggleTask}
           onViewTask={handleViewTask}

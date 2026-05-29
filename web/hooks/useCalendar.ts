@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { DateTime } from 'luxon'
 import {
   getCalendarMonth,
   getCalendarWeek,
@@ -33,12 +34,9 @@ interface UseCalendarReturn {
   refresh: () => Promise<void>
 }
 
-// Helper to format date as YYYY-MM-DD using local date (no UTC conversion)
+// Helper to format date as YYYY-MM-DD using Luxon (no UTC conversion)
 function formatDateParam(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return DateTime.fromJSDate(date).toFormat('yyyy-MM-dd')
 }
 
 export function useCalendar(initialView: CalendarView = 'month'): UseCalendarReturn {
@@ -82,19 +80,21 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
   }, [fetchData])
 
   const goToPrev = () => {
-    const date = new Date(currentDate)
-    if (view === 'month') date.setMonth(date.getMonth() - 1)
-    else if (view === 'week') date.setDate(date.getDate() - 7)
-    else date.setDate(date.getDate() - 1)
-    setCurrentDate(date)
+    const dt = DateTime.fromJSDate(currentDate)
+    let newDate: DateTime
+    if (view === 'month') newDate = dt.minus({ months: 1 })
+    else if (view === 'week') newDate = dt.minus({ weeks: 1 })
+    else newDate = dt.minus({ days: 1 })
+    setCurrentDate(newDate.toJSDate())
   }
 
   const goToNext = () => {
-    const date = new Date(currentDate)
-    if (view === 'month') date.setMonth(date.getMonth() + 1)
-    else if (view === 'week') date.setDate(date.getDate() + 7)
-    else date.setDate(date.getDate() + 1)
-    setCurrentDate(date)
+    const dt = DateTime.fromJSDate(currentDate)
+    let newDate: DateTime
+    if (view === 'month') newDate = dt.plus({ months: 1 })
+    else if (view === 'week') newDate = dt.plus({ weeks: 1 })
+    else newDate = dt.plus({ days: 1 })
+    setCurrentDate(newDate.toJSDate())
   }
 
   const goToToday = () => setCurrentDate(new Date())

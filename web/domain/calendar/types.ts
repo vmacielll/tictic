@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { uuidSchema, datetimeString, dateIsoString, timeString, prioritySchema } from '../shared/schemas'
 
-// ── Tarefa resumida — usada nas views month/week ──
+// ── Summary task — used in month/week views ──
 export const calendarSummaryTaskSchema = z.object({
-  id: uuidSchema,
+  id: z.string().uuid(),
   title: z.string(),
   priority: prioritySchema,
   completed: z.boolean(),
@@ -12,9 +12,9 @@ export const calendarSummaryTaskSchema = z.object({
 
 export type CalendarSummaryTask = z.output<typeof calendarSummaryTaskSchema>
 
-// ── Tarefa completa — usada na view day ──
+// ── Detail task — used in day view ──
 export const calendarDetailTaskSchema = z.object({
-  id: uuidSchema,
+  id: z.string().uuid(),
   title: z.string(),
   description: z.string().optional(),
   priority: prioritySchema,
@@ -26,7 +26,7 @@ export const calendarDetailTaskSchema = z.object({
 
 export type CalendarDetailTask = z.output<typeof calendarDetailTaskSchema>
 
-// ── Dia do calendário (month/week) — tasks resumidas ──
+// ── Calendar day (month/week) — summary tasks ──
 export const calendarDaySchema = z.object({
   date: dateIsoString,
   tasks: z.array(calendarSummaryTaskSchema),
@@ -34,7 +34,7 @@ export const calendarDaySchema = z.object({
 
 export type CalendarDay = z.output<typeof calendarDaySchema>
 
-// ── Dia detalhado (day view) — tasks completas ──
+// ── Detail day (day view) — full tasks ──
 export const calendarDayDetailSchema = z.object({
   date: dateIsoString,
   tasks: z.array(calendarDetailTaskSchema),
@@ -51,7 +51,7 @@ export function parseCalendarDayDetail(raw: unknown): CalendarDayDetail {
   return calendarDayDetailSchema.parse(raw)
 }
 
-// ── Utilitários ──
+// ── Utilities ──
 export function getTaskCountForDate(days: CalendarDay[], date: Date): number {
   const key = date.toISOString().slice(0, 10)
   return days.find((d) => d.date === key)?.tasks.length ?? 0

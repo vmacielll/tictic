@@ -64,7 +64,7 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
       {onViewDetails && (
         <button
           onClick={() => onViewDetails(task.id)}
-          className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-text-primary transition-all"
+          className="flex-shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 text-text-muted hover:text-text-primary transition-all"
           aria-label="View task details"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -77,7 +77,7 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
       <button
         data-testid="task-delete-button"
         onClick={() => onDelete(task.id)}
-        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-danger transition-all"
+        className="flex-shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 text-text-muted hover:text-danger transition-all"
         aria-label="Delete task"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}>

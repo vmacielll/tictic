@@ -4,29 +4,29 @@ import { uuidSchema, datetimeString } from '../shared/schemas'
 const pomodoroStatusSchema = z.enum(['RUNNING', 'COMPLETED', 'CANCELLED'])
 
 export const pomodoroSchema = z.object({
-  id: uuidSchema,
-  userId: uuidSchema,
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
   taskId: uuidSchema.optional(),
   duration: z.number().int().positive(),
   startedAt: datetimeString.transform((d) => new Date(d)),
-  completedAt: datetimeString.optional().transform((d) => (d ? new Date(d) : undefined)),
+  completedAt: datetimeString.optional().nullable().transform((d) => d ? new Date(d) : undefined),
   status: pomodoroStatusSchema,
 })
 
 export type PomodoroSession = z.output<typeof pomodoroSchema>
 
-// ── Parsers — lidam com wrappers diferentes do backend ──
+// ── Parsers — handle different backend wrappers ──
 export function parsePomodoro(raw: unknown): PomodoroSession {
   return pomodoroSchema.parse(raw)
 }
 
-// GET /pomodoro retorna { pomodoroSessions: [...] }
+// GET /pomodoro returns { pomodoroSessions: [...] }
 export function parsePomodoroList(raw: unknown): PomodoroSession[] {
   const wrapper = z.object({ pomodoroSessions: z.array(z.unknown()) }).parse(raw)
   return wrapper.pomodoroSessions.map(parsePomodoro)
 }
 
-// GET /pomodoro/active retorna { pomodoroSession?: {...} } ou {}
+// GET /pomodoro/active returns { pomodoroSession?: {...} } or {}
 export function parseActivePomodoro(raw: unknown): PomodoroSession | null {
   const wrapper = z.object({ pomodoroSession: z.unknown().optional() }).parse(raw)
   if (!wrapper.pomodoroSession) return null
@@ -41,7 +41,7 @@ export const startPomodoroSchema = z.object({
 
 export type StartPomodoroInput = z.output<typeof startPomodoroSchema>
 
-// ── "Métodos" como funções puras ──
+// ── "Methods" as pure functions ──
 
 export function isRunning(session: PomodoroSession): boolean {
   return session.status === 'RUNNING'

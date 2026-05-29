@@ -3,19 +3,19 @@ import { uuidSchema, datetimeString, dateIsoString, timeString, timezoneSchema, 
 
 // ── Schema que valida E converte o que vem do servidor ──
 export const taskSchema = z.object({
-  id: uuidSchema,
+  id: z.string().uuid(),
   title: z.string(),
   description: z.string().optional(),
   priority: prioritySchema,
-  dueDate: dateIsoString.optional().transform((d) => (d ? new Date(d + 'T00:00:00.000Z') : undefined)),
+  dueDate: dateIsoString.optional().transform((d) => d ? new Date(d + 'T00:00:00.000Z') : undefined),
   dueTime: timeString.optional(),
   dueTimezone: timezoneSchema.optional(),
   completed: z.boolean(),
-  completedAt: datetimeString.optional().transform((d) => (d ? new Date(d) : undefined)),
+  completedAt: datetimeString.optional().transform((d) => d ? new Date(d) : undefined),
   listId: uuidSchema.optional(),
-  userId: uuidSchema.optional(),
-  createdAt: datetimeString.transform((d) => new Date(d)),
-  updatedAt: datetimeString.transform((d) => new Date(d)),
+  userId: z.string().uuid(),
+  createdAt: datetimeString.transform((d) => d ? new Date(d) : new Date()),
+  updatedAt: datetimeString.transform((d) => d ? new Date(d) : new Date()),
 })
 
 export type TaskResponse = z.input<typeof taskSchema>

@@ -1,5 +1,6 @@
 'use client'
 
+import { DateTime } from 'luxon'
 import { type CalendarDay } from '@/domain/calendar/types'
 import { type CalendarSummaryTask } from '@/domain/calendar/types'
 
@@ -19,7 +20,7 @@ function parseDateString(dateStr: string): Date {
 }
 
 export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask }: MonthViewProps) {
-  const firstDayDate = days[0]?.date ? parseDateString(days[0].date) : new Date()
+  const firstDayDate = days[0]?.date ? parseDateString(days[0].date) : DateTime.now().toJSDate()
   const startDayOfWeek = firstDayDate.getDay()
   const paddingDays = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1
 
@@ -29,16 +30,8 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
 
   const totalCells = Math.ceil(allDates.length / 7) * 7
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
-      </div>
-    )
-  }
-
   return (
-    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden">
+    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden" data-testid="calendar-month-grid">
       <div className="grid grid-cols-7 border-b border-border">
         {DAY_NAMES.map((day) => (
           <div key={day} className="py-2.5 text-center text-xs font-medium text-text-muted uppercase tracking-wide">
@@ -46,7 +39,12 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 auto-rows-fr" data-testid="calendar-month-grid">
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-7 auto-rows-fr">
         {Array.from({ length: totalCells }).map((_, index) => {
           const tasks = allDates[index]
           if (tasks === null) {
@@ -54,7 +52,7 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
           }
           const dateStr = days.find((d) => d.tasks === tasks)?.date
           const date = dateStr ? parseDateString(dateStr) : null
-          const isToday = date ? date.toDateString() === new Date().toDateString() : false
+          const isToday = date ? date.toDateString() === DateTime.now().toJSDate().toDateString() : false
 
           return (
             <div
@@ -130,7 +128,8 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
             </div>
           )
         })}
-      </div>
+          </div>
+        )}
     </div>
   )
 }

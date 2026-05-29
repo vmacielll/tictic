@@ -2,10 +2,10 @@ import { z } from 'zod'
 import { uuidSchema, datetimeString } from '../shared/schemas'
 
 export const listSchema = z.object({
-  id: uuidSchema,
+  id: z.string().uuid(),
   name: z.string(),
   color: z.string().optional(),
-  userId: uuidSchema,
+  userId: z.string().uuid(),
   createdAt: datetimeString.transform((d) => new Date(d)),
 })
 

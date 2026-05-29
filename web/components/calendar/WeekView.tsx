@@ -1,5 +1,6 @@
 'use client'
 
+import { DateTime } from 'luxon'
 import { type CalendarDay } from '@/domain/calendar/types'
 import { type CalendarSummaryTask } from '@/domain/calendar/types'
 
@@ -12,21 +13,18 @@ interface WeekViewProps {
 }
 
 export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }: WeekViewProps) {
-  if (loading) {
-    return (
+  return (
+    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden w-full" data-testid="calendar-week-grid">
+    {loading ? (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
       </div>
-    )
-  }
-
-  return (
-    <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden w-full" data-testid="calendar-week-grid">
+    ) : (
       <div className="grid grid-cols-7 divide-x divide-border min-h-[400px] w-full">
         {days.map((day) => {
           const [year, month, dateDay] = day.date.split('-').map(Number)
           const date = new Date(year, month - 1, dateDay)
-          const isToday = date.toDateString() === new Date().toDateString()
+          const isToday = date.toDateString() === DateTime.now().toJSDate().toDateString()
           const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
 
           return (
@@ -95,6 +93,7 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
           )
         })}
       </div>
+    )}
     </div>
   )
 }

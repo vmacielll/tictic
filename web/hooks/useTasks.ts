@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { DateTime } from 'luxon'
 import {
   listInboxTasks,
   listTodayTasks,
@@ -83,7 +84,7 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? { ...t, completed: newCompleted, completedAt: newCompleted ? new Date() : undefined }
+          ? { ...t, completed: newCompleted, completedAt: newCompleted ? DateTime.now().toJSDate() : undefined }
           : t
       )
     )
