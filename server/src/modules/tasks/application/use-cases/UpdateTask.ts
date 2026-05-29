@@ -24,6 +24,7 @@ interface UpdateTaskResponse {
   dueTime?: string
   dueTimezone?: string
   completed: boolean
+  completedAt?: Date
   listId?: string
   userId: string
   createdAt: Date
@@ -61,7 +62,7 @@ export class UpdateTask {
     return this.toResponse(saved)
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): UpdateTaskResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): UpdateTaskResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -71,6 +72,7 @@ export class UpdateTask {
       dueTime: task.dueTime,
       dueTimezone: task.dueTimezone,
       completed: task.completed,
+      completedAt: task.completedAt,
       listId: task.listId,
       userId: task.userId,
       createdAt: task.createdAt,

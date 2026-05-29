@@ -14,6 +14,7 @@ interface StartPomodoroResponse {
   taskId?: string
   duration: number
   startedAt: string
+  completedAt: string | null
   status: string
 }
 
@@ -54,6 +55,7 @@ export class StartPomodoro {
       taskId: session.taskId,
       duration: session.duration,
       startedAt: session.startedAt.toISOString(),
+      completedAt: session.completedAt?.toISOString() ?? null,
       status: session.status,
     }
   }

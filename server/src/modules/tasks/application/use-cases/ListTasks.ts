@@ -1,4 +1,5 @@
-import type { ITaskRepository, PaginationParams } from '../../domain/repositories/ITaskRepository'
+import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
+import type { PaginationParams } from '@shared/types/pagination'
 import type { Priority } from '../../domain/types/Priority'
 
 interface ListTasksRequest {
@@ -17,6 +18,7 @@ interface ListTasksResponse {
   completed: boolean
   completedAt?: Date
   listId?: string
+  userId: string
   createdAt: Date
   updatedAt: Date
 }
@@ -49,7 +51,7 @@ export class ListTasks {
     }
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): ListTasksResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -61,6 +63,7 @@ export class ListTasks {
       completed: task.completed,
       completedAt: task.completedAt,
       listId: task.listId,
+      userId: task.userId,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
     }

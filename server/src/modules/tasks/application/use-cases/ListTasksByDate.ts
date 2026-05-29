@@ -18,6 +18,7 @@ interface ListTasksByDateResponse {
   completed: boolean
   completedAt?: Date
   listId?: string
+  userId: string
   createdAt: Date
   updatedAt: Date
 }
@@ -32,7 +33,7 @@ export class ListTasksByDate {
     return tasks.map(this.toResponse)
   }
 
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; createdAt: Date; updatedAt: Date }): ListTasksByDateResponse {
+  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): ListTasksByDateResponse {
     return {
       id: task.id,
       title: task.title.value,
@@ -44,6 +45,7 @@ export class ListTasksByDate {
       completed: task.completed,
       completedAt: task.completedAt,
       listId: task.listId,
+      userId: task.userId,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
     }

@@ -40,7 +40,7 @@ describe('GetActivePomodoro', () => {
     expect(result.pomodoroSession).toBeUndefined()
   })
 
-  it('should not include completedAt in DTO for active session', async () => {
+  it('should include completedAt as null for active session', async () => {
     const session = PomodoroSession.create('user-1', 25)
     Object.defineProperty(session, 'id', { value: 'session-1' })
 
@@ -48,8 +48,8 @@ describe('GetActivePomodoro', () => {
 
     const result = await useCase.execute({ userId: 'user-1' })
 
-    // The DTO for GetActivePomodoro should not have completedAt
-    expect(result.pomodoroSession).not.toHaveProperty('completedAt')
+    // Active sessions have completedAt as null
+    expect(result.pomodoroSession?.completedAt).toBeNull()
     expect(result.pomodoroSession?.status).toBe('RUNNING')
   })
 })

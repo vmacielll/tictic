@@ -62,7 +62,7 @@ describe('ListPomodoros', () => {
     expect(result.pomodoroSessions[0].status).toBe('COMPLETED')
   })
 
-  it('should have undefined completedAt for running sessions', async () => {
+  it('should have null completedAt for running sessions', async () => {
     const session = PomodoroSession.create('user-1', 25)
     Object.defineProperty(session, 'id', { value: 'session-1' })
 
@@ -70,7 +70,7 @@ describe('ListPomodoros', () => {
 
     const result = await useCase.execute({ userId: 'user-1' })
 
-    expect(result.pomodoroSessions[0].completedAt).toBeUndefined()
+    expect(result.pomodoroSessions[0].completedAt).toBeNull()
     expect(result.pomodoroSessions[0].status).toBe('RUNNING')
   })
 })

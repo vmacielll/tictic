@@ -25,6 +25,7 @@ interface CreateTaskResponse {
   dueTime?: string
   dueTimezone?: string
   completed: boolean
+  completedAt?: Date
   listId?: string
   userId: string
   createdAt: Date
@@ -107,6 +108,7 @@ export class CreateTask {
       dueTime: task.dueTime,
       dueTimezone: task.dueTimezone,
       completed: task.completed,
+      completedAt: task.completedAt,
       listId: task.listId,
       userId: task.userId,
       createdAt: task.createdAt,
