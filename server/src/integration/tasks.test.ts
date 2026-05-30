@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import Fastify, { FastifyInstance } from 'fastify'
-import fastifyJwt from '@fastify/jwt'
-import fastifyCors from '@fastify/cors'
+import { type FastifyInstance } from 'fastify'
 import { CreateTask } from '@modules/tasks/application/use-cases/CreateTask'
 import { GetTask } from '@modules/tasks/application/use-cases/GetTask'
 import { UpdateTask } from '@modules/tasks/application/use-cases/UpdateTask'
@@ -13,8 +11,7 @@ import { PrismaTaskRepository } from '@modules/tasks/infra/repositories/PrismaTa
 import { TasksController } from '@modules/tasks/http/TasksController'
 import { tasksRoutes } from '@modules/tasks/http/tasks.routes'
 import { resetLogger } from '@shared/utils/logger'
-
-const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
+import { createTestApp } from '../__tests__/utils/testAppFactory'
 
 interface MockTask {
   id: string
@@ -114,10 +111,7 @@ const mockPrisma = {
 }
 
 async function buildTestApp() {
-  const app = Fastify({ logger: false })
-
-  await app.register(fastifyCors, { origin: '*' })
-  await app.register(fastifyJwt, { secret: TEST_JWT_SECRET })
+  const { app, generateToken } = await createTestApp()
 
   const taskRepository = new PrismaTaskRepository(mockPrisma as any)
   const createTask = new CreateTask(taskRepository)
@@ -138,21 +132,10 @@ async function buildTestApp() {
   )
 
   app.decorate('tasksController', tasksController)
-  app.decorate('authenticate', async (request: any, reply: any) => {
-    try {
-      await request.jwtVerify()
-    } catch {
-      return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
-    }
-  })
 
   await app.register(tasksRoutes)
 
-  return app
-}
-
-function generateToken(app: FastifyInstance, userId: string): string {
-  return app.jwt.sign({ sub: userId })
+  return { app, generateToken }
 }
 
 describe('Tasks Integration Tests', () => {
@@ -162,9 +145,10 @@ describe('Tasks Integration Tests', () => {
   beforeAll(async () => {
     mockTasks.length = 0
     resetLogger()
-    app = await buildTestApp()
+    const result = await buildTestApp()
+    app = result.app
     await app.ready()
-    userToken = generateToken(app, 'test-user-1')
+    userToken = result.generateToken(app, 'test-user-1')
   })
 
   afterAll(async () => {

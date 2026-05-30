@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import Fastify, { FastifyInstance } from 'fastify'
-import fastifyJwt from '@fastify/jwt'
-import fastifyCors from '@fastify/cors'
+import { type FastifyInstance } from 'fastify'
 import { StartPomodoro } from '@modules/pomodoro/application/use-cases/StartPomodoro'
 import { CompletePomodoro } from '@modules/pomodoro/application/use-cases/CompletePomodoro'
 import { CancelPomodoro } from '@modules/pomodoro/application/use-cases/CancelPomodoro'
@@ -10,8 +8,7 @@ import { GetActivePomodoro } from '@modules/pomodoro/application/use-cases/GetAc
 import { PrismaPomodoroRepository } from '@modules/pomodoro/infra/repositories/PrismaPomodoroRepository'
 import { PomodoroController } from '@modules/pomodoro/http/PomodoroController'
 import { pomodoroRoutes } from '@modules/pomodoro/http/pomodoro.routes'
-
-const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
+import { createTestApp } from '../__tests__/utils/testAppFactory'
 
 interface MockPomodoro {
   id: string
@@ -67,10 +64,7 @@ const mockPrisma = {
 }
 
 async function buildTestApp() {
-  const app = Fastify({ logger: false })
-
-  await app.register(fastifyCors, { origin: '*' })
-  await app.register(fastifyJwt, { secret: TEST_JWT_SECRET })
+  const { app, generateToken } = await createTestApp()
 
   const pomodoroRepository = new PrismaPomodoroRepository(mockPrisma as any)
   const startPomodoro = new StartPomodoro(pomodoroRepository)
@@ -87,21 +81,10 @@ async function buildTestApp() {
   )
 
   app.decorate('pomodoroController', pomodoroController)
-  app.decorate('authenticate', async (request: any, reply: any) => {
-    try {
-      await request.jwtVerify()
-    } catch {
-      return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
-    }
-  })
 
   await app.register(pomodoroRoutes)
 
-  return app
-}
-
-function generateToken(app: FastifyInstance, userId: string): string {
-  return app.jwt.sign({ sub: userId })
+  return { app, generateToken }
 }
 
 describe('Pomodoro Integration Tests', () => {
@@ -110,9 +93,10 @@ describe('Pomodoro Integration Tests', () => {
 
   beforeAll(async () => {
     mockPomodoros.length = 0
-    app = await buildTestApp()
+    const result = await buildTestApp()
+    app = result.app
+    userToken = result.generateToken(app, 'test-user-1')
     await app.ready()
-    userToken = generateToken(app, 'test-user-1')
   })
 
   afterAll(async () => {

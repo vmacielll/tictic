@@ -1,16 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import Fastify, { FastifyInstance } from 'fastify'
-import fastifyJwt from '@fastify/jwt'
-import fastifyCors from '@fastify/cors'
+import { type FastifyInstance } from 'fastify'
 import { CreateList } from '@modules/lists/application/use-cases/CreateList'
 import { UpdateList } from '@modules/lists/application/use-cases/UpdateList'
 import { DeleteList } from '@modules/lists/application/use-cases/DeleteList'
 import { ListUserLists } from '@modules/lists/application/use-cases/ListUserLists'
+import { ListTasksByList } from '@modules/tasks/application/use-cases/ListTasksByList'
 import { PrismaListRepository } from '@modules/lists/infra/repositories/PrismaListRepository'
+import { PrismaTaskRepository } from '@modules/tasks/infra/repositories/PrismaTaskRepository'
 import { ListsController } from '@modules/lists/http/ListsController'
 import { listsRoutes } from '@modules/lists/http/lists.routes'
-
-const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
+import { createTestApp } from '../__tests__/utils/testAppFactory'
 
 interface MockList {
   id: string
@@ -37,7 +36,7 @@ const mockPrisma = {
             : a.createdAt.getTime() - b.createdAt.getTime()
         )
       }
-      return results
+      return results.map((list) => ({ ...list, _count: { tasks: 0 } }))
     },
     create: async ({ data }: { data: any }) => {
       const newList: MockList = {
@@ -67,37 +66,29 @@ const mockPrisma = {
       if (index !== -1) mockLists.splice(index, 1)
     },
   },
+  task: {
+    findMany: async () => [],
+    count: async () => 0,
+  },
 }
 
 async function buildTestApp() {
-  const app = Fastify({ logger: false })
-
-  await app.register(fastifyCors, { origin: '*' })
-  await app.register(fastifyJwt, { secret: TEST_JWT_SECRET })
+  const { app, generateToken } = await createTestApp()
 
   const listRepository = new PrismaListRepository(mockPrisma as any)
+  const taskRepository = new PrismaTaskRepository(mockPrisma as any)
   const createList = new CreateList(listRepository)
   const updateList = new UpdateList(listRepository)
   const deleteList = new DeleteList(listRepository)
   const listUserLists = new ListUserLists(listRepository)
-  const listsController = new ListsController(createList, updateList, deleteList, listUserLists)
+  const listTasksByList = new ListTasksByList(taskRepository)
+  const listsController = new ListsController(createList, updateList, deleteList, listUserLists, listTasksByList)
 
   app.decorate('listsController', listsController)
-  app.decorate('authenticate', async (request: any, reply: any) => {
-    try {
-      await request.jwtVerify()
-    } catch {
-      return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
-    }
-  })
 
   await app.register(listsRoutes)
 
-  return app
-}
-
-function generateToken(app: FastifyInstance, userId: string): string {
-  return app.jwt.sign({ sub: userId })
+  return { app, generateToken }
 }
 
 describe('Lists Integration Tests', () => {
@@ -106,9 +97,10 @@ describe('Lists Integration Tests', () => {
 
   beforeAll(async () => {
     mockLists.length = 0
-    app = await buildTestApp()
+    const result = await buildTestApp()
+    app = result.app
     await app.ready()
-    userToken = generateToken(app, 'test-user-1')
+    userToken = result.generateToken(app, 'test-user-1')
   })
 
   afterAll(async () => {
@@ -147,13 +139,13 @@ describe('Lists Integration Tests', () => {
         },
         payload: {
           name: 'Colored List',
-          color: '#FF0000',
+          color: '#dc2626',
         },
       })
 
       expect(response.statusCode).toBe(201)
       const body = JSON.parse(response.body)
-      expect(body.color).toBe('#FF0000')
+      expect(body.color).toBe('#dc2626')
     })
 
     it('should return 400 for missing name', async () => {
@@ -164,7 +156,7 @@ describe('Lists Integration Tests', () => {
           authorization: `Bearer ${userToken}`,
         },
         payload: {
-          color: '#FF0000',
+          color: '#dc2626',
         },
       })
 

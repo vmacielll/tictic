@@ -1,15 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import Fastify, { FastifyInstance } from 'fastify'
-import fastifyJwt from '@fastify/jwt'
-import fastifyCors from '@fastify/cors'
+import { type FastifyInstance } from 'fastify'
 import { RegisterUser } from '@modules/auth/application/use-cases/RegisterUser'
 import { LoginUser } from '@modules/auth/application/use-cases/LoginUser'
 import { PrismaUserRepository } from '@modules/auth/infra/repositories/PrismaUserRepository'
 import { AuthController } from '@modules/auth/http/AuthController'
 import { authRoutes } from '@modules/auth/http/auth.routes'
 import { resetLogger } from '@shared/utils/logger'
-
-const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
+import { createTestApp } from '../__tests__/utils/testAppFactory'
 
 interface MockUser {
   id: string
@@ -48,10 +45,7 @@ const mockPassword = {
 }
 
 async function buildTestApp() {
-  const app = Fastify({ logger: false })
-
-  await app.register(fastifyCors, { origin: '*' })
-  await app.register(fastifyJwt, { secret: TEST_JWT_SECRET })
+  const { app, generateToken } = await createTestApp()
 
   const userRepository = new PrismaUserRepository(mockPrisma as any)
   const registerUser = new RegisterUser(userRepository)
@@ -59,17 +53,10 @@ async function buildTestApp() {
   const authController = new AuthController(registerUser, loginUser)
 
   app.decorate('authController', authController)
-  app.decorate('authenticate', async (request: any, reply: any) => {
-    try {
-      await request.jwtVerify()
-    } catch (err) {
-      return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
-    }
-  })
 
   await app.register(authRoutes)
 
-  return app
+  return { app, generateToken }
 }
 
 describe('Auth Integration Tests', () => {
@@ -78,7 +65,8 @@ describe('Auth Integration Tests', () => {
   beforeAll(async () => {
     mockUsers.length = 0
     resetLogger()
-    app = await buildTestApp()
+    const result = await buildTestApp()
+    app = result.app
     await app.ready()
   })
 

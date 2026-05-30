@@ -6,7 +6,7 @@ interface GetActivePomodoroRequest {
 }
 
 interface GetActivePomodoroResponse {
-  pomodoroSession?: PomodoroSessionDTO
+  pomodoroSession: PomodoroSessionDTO | null
 }
 
 interface PomodoroSessionDTO {
@@ -30,7 +30,7 @@ export class GetActivePomodoro {
     )
 
     if (!session) {
-      return {}
+      return { pomodoroSession: null }
     }
 
     return {

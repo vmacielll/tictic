@@ -32,12 +32,12 @@ describe('GetActivePomodoro', () => {
     expect(result.pomodoroSession?.status).toBe('RUNNING')
   })
 
-  it('should return empty object when no active session exists', async () => {
+  it('should return null pomodoroSession when no active session exists', async () => {
     vi.spyOn(pomodoroRepository, 'findActiveByUserId').mockResolvedValue(null)
 
     const result = await useCase.execute({ userId: 'user-1' })
 
-    expect(result.pomodoroSession).toBeUndefined()
+    expect(result.pomodoroSession).toBeNull()
   })
 
   it('should include completedAt as null for active session', async () => {
