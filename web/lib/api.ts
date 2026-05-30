@@ -1,3 +1,9 @@
+import type { AuthResponse } from '@/domain/auth/types'
+import type { CalendarDay, CalendarDayDetail } from '@/domain/calendar/types'
+import type { List } from '@/domain/lists/types'
+import type { PomodoroSession, StartPomodoroInput } from '@/domain/pomodoro/types'
+import type { TaskResponse, CreateTaskInput, UpdateTaskInput } from '@/domain/tasks/types'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
 interface RequestOptions extends RequestInit {
@@ -84,14 +90,14 @@ export async function getMe(): Promise<{ id: string; name: string; email: string
 }
 
 // ── Auth ──
-export async function login(email: string, password: string): Promise<unknown> {
+export async function login(email: string, password: string): Promise<AuthResponse> {
   return apiRequest('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
 }
 
-export async function register(name: string, email: string, password: string): Promise<unknown> {
+export async function register(name: string, email: string, password: string): Promise<AuthResponse> {
   return apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify({ name, email, password }),
@@ -99,24 +105,24 @@ export async function register(name: string, email: string, password: string): P
 }
 
 // ── Calendar ──
-export async function getCalendarMonth(month: number, year: number): Promise<unknown> {
+export async function getCalendarMonth(month: number, year: number): Promise<CalendarDay[]> {
   return apiRequest(`/calendar/month?month=${month}&year=${year}`, { requiresAuth: true })
 }
 
-export async function getCalendarWeek(date: string): Promise<unknown> {
+export async function getCalendarWeek(date: string): Promise<CalendarDay[]> {
   return apiRequest(`/calendar/week?date=${date}`, { requiresAuth: true })
 }
 
-export async function getCalendarDay(date: string): Promise<unknown> {
+export async function getCalendarDay(date: string): Promise<CalendarDayDetail> {
   return apiRequest(`/calendar/day?date=${date}`, { requiresAuth: true })
 }
 
 // ── Tasks ──
-export async function getTask(id: string): Promise<unknown> {
+export async function getTask(id: string): Promise<TaskResponse> {
   return apiRequest(`/tasks/${id}`, { requiresAuth: true })
 }
 
-export async function createTask(data: unknown): Promise<unknown> {
+export async function createTask(data: CreateTaskInput): Promise<TaskResponse> {
   return apiRequest('/tasks', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -124,7 +130,7 @@ export async function createTask(data: unknown): Promise<unknown> {
   })
 }
 
-export async function updateTask(id: string, data: unknown): Promise<unknown> {
+export async function updateTask(id: string, data: UpdateTaskInput): Promise<TaskResponse> {
   return apiRequest(`/tasks/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -139,20 +145,20 @@ export async function deleteTask(id: string): Promise<void> {
   })
 }
 
-export async function listTasks(): Promise<unknown[]> {
+export async function listTasks(): Promise<TaskResponse[]> {
   return apiRequest('/tasks', { requiresAuth: true })
 }
 
-export async function listTodayTasks(): Promise<unknown[]> {
+export async function listTodayTasks(): Promise<TaskResponse[]> {
   return apiRequest('/tasks/today', { requiresAuth: true })
 }
 
-export async function listInboxTasks(): Promise<unknown[]> {
+export async function listInboxTasks(): Promise<TaskResponse[]> {
   return apiRequest('/tasks/inbox', { requiresAuth: true })
 }
 
 // ── Lists ──
-export async function createList(name: string, color?: string): Promise<unknown> {
+export async function createList(name: string, color?: string): Promise<List> {
   return apiRequest('/lists', {
     method: 'POST',
     body: JSON.stringify({ name, color }),
@@ -160,7 +166,7 @@ export async function createList(name: string, color?: string): Promise<unknown>
   })
 }
 
-export async function updateList(id: string, data: { name?: string; color?: string }): Promise<unknown> {
+export async function updateList(id: string, data: { name?: string; color?: string }): Promise<List> {
   return apiRequest(`/lists/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -175,12 +181,25 @@ export async function deleteList(id: string): Promise<void> {
   })
 }
 
-export async function listLists(): Promise<unknown[]> {
+export async function listLists(): Promise<List[]> {
   return apiRequest('/lists', { requiresAuth: true })
 }
 
+export interface ListTasksResponse {
+  items: TaskResponse[]
+  meta: { page: number; size: number; totalCount: number }
+}
+
+export async function listListTasks(listId: string, page?: number, size?: number): Promise<ListTasksResponse> {
+  const params = new URLSearchParams()
+  if (page) params.set('page', String(page))
+  if (size) params.set('size', String(size))
+  const query = params.toString() ? `?${params.toString()}` : ''
+  return apiRequest(`/lists/${listId}/tasks${query}`, { requiresAuth: true })
+}
+
 // ── Pomodoro ──
-export async function startPomodoro(data: unknown = {}): Promise<unknown> {
+export async function startPomodoro(data: StartPomodoroInput = {}): Promise<PomodoroSession> {
   return apiRequest('/pomodoro', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -188,7 +207,7 @@ export async function startPomodoro(data: unknown = {}): Promise<unknown> {
   })
 }
 
-export async function completePomodoro(id: string): Promise<unknown> {
+export async function completePomodoro(id: string): Promise<PomodoroSession> {
   return apiRequest(`/pomodoro/${id}/complete`, {
     method: 'PATCH',
     body: JSON.stringify({}),
@@ -196,7 +215,7 @@ export async function completePomodoro(id: string): Promise<unknown> {
   })
 }
 
-export async function cancelPomodoro(id: string): Promise<unknown> {
+export async function cancelPomodoro(id: string): Promise<PomodoroSession> {
   return apiRequest(`/pomodoro/${id}/cancel`, {
     method: 'PATCH',
     body: JSON.stringify({}),
@@ -204,10 +223,18 @@ export async function cancelPomodoro(id: string): Promise<unknown> {
   })
 }
 
-export async function listPomodoros(): Promise<unknown> {
+export interface ListPomodorosResponse {
+  pomodoroSessions: PomodoroSession[]
+}
+
+export async function listPomodoros(): Promise<ListPomodorosResponse> {
   return apiRequest('/pomodoro', { requiresAuth: true })
 }
 
-export async function getActivePomodoro(): Promise<unknown> {
+export interface ActivePomodoroResponse {
+  pomodoroSession?: PomodoroSession
+}
+
+export async function getActivePomodoro(): Promise<ActivePomodoroResponse> {
   return apiRequest('/pomodoro/active', { requiresAuth: true })
 }

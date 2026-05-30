@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { uuidSchema, datetimeString, dateIsoString, timeString, timezoneSchema, prioritySchema } from '../shared/schemas'
 
-// ── Schema que valida E converte o que vem do servidor ──
+// ── Schema that validates AND converts server payloads ──
 export const taskSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
@@ -21,7 +21,7 @@ export const taskSchema = z.object({
 export type TaskResponse = z.input<typeof taskSchema>
 export type Task = z.output<typeof taskSchema>
 
-// ── Parsers — ponto único de validação na borda ──
+// ── Parsers — single validation point at the boundary ──
 export function parseTask(raw: unknown): Task {
   return taskSchema.parse(raw)
 }
@@ -30,7 +30,7 @@ export function parseTasks(raw: unknown[]): Task[] {
   return raw.map(parseTask)
 }
 
-// ── Input schemas para criação/atualização ──
+// ── Input schemas for creation/update ──
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -53,7 +53,7 @@ export const updateTaskSchema = z.object({
 
 export type UpdateTaskInput = z.output<typeof updateTaskSchema>
 
-// ── "Métodos" como funções puras ──
+// ── "Methods" as pure functions ──
 
 export function isInbox(task: Task): boolean {
   return task.dueDate === undefined

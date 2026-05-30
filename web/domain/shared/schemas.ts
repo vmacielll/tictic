@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Shared schemas reutilizáveis em todos os módulos
+// Shared schemas reusable across all modules
 
 const emptyToUndefined = z.literal('').transform(() => undefined)
 

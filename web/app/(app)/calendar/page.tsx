@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { useCalendar } from '@/hooks/useCalendar'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
+import { useTasks } from '@/hooks/useTasks'
 import { MonthView } from '@/components/calendar/MonthView'
 import { WeekView } from '@/components/calendar/WeekView'
 import { DayView } from '@/components/calendar/DayView'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { type CalendarDetailTask } from '@/domain/calendar/types'
 import { type Task } from '@/domain/tasks/types'
-import { updateTask, deleteTask } from '@/lib/api'
 import { DateTime } from 'luxon'
 
 function toTask(task: CalendarDetailTask): Task {
@@ -49,6 +49,8 @@ export default function CalendarPage() {
     refresh,
   } = useCalendar('month')
 
+  const { updateTask: updateTaskMutation, removeTask } = useTasks('inbox')
+
   const {
     selectedTask,
     isModalOpen,
@@ -59,7 +61,7 @@ export default function CalendarPage() {
     handleToggleComplete,
   } = useTaskDetail(
     async (updatedTask) => {
-      await updateTask(updatedTask.id, {
+      await updateTaskMutation(updatedTask.id, {
         title: updatedTask.title,
         description: updatedTask.description,
         priority: updatedTask.priority,
@@ -70,7 +72,7 @@ export default function CalendarPage() {
       setCalendarRefreshKey(prev => prev + 1)
     },
     async (taskId) => {
-      await deleteTask(taskId)
+      await removeTask(taskId)
       await refresh()
       setCalendarRefreshKey(prev => prev + 1)
     },
