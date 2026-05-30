@@ -12,6 +12,12 @@ interface RequestOptions extends RequestInit {
   signal?: AbortSignal
 }
 
+function getCsrfTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/)
+  return match ? match[1] : null
+}
+
 function parseServerError(error: unknown): string {
   if (!error || typeof error !== 'object') return 'Unknown error'
 
@@ -40,6 +46,14 @@ export async function apiRequest<T>(
       ? Intl.DateTimeFormat().resolvedOptions().timeZone
       : 'UTC',
     ...(customHeaders as Record<string, string>),
+  }
+
+  const isStateChanging = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(restOptions.method || '')
+  if (isStateChanging) {
+    const csrfToken = getCsrfTokenFromCookie()
+    if (csrfToken) {
+      headers['x-csrf-token'] = csrfToken
+    }
   }
 
   try {

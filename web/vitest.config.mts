@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './setupTests.ts',
-    include: ['domain/**/*.test.ts', 'hooks/**/*.test.ts', 'components/**/*.test.tsx', 'app/**/*.test.tsx'],
+    include: ['domain/**/*.test.ts', 'hooks/**/*.test.ts', 'components/**/*.test.tsx', 'app/**/*.test.tsx', 'lib/**/*.test.ts'],
   },
   esbuild: {
     jsx: 'automatic',
