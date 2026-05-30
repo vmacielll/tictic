@@ -10,7 +10,6 @@ test.describe('Lists - Full CRUD Flow', () => {
     await page.goto('/lists')
     await expect(page.getByTestId('lists-page')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
   })
 
   test('should create a list', async ({ page }) => {
@@ -90,11 +89,11 @@ test.describe('Lists - Full CRUD Flow', () => {
     const listItem = page.locator('[data-testid^="list-item-"]').filter({ hasText: listName }).first()
     await expect(listItem).toBeVisible({ timeout: 15000 })
 
+    // Confirm deletion (dialog) — must be registered BEFORE clicking delete
+    page.once('dialog', (dialog) => dialog.accept())
+
     // Click delete button
     await listItem.getByTestId('list-delete-button').click()
-
-    // Confirm deletion (dialog)
-    page.once('dialog', (dialog) => dialog.accept())
 
     // Verify the list is removed
     await expect(listItem).not.toBeVisible({ timeout: 10000 })
@@ -112,8 +111,8 @@ test.describe('Lists - Full CRUD Flow', () => {
     const listItem = page.locator('[data-testid^="list-item-"]').filter({ hasText: listName }).first()
     await expect(listItem).toBeVisible({ timeout: 15000 })
 
-    // Click the list item to navigate to its detail page
-    await listItem.click()
+    // Click the list item link to navigate to its detail page
+    await listItem.locator('a').first().click()
 
     // Should navigate to /lists/:id
     await expect(page).toHaveURL(/\/lists\//)

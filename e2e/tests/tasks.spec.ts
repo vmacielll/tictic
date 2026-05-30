@@ -10,7 +10,6 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await page.goto('/inbox')
     await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
   })
 
   test('should create, complete, and delete a task via UI', async ({ page }) => {
@@ -19,16 +18,18 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await page.getByTestId('task-add-button').click()
+    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
 
-    // Wait for task to be created - wait for the task item to appear
-    const taskItem = page.locator('[data-testid^="task-item-"]').first()
-    await taskItem.waitFor({ state: 'attached', timeout: 15000 })
-    
-    // Wait for task title to be visible
-    const taskText = page.getByText(taskTitle)
-    await expect(taskText).toBeVisible({ timeout: 10000 })
-    await expect(taskItem).toBeVisible({ timeout: 10000 })
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
+    )
+    await page.getByTestId('task-add-button').click()
+    const response = await responsePromise
+    expect(response.status(), `Expected 201, got ${response.status()}`).toBe(201)
+
+    // Wait for task to appear by text content
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    await expect(taskItem).toBeVisible({ timeout: 15000 })
 
     await taskItem.getByTestId('task-complete-button').click()
     await expect(taskItem.getByTestId('task-item-title')).toHaveClass(/line-through/)
@@ -145,12 +146,18 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await page.getByTestId('task-add-button').click()
+    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
 
-    // Wait for task to appear
-    const taskItem = page.locator('[data-testid^="task-item-"]').first()
-    await taskItem.waitFor({ state: 'attached', timeout: 15000 })
-    await expect(taskItem).toBeVisible({ timeout: 10000 })
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
+    )
+    await page.getByTestId('task-add-button').click()
+    const response = await responsePromise
+    expect(response.status(), `Expected 201, got ${response.status()}`).toBe(201)
+
+    // Wait for task to appear by text content
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    await expect(taskItem).toBeVisible({ timeout: 15000 })
 
     await taskItem.hover()
     await taskItem.getByLabel('View task details').click()
@@ -183,12 +190,20 @@ test.describe('Tasks - Full CRUD Flow', () => {
 
     const taskTitle = `Today Task ${Date.now()}`
     const taskInput = page.getByTestId('task-input')
+    await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await page.getByTestId('task-add-button').click()
+    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
 
-    // Wait for task to appear
-    const taskItem = page.locator('[data-testid^="task-item-"]').first()
-    await taskItem.waitFor({ state: 'attached', timeout: 15000 })
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
+    )
+    await page.getByTestId('task-add-button').click()
+    const response = await responsePromise
+    expect(response.status(), `Expected 201, got ${response.status()}`).toBe(201)
+
+    // Wait for task to appear by text content
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    await expect(taskItem).toBeVisible({ timeout: 15000 })
 
     const taskText = page.getByText(taskTitle)
     await expect(taskText).toBeVisible({ timeout: 10000 })

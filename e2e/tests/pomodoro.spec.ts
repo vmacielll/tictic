@@ -11,14 +11,10 @@ test.describe('Pomodoro', () => {
     await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
     await page.waitForLoadState('networkidle')
 
-    // Wait for any session to settle
-    await page.waitForTimeout(2000)
-
     // Check if there's an active session (cancel button visible) and cancel it first
     const cancelButton = page.getByTestId('pomodoro-cancel-button')
     if (await cancelButton.isVisible().catch(() => false)) {
       await cancelButton.click()
-      await page.waitForTimeout(1000)
     }
 
     // Now click the start button (may have different text depending on state)
@@ -28,9 +24,6 @@ test.describe('Pomodoro', () => {
 
     // Wait for the timer to appear first (indicates session started)
     await expect(page.locator('text=/\\d{2}:\\d{2}/')).toBeVisible({ timeout: 15000 })
-
-    // Wait a bit for the session status to propagate
-    await page.waitForTimeout(1000)
 
     // Check if "Focusing" appears or if we see the timer running
     const focusingVisible = await page.getByTestId('pomodoro-status').isVisible().catch(() => false)
@@ -44,13 +37,10 @@ test.describe('Pomodoro', () => {
     await page.waitForLoadState('networkidle')
     await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
 
-    await page.waitForTimeout(2000)
-
     const startButton = page.getByTestId('pomodoro-start-button')
     if (await startButton.isVisible().catch(() => false)) {
       await startButton.click()
       await expect(page.locator('text=/\\d{2}:\\d{2}/')).toBeVisible({ timeout: 15000 })
-      await page.waitForTimeout(3000)
     }
 
     const cancelButton = page.getByTestId('pomodoro-cancel-button')
@@ -67,13 +57,10 @@ test.describe('Pomodoro', () => {
     await page.waitForLoadState('networkidle')
     await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
 
-    await page.waitForTimeout(2000)
-
     const startButton = page.getByTestId('pomodoro-start-button')
     if (await startButton.isVisible().catch(() => false)) {
       await startButton.click()
       await expect(page.locator('text=/\\d{2}:\\d{2}/')).toBeVisible({ timeout: 15000 })
-      await page.waitForTimeout(3000)
     }
 
     const completeButton = page.getByTestId('pomodoro-complete-button')
@@ -119,11 +106,18 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
     const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await page.getByTestId('task-add-button').click()
+    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
 
-    // Wait for task to be created - wait for the task item to appear
-    const taskItem = page.locator('[data-testid^="task-item-"]').first()
-    await taskItem.waitFor({ state: 'attached', timeout: 15000 })
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
+    )
+    await page.getByTestId('task-add-button').click()
+    const response = await responsePromise
+    expect(response.status(), `Expected 201, got ${response.status()}`).toBe(201)
+
+    // Wait for task to appear by text content
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    await expect(taskItem).toBeVisible({ timeout: 15000 })
 
     // Use test-id instead of fragile selector
     await taskItem.getByTestId('task-item-content').click()

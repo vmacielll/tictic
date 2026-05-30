@@ -8,6 +8,7 @@ test.describe('Calendar - Timezone Validation', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/calendar')
+    await page.waitForLoadState('networkidle')
     // Wait for the calendar header to be visible
     await expect(page.getByTestId('calendar-today-btn')).toBeVisible({ timeout: 10000 })
   })
@@ -20,7 +21,7 @@ test.describe('Calendar - Timezone Validation', () => {
     await expect(page.getByTestId('calendar-day-view')).toBeVisible({ timeout: 10000 })
 
     // Wait for the day view heading to appear (requires API data)
-    await expect(page.getByTestId('calendar-day-view-heading')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('calendar-day-view-heading')).toBeVisible({ timeout: 30000 })
   })
 
   test('should show correct day names in week view', async ({ page }) => {
@@ -45,8 +46,8 @@ test.describe('Calendar - Timezone Validation', () => {
     // Click "Today" button
     await page.getByTestId('calendar-today-btn').click()
 
-    // Should be back to current month with today highlighted
-    await page.waitForTimeout(1000)
+    // Verify we're back to current month
+    await expect(page.getByTestId('calendar-heading')).toBeVisible({ timeout: 10000 })
     await page.getByTestId('calendar-view-week').click()
     const todayButton = page.getByTestId('calendar-today-btn')
     await expect(todayButton).toBeVisible()

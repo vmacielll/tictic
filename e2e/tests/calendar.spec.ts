@@ -22,7 +22,6 @@ test.describe('Calendar', () => {
     await page.getByTestId('calendar-view-week').click()
     await expect(page.getByTestId('calendar-week-grid')).toBeVisible()
     await page.getByTestId('calendar-view-day').click()
-    await page.waitForTimeout(1000)
     await expect(page.getByTestId('calendar-day-view')).toBeVisible({ timeout: 10000 })
   })
 
