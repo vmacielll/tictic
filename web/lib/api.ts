@@ -9,6 +9,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean
   _retry?: boolean
+  signal?: AbortSignal
 }
 
 function parseServerError(error: unknown): string {
@@ -41,31 +42,38 @@ export async function apiRequest<T>(
     ...(customHeaders as Record<string, string>),
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...restOptions,
-    headers,
-    credentials: 'include',
-  })
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...restOptions,
+      headers,
+      credentials: 'include',
+    })
 
-  if (response.status === 401 && !_retry && requiresAuth) {
-    try {
-      await refreshToken()
-      return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
-    } catch {
-      throw new Error('Session expired')
+    if (response.status === 401 && !_retry && requiresAuth) {
+      try {
+        await refreshToken()
+        return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
+      } catch {
+        throw new Error('Session expired')
+      }
     }
-  }
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed', code: 'UNKNOWN' }))
-    throw new Error(parseServerError(error))
-  }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed', code: 'UNKNOWN' }))
+      throw new Error(parseServerError(error))
+    }
 
-  if (response.status === 204 || response.headers.get('content-length') === '0') {
-    return undefined as unknown as T
-  }
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return undefined as unknown as T
+    }
 
-  return response.json() as Promise<T>
+    return response.json() as Promise<T>
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return undefined as unknown as T
+    }
+    throw error
+  }
 }
 
 async function refreshToken(): Promise<void> {
@@ -105,21 +113,21 @@ export async function register(name: string, email: string, password: string): P
 }
 
 // ── Calendar ──
-export async function getCalendarMonth(month: number, year: number): Promise<CalendarDay[]> {
-  return apiRequest(`/calendar/month?month=${month}&year=${year}`, { requiresAuth: true })
+export async function getCalendarMonth(month: number, year: number, signal?: AbortSignal): Promise<CalendarDay[]> {
+  return apiRequest(`/calendar/month?month=${month}&year=${year}`, { requiresAuth: true, signal })
 }
 
-export async function getCalendarWeek(date: string): Promise<CalendarDay[]> {
-  return apiRequest(`/calendar/week?date=${date}`, { requiresAuth: true })
+export async function getCalendarWeek(date: string, signal?: AbortSignal): Promise<CalendarDay[]> {
+  return apiRequest(`/calendar/week?date=${date}`, { requiresAuth: true, signal })
 }
 
-export async function getCalendarDay(date: string): Promise<CalendarDayDetail> {
-  return apiRequest(`/calendar/day?date=${date}`, { requiresAuth: true })
+export async function getCalendarDay(date: string, signal?: AbortSignal): Promise<CalendarDayDetail> {
+  return apiRequest(`/calendar/day?date=${date}`, { requiresAuth: true, signal })
 }
 
 // ── Tasks ──
-export async function getTask(id: string): Promise<TaskResponse> {
-  return apiRequest(`/tasks/${id}`, { requiresAuth: true })
+export async function getTask(id: string, signal?: AbortSignal): Promise<TaskResponse> {
+  return apiRequest(`/tasks/${id}`, { requiresAuth: true, signal })
 }
 
 export async function createTask(data: CreateTaskInput): Promise<TaskResponse> {
@@ -149,12 +157,12 @@ export async function listTasks(): Promise<TaskResponse[]> {
   return apiRequest('/tasks', { requiresAuth: true })
 }
 
-export async function listTodayTasks(): Promise<TaskResponse[]> {
-  return apiRequest('/tasks/today', { requiresAuth: true })
+export async function listTodayTasks(signal?: AbortSignal): Promise<TaskResponse[]> {
+  return apiRequest('/tasks/today', { requiresAuth: true, signal })
 }
 
-export async function listInboxTasks(): Promise<TaskResponse[]> {
-  return apiRequest('/tasks/inbox', { requiresAuth: true })
+export async function listInboxTasks(signal?: AbortSignal): Promise<TaskResponse[]> {
+  return apiRequest('/tasks/inbox', { requiresAuth: true, signal })
 }
 
 // ── Lists ──
@@ -181,8 +189,8 @@ export async function deleteList(id: string): Promise<void> {
   })
 }
 
-export async function listLists(): Promise<List[]> {
-  return apiRequest('/lists', { requiresAuth: true })
+export async function listLists(signal?: AbortSignal): Promise<List[]> {
+  return apiRequest('/lists', { requiresAuth: true, signal })
 }
 
 export interface ListTasksResponse {
@@ -190,12 +198,12 @@ export interface ListTasksResponse {
   meta: { page: number; size: number; totalCount: number }
 }
 
-export async function listListTasks(listId: string, page?: number, size?: number): Promise<ListTasksResponse> {
+export async function listListTasks(listId: string, page?: number, size?: number, signal?: AbortSignal): Promise<ListTasksResponse> {
   const params = new URLSearchParams()
   if (page) params.set('page', String(page))
   if (size) params.set('size', String(size))
   const query = params.toString() ? `?${params.toString()}` : ''
-  return apiRequest(`/lists/${listId}/tasks${query}`, { requiresAuth: true })
+  return apiRequest(`/lists/${listId}/tasks${query}`, { requiresAuth: true, signal })
 }
 
 // ── Pomodoro ──
@@ -227,14 +235,14 @@ export interface ListPomodorosResponse {
   pomodoroSessions: PomodoroSession[]
 }
 
-export async function listPomodoros(): Promise<ListPomodorosResponse> {
-  return apiRequest('/pomodoro', { requiresAuth: true })
+export async function listPomodoros(signal?: AbortSignal): Promise<ListPomodorosResponse> {
+  return apiRequest('/pomodoro', { requiresAuth: true, signal })
 }
 
 export interface ActivePomodoroResponse {
   pomodoroSession?: PomodoroSession
 }
 
-export async function getActivePomodoro(): Promise<ActivePomodoroResponse> {
-  return apiRequest('/pomodoro/active', { requiresAuth: true })
+export async function getActivePomodoro(signal?: AbortSignal): Promise<ActivePomodoroResponse> {
+  return apiRequest('/pomodoro/active', { requiresAuth: true, signal })
 }

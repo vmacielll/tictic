@@ -4,6 +4,8 @@ import { useTasks } from '@/hooks/useTasks'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { TaskList } from '@/components/tasks/TaskList'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
+import { useListsContext } from '@/contexts/ListsContext'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { DateTime } from 'luxon'
 
 interface TaskPageTemplateProps {
@@ -22,6 +24,7 @@ export function TaskPageTemplate({
   showDate = false,
 }: TaskPageTemplateProps) {
   const { tasks, loading, error, addTask, toggleTask, removeTask, updateTask, refresh } = useTasks(pageKey)
+  const { lists } = useListsContext()
 
   // Use Luxon for date formatting (FR-02)
   const today = DateTime.now()
@@ -65,11 +68,7 @@ export function TaskPageTemplate({
         )}
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       <TaskList
         tasks={tasks}
@@ -80,6 +79,7 @@ export function TaskPageTemplate({
         onDeleteTask={removeTask}
         defaultDueDate={showDate ? todayFormatted : undefined}
         onViewDetails={openModal}
+        lists={lists}
       />
 
       {selectedTask && (
@@ -90,6 +90,7 @@ export function TaskPageTemplate({
           onSave={handleSave}
           onDelete={handleDelete}
           onToggleComplete={handleToggleComplete}
+          lists={lists}
         />
       )}
     </div>

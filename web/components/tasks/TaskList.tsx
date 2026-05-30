@@ -1,9 +1,11 @@
 'use client'
 
+import React from 'react'
 import { type Task } from '@/domain/tasks/types'
 import { TaskItem } from './TaskItem'
 import { TaskForm } from './TaskForm'
 import type { CreateTaskInput } from '@/domain/tasks/types'
+import type { List } from '@/domain/lists/types'
 
 interface TaskListProps {
   tasks: Task[]
@@ -14,6 +16,7 @@ interface TaskListProps {
   onDeleteTask: (id: string) => void
   defaultDueDate?: string
   onViewDetails?: (taskId: string) => void
+  lists?: List[]
 }
 
 export function TaskList({
@@ -25,7 +28,18 @@ export function TaskList({
   onDeleteTask,
   defaultDueDate,
   onViewDetails,
+  lists,
 }: TaskListProps) {
+  const listMap = React.useMemo(() => {
+    const map = new Map<string, List>()
+    if (lists) {
+      for (const list of lists) {
+        map.set(list.id, list)
+      }
+    }
+    return map
+  }, [lists])
+
   if (loading) {
     return (
       <div className="space-y-2">
@@ -38,7 +52,7 @@ export function TaskList({
 
   return (
     <div className="space-y-4">
-      <TaskForm onSubmit={onAddTask} defaultDueDate={defaultDueDate} />
+      <TaskForm onSubmit={onAddTask} defaultDueDate={defaultDueDate} lists={lists} />
 
       {tasks.length === 0 ? (
         <div className="text-center py-12">
@@ -56,6 +70,7 @@ export function TaskList({
               onToggle={onToggleTask}
               onDelete={onDeleteTask}
               onViewDetails={onViewDetails}
+              list={listMap.get(task.listId)}
             />
           ))}
         </div>

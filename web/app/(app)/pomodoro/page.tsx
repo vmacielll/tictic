@@ -2,6 +2,7 @@
 
 import { usePomodoro } from '@/hooks/usePomodoro'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 
 export default function PomodoroPage() {
   const { sessions, loading, error, refreshSessions } = usePomodoro()
@@ -31,11 +32,7 @@ export default function PomodoroPage() {
         <p className="text-sm text-text-muted mt-1">Stay focused and productive</p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timer */}

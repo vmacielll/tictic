@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { DateTime } from 'luxon'
 import { type Task } from '@/domain/tasks/types'
 import { getTask } from '@/lib/api'
@@ -23,10 +23,18 @@ export function useTaskDetail(
 ): UseTaskDetailReturn {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const openModal = useCallback(async (taskId: string) => {
+    // Abort any previous in-flight request
+    if (abortRef.current) {
+      abortRef.current.abort()
+    }
+    abortRef.current = new AbortController()
+
     try {
-      const raw = await getTask(taskId)
+      const raw = await getTask(taskId, abortRef.current.signal)
+      if (!raw) return // Request was aborted
       const task = parseTask(raw)
       setSelectedTask(task)
       setIsModalOpen(true)
@@ -36,6 +44,8 @@ export function useTaskDetail(
   }, [])
 
   const closeModal = useCallback(() => {
+    abortRef.current?.abort()
+    abortRef.current = null
     setIsModalOpen(false)
     setSelectedTask(null)
   }, [])

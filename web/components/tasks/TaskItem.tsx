@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { type Task } from '@/domain/tasks/types'
 
 const PRIORITY_STYLES: Record<string, { border: string; badge: string; label: string }> = {
@@ -13,9 +14,10 @@ interface TaskItemProps {
   onToggle: (id: string, completed: boolean) => void
   onDelete: (id: string) => void
   onViewDetails?: (taskId: string) => void
+  list?: { id: string; name: string; color?: string }
 }
 
-export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemProps) {
+const TaskItem = memo(function TaskItem({ task, onToggle, onDelete, onViewDetails, list }: TaskItemProps) {
   const style = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.MEDIUM
 
   return (
@@ -60,6 +62,17 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
         {style.label}
       </span>
 
+      {/* List badge */}
+      {list && (
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1"
+          style={{ backgroundColor: list.color ? `${list.color}20` : '#6b728020', color: list.color || '#6b7280' }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: list.color || '#6b7280' }} />
+          {list.name}
+        </span>
+      )}
+
       {/* View details button */}
       {onViewDetails && (
         <button
@@ -86,4 +99,6 @@ export function TaskItem({ task, onToggle, onDelete, onViewDetails }: TaskItemPr
       </button>
     </div>
   )
-}
+})
+TaskItem.displayName = 'TaskItem'
+export { TaskItem }

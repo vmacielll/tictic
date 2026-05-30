@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { register, login } from '@/lib/api'
 
 export default function RegisterPage() {
@@ -39,11 +40,7 @@ export default function RegisterPage() {
         <p className="text-sm text-text-muted mt-1">Start organizing your tasks</p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input

@@ -10,6 +10,7 @@ import { DayView } from '@/components/calendar/DayView'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { type CalendarDetailTask } from '@/domain/calendar/types'
 import { type Task } from '@/domain/tasks/types'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { DateTime } from 'luxon'
 
 function toTask(task: CalendarDetailTask): Task {
@@ -127,11 +128,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg text-sm text-danger/90">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       {/* Views */}
       {view === 'month' && (

@@ -65,7 +65,7 @@ describe('useTaskDetail', () => {
         await result.current.openModal(mockTaskResponse.id)
       })
 
-      expect(mockedGetTask).toHaveBeenCalledWith(mockTaskResponse.id)
+      expect(mockedGetTask).toHaveBeenCalledWith(mockTaskResponse.id, expect.any(AbortSignal))
       expect(mockedGetTask).toHaveBeenCalledTimes(1)
       expect(result.current.selectedTask).toEqual(parsedTask)
       expect(result.current.isModalOpen).toBe(true)

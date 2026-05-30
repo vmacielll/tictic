@@ -47,24 +47,27 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     setError(null)
     try {
       if (view === 'month') {
         const month = currentDate.getMonth() + 1
         const year = currentDate.getFullYear()
-        const result = await getCalendarMonth(month, year)
+        const result = await getCalendarMonth(month, year, signal)
+        if (!result) return // Request was aborted
         const parsed = result as { days: unknown[] }
         setDays(parseCalendarDays(parsed.days))
         setSingleDay(null)
       } else if (view === 'week') {
-        const result = await getCalendarWeek(formatDateParam(currentDate))
+        const result = await getCalendarWeek(formatDateParam(currentDate), signal)
+        if (!result) return // Request was aborted
         const parsed = result as { days: unknown[] }
         setDays(parseCalendarDays(parsed.days))
         setSingleDay(null)
       } else {
-        const result = await getCalendarDay(formatDateParam(currentDate))
+        const result = await getCalendarDay(formatDateParam(currentDate), signal)
+        if (!result) return // Request was aborted
         setSingleDay(parseCalendarDayDetail(result))
         setDays([])
       }
@@ -76,7 +79,9 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
   }, [view, currentDate])
 
   useEffect(() => {
-    fetchData()
+    const controller = new AbortController()
+    fetchData(controller.signal)
+    return () => controller.abort()
   }, [fetchData])
 
   const goToPrev = () => {

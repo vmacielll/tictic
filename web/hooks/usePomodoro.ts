@@ -45,9 +45,10 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
 
   // Load sessions on mount
   useEffect(() => {
+    const controller = new AbortController()
     async function init() {
       try {
-        await Promise.all([loadActiveSession(), loadSessions()])
+        await Promise.all([loadActiveSession(controller.signal), loadSessions(controller.signal)])
       } catch {
         // Error handled in individual functions
       } finally {
@@ -55,6 +56,7 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
       }
     }
     init()
+    return () => controller.abort()
   }, [])
 
   // Timer countdown - uses startedAt for accurate calculation (no drift)
@@ -90,9 +92,10 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, isRunning, activeSession])
 
-  const loadActiveSession = useCallback(async () => {
+  const loadActiveSession = useCallback(async (signal?: AbortSignal) => {
     try {
-      const raw = await getActivePomodoro()
+      const raw = await getActivePomodoro(signal)
+      if (!raw) return // Request was aborted
       const session = parseActivePomodoro(raw)
       if (session && session.status === 'RUNNING') {
         setActiveSession(session)
@@ -114,9 +117,10 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
     }
   }, [])
 
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (signal?: AbortSignal) => {
     try {
-      const raw = await listPomodoros()
+      const raw = await listPomodoros(signal)
+      if (!raw) return // Request was aborted
       setSessions(parsePomodoroList(raw))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sessions')

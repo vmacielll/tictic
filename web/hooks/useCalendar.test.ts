@@ -85,7 +85,7 @@ describe('useCalendar', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(getCalendarMonth).toHaveBeenCalledWith(5, 2026)
+    expect(getCalendarMonth).toHaveBeenCalledWith(5, 2026, expect.any(AbortSignal))
     expect(result.current.view).toBe('month')
     expect(result.current.days).toHaveLength(2)
     expect(result.current.days[0].tasks[0].title).toBe('Task 1')
@@ -103,7 +103,7 @@ describe('useCalendar', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(getCalendarWeek).toHaveBeenCalledWith('2026-05-15')
+    expect(getCalendarWeek).toHaveBeenCalledWith('2026-05-15', expect.any(AbortSignal))
     expect(result.current.view).toBe('week')
     expect(result.current.days).toHaveLength(2)
     expect(result.current.singleDay).toBeNull()
@@ -120,7 +120,7 @@ describe('useCalendar', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(getCalendarDay).toHaveBeenCalledWith('2026-05-15')
+    expect(getCalendarDay).toHaveBeenCalledWith('2026-05-15', expect.any(AbortSignal))
     expect(result.current.view).toBe('day')
     expect(result.current.singleDay).not.toBeNull()
     expect(result.current.singleDay?.tasks[0].title).toBe('Day Task')
@@ -138,7 +138,7 @@ describe('useCalendar', () => {
     })
 
     expect(getCalendarMonth).toHaveBeenCalledTimes(1)
-    expect(getCalendarMonth).toHaveBeenCalledWith(5, 2026)
+    expect(getCalendarMonth).toHaveBeenCalledWith(5, 2026, expect.any(AbortSignal))
 
     await act(async () => {
       result.current.goToNext()
@@ -148,7 +148,7 @@ describe('useCalendar', () => {
     })
 
     expect(getCalendarMonth).toHaveBeenCalledTimes(2)
-    expect(getCalendarMonth).toHaveBeenNthCalledWith(2, 6, 2026)
+    expect(getCalendarMonth).toHaveBeenNthCalledWith(2, 6, 2026, expect.any(AbortSignal))
   })
 
   // ── 5. goToPrev ──
@@ -168,7 +168,7 @@ describe('useCalendar', () => {
     })
 
     expect(getCalendarMonth).toHaveBeenCalledTimes(2)
-    expect(getCalendarMonth).toHaveBeenNthCalledWith(2, 4, 2026)
+    expect(getCalendarMonth).toHaveBeenNthCalledWith(2, 4, 2026, expect.any(AbortSignal))
   })
 
   // ── 6. goToToday ──
@@ -187,7 +187,7 @@ describe('useCalendar', () => {
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
-    expect(getCalendarMonth).toHaveBeenNthCalledWith(2, 6, 2026)
+    expect(getCalendarMonth).toHaveBeenNthCalledWith(2, 6, 2026, expect.any(AbortSignal))
 
     // Reset back to today
     await act(async () => {
@@ -198,7 +198,7 @@ describe('useCalendar', () => {
     })
 
     expect(getCalendarMonth).toHaveBeenCalledTimes(3)
-    expect(getCalendarMonth).toHaveBeenNthCalledWith(3, 5, 2026)
+    expect(getCalendarMonth).toHaveBeenNthCalledWith(3, 5, 2026, expect.any(AbortSignal))
     expect(result.current.currentDate.getFullYear()).toBe(2026)
     expect(result.current.currentDate.getMonth()).toBe(4) // May = 4 (0-indexed)
     expect(result.current.currentDate.getDate()).toBe(15)
@@ -223,7 +223,7 @@ describe('useCalendar', () => {
     })
 
     expect(result.current.view).toBe('day')
-    expect(getCalendarDay).toHaveBeenCalledWith('2026-07-20')
+    expect(getCalendarDay).toHaveBeenCalledWith('2026-07-20', expect.any(AbortSignal))
     expect(result.current.singleDay).not.toBeNull()
     expect(result.current.days).toHaveLength(0)
     expect(result.current.error).toBeNull()
@@ -248,7 +248,7 @@ describe('useCalendar', () => {
     })
 
     expect(result.current.view).toBe('week')
-    expect(getCalendarWeek).toHaveBeenCalledWith('2026-05-15')
+    expect(getCalendarWeek).toHaveBeenCalledWith('2026-05-15', expect.any(AbortSignal))
     expect(result.current.days).toHaveLength(2)
     expect(result.current.singleDay).toBeNull()
     expect(result.current.error).toBeNull()
