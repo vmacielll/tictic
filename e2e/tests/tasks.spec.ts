@@ -56,16 +56,16 @@ test.describe('Tasks - Full CRUD Flow', () => {
 
     for (let i = 1; i <= 3; i++) {
       await taskInput.fill(`Task ${i} ${Date.now()}`)
+      const responsePromise = page.waitForResponse(
+        resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
+      )
       await page.getByTestId('task-add-button').click()
-      await page.waitForTimeout(800)
+      await responsePromise
     }
-
-    await page.waitForTimeout(2000)
 
     const taskItems = await page.locator('[data-testid^="task-item-"]').count()
     expect(taskItems).toBeGreaterThanOrEqual(3)
 
-    await page.waitForTimeout(1000)
     const task2Item = page.locator('[data-testid^="task-item-"]').filter({ hasText: 'Task 2' }).first()
     await expect(task2Item).toBeVisible({ timeout: 5000 })
     await task2Item.getByTestId('task-complete-button').click()
@@ -154,9 +154,8 @@ test.describe('Tasks - Full CRUD Flow', () => {
 
     await taskItem.hover()
     await taskItem.getByLabel('View task details').click()
-    
+
     // Wait for modal to open
-    await page.waitForTimeout(1500)
     const titleInput = page.getByTestId('modal-title-input')
     await expect(titleInput).toBeVisible({ timeout: 10000 })
     await titleInput.click()
@@ -167,9 +166,9 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await descInput.fill(newDescription)
 
     await page.getByTestId('modal-save-button').click()
-    
-    // Wait for the save to complete and modal to close
-    await page.waitForTimeout(3000)
+
+    // Wait for modal to close
+    await expect(page.getByTestId('modal-title-input')).not.toBeVisible({ timeout: 10000 })
 
     // Verify the task list has been updated - look for the new title
     // The task list should refresh after save

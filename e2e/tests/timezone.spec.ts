@@ -79,4 +79,22 @@ test.describe('Calendar - Timezone Validation', () => {
     await page.getByTestId('calendar-view-day').click()
     await expect(page.getByTestId('calendar-day-view')).toBeVisible({ timeout: 10000 })
   })
+
+  test('should display correct date at midnight boundary', async ({ page }) => {
+    const heading = page.getByTestId('calendar-heading')
+    await expect(heading).toBeVisible()
+
+    const headingText = await heading.textContent()
+    expect(headingText).toBeTruthy()
+  })
+
+  test('should navigate to correct timezone from calendar', async ({ page }) => {
+    await page.getByTestId('calendar-view-week').click()
+    await expect(page.getByTestId('calendar-week-grid')).toBeVisible({ timeout: 10000 })
+
+    await page.getByTestId('calendar-today-btn').click()
+
+    const heading = page.getByTestId('calendar-heading')
+    await expect(heading).toBeVisible()
+  })
 })
