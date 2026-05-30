@@ -1,6 +1,7 @@
 import type { IListRepository } from '../../domain/repositories/IListRepository'
 import { List } from '../../domain/entities/List'
 import { AppError } from '@shared/errors/AppError'
+import { ensureOwnership } from '@shared/utils/authorize'
 
 interface UpdateListRequest {
   listId: string
@@ -26,9 +27,7 @@ export class UpdateList {
       throw new AppError('List not found', 404, 'LIST_NOT_FOUND')
     }
 
-    if (list.userId !== request.userId) {
-      throw new AppError('Unauthorized', 403, 'FORBIDDEN')
-    }
+    ensureOwnership(list, request.userId, 'list')
 
     if (request.name !== undefined) {
       list.updateName(request.name)

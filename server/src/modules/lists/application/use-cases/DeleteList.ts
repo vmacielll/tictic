@@ -1,5 +1,6 @@
 import type { IListRepository } from '../../domain/repositories/IListRepository'
 import { AppError } from '@shared/errors/AppError'
+import { ensureOwnership } from '@shared/utils/authorize'
 
 interface DeleteListRequest {
   listId: string
@@ -15,9 +16,7 @@ export class DeleteList {
       throw new AppError('List not found', 404, 'LIST_NOT_FOUND')
     }
 
-    if (list.userId !== request.userId) {
-      throw new AppError('Unauthorized', 403, 'FORBIDDEN')
-    }
+    ensureOwnership(list, request.userId, 'list')
 
     await this.listRepository.delete(request.listId, request.userId)
   }

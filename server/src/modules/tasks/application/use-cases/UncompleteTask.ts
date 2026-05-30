@@ -1,5 +1,6 @@
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { AppError } from '@shared/errors/AppError'
+import { ensureOwnership } from '@shared/utils/authorize'
 
 interface UncompleteTaskRequest {
   taskId: string
@@ -22,9 +23,7 @@ export class UncompleteTask {
       throw new AppError('Task not found', 404, 'TASK_NOT_FOUND')
     }
 
-    if (task.userId !== request.userId) {
-      throw new AppError('Unauthorized', 403, 'FORBIDDEN')
-    }
+    ensureOwnership(task, request.userId, 'task')
 
     task.uncomplete()
 

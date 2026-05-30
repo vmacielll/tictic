@@ -63,7 +63,7 @@ describe('CancelPomodoro', () => {
     await expect(
       useCase.execute({ sessionId: 'session-1', userId: 'user-2' })
     ).rejects.toMatchObject({
-      message: 'Unauthorized',
+      message: 'You do not have permission to access this session',
       code: 'FORBIDDEN',
       statusCode: 403,
     })

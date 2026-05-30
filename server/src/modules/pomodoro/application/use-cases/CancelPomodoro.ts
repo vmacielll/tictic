@@ -1,6 +1,7 @@
 import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
 import { type PomodoroSession } from '../../domain/entities/PomodoroSession'
 import { AppError } from '@shared/errors/AppError'
+import { ensureOwnership } from '@shared/utils/authorize'
 
 interface CancelPomodoroRequest {
   sessionId: string
@@ -26,9 +27,7 @@ export class CancelPomodoro {
       throw new AppError('Pomodoro session not found', 404, 'POMODORO_NOT_FOUND')
     }
 
-    if (session.userId !== request.userId) {
-      throw new AppError('Unauthorized', 403, 'FORBIDDEN')
-    }
+    ensureOwnership(session, request.userId, 'session')
 
     session.cancel()
 

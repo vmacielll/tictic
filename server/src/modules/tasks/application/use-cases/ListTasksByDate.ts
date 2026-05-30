@@ -1,5 +1,5 @@
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
-import type { Priority } from '../../domain/types/Priority'
+import { toTaskResponse, type TaskResponse } from '../../http/mappers/taskResponse'
 
 interface ListTasksByDateRequest {
   userId: string
@@ -7,47 +7,13 @@ interface ListTasksByDateRequest {
   timezone: string
 }
 
-interface ListTasksByDateResponse {
-  id: string
-  title: string
-  description?: string
-  priority: Priority
-  dueDate?: string
-  dueTime?: string
-  dueTimezone?: string
-  completed: boolean
-  completedAt?: Date
-  listId?: string
-  userId: string
-  createdAt: Date
-  updatedAt: Date
-}
-
 export class ListTasksByDate {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
-  async execute(request: ListTasksByDateRequest): Promise<ListTasksByDateResponse[]> {
+  async execute(request: ListTasksByDateRequest): Promise<TaskResponse[]> {
     const { userId, date } = request
 
     const tasks = await this.taskRepository.findByDueDate(userId, date)
-    return tasks.map(this.toResponse)
-  }
-
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): ListTasksByDateResponse {
-    return {
-      id: task.id,
-      title: task.title.value,
-      description: task.description,
-      priority: task.priority,
-      dueDate: task.dueDate,
-      dueTime: task.dueTime,
-      dueTimezone: task.dueTimezone,
-      completed: task.completed,
-      completedAt: task.completedAt,
-      listId: task.listId,
-      userId: task.userId,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    }
+    return tasks.map(toTaskResponse)
   }
 }

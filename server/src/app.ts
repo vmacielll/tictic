@@ -8,6 +8,7 @@ import fastifySensible from '@fastify/sensible'
 import { prisma } from '@prisma/PrismaClient'
 import { isValidTimezone } from '@shared/utils/timezone'
 import { initializeLogger } from '@shared/utils/logger'
+import { handleError } from '@shared/utils/handleError'
 import type { AuthenticatedRequest } from '@shared/middleware/authMiddleware'
 
 const requiredEnv = ['JWT_SECRET', 'DATABASE_URL', 'FRONTEND_URL']
@@ -29,6 +30,7 @@ import { UpdateTask } from './modules/tasks/application/use-cases/UpdateTask'
 import { DeleteTask } from './modules/tasks/application/use-cases/DeleteTask'
 import { ListTasks } from './modules/tasks/application/use-cases/ListTasks'
 import { ListTasksByDate } from './modules/tasks/application/use-cases/ListTasksByDate'
+import { ListTasksByList } from './modules/tasks/application/use-cases/ListTasksByList'
 import { ListInboxTasks } from './modules/tasks/application/use-cases/ListInboxTasks'
 import { PrismaTaskRepository } from './modules/tasks/infra/repositories/PrismaTaskRepository'
 import { TasksController } from './modules/tasks/http/TasksController'
@@ -172,7 +174,8 @@ const createList = new CreateList(listRepository)
 const updateList = new UpdateList(listRepository)
 const deleteList = new DeleteList(listRepository)
 const listUserLists = new ListUserLists(listRepository)
-const listsController = new ListsController(createList, updateList, deleteList, listUserLists)
+const listTasksByList = new ListTasksByList(taskRepository)
+const listsController = new ListsController(createList, updateList, deleteList, listUserLists, listTasksByList)
 app.decorate('listsController', listsController)
 
 // Register calendar use cases (uses taskRepository - calendar is a projection of tasks)
@@ -216,21 +219,7 @@ app.get('/health', async () => {
 // Global error handler
 app.setErrorHandler((error, request, reply) => {
   request.log.error({ err: error }, 'Request error')
-
-  if (error.validation) {
-    return reply.badRequest('Validation failed')
-  }
-
-  const statusCode = error.statusCode ?? 500
-
-  const message = statusCode >= 500 && process.env.NODE_ENV === 'production'
-    ? 'Internal Server Error'
-    : error.message
-
-  return reply.status(statusCode).send({
-    message,
-    code: error.code ?? 'INTERNAL_ERROR'
-  })
+  return handleError(error, reply)
 })
 
 const PORT = parseInt(process.env.PORT || '3333', 10)

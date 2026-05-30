@@ -2,12 +2,13 @@ import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import type { PaginationParams } from '@shared/types/pagination'
 import { toTaskResponse, type TaskResponse } from '../../http/mappers/taskResponse'
 
-interface ListTasksRequest {
+interface ListTasksByListRequest {
   userId: string
+  listId: string
   pagination?: PaginationParams
 }
 
-export interface ListTasksOutput {
+export interface ListTasksByListOutput {
   items: TaskResponse[]
   meta: {
     page: number
@@ -16,17 +17,17 @@ export interface ListTasksOutput {
   }
 }
 
-export class ListTasks {
+export class ListTasksByList {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
-  async execute(request: ListTasksRequest): Promise<ListTasksOutput> {
-    const { userId, pagination } = request
+  async execute(request: ListTasksByListRequest): Promise<ListTasksByListOutput> {
+    const { userId, listId, pagination } = request
     const page = pagination?.skip ? Math.floor(pagination.skip / (pagination.take || 20)) + 1 : 1
     const size = pagination?.take || 20
 
     const [tasks, totalCount] = await Promise.all([
-      this.taskRepository.findByUserId(userId, pagination),
-      this.taskRepository.countByUserId(userId),
+      this.taskRepository.findByListId(userId, listId, pagination),
+      this.taskRepository.countByListId(userId, listId),
     ])
 
     return {

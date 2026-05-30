@@ -1,6 +1,8 @@
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { AppError } from '@shared/errors/AppError'
+import { ensureOwnership } from '@shared/utils/authorize'
 import type { Priority } from '../../domain/types/Priority'
+import { toTaskResponse, type TaskResponse } from '../../http/mappers/taskResponse'
 
 interface UpdateTaskRequest {
   taskId: string
@@ -15,34 +17,16 @@ interface UpdateTaskRequest {
   completed?: boolean
 }
 
-interface UpdateTaskResponse {
-  id: string
-  title: string
-  description?: string
-  priority: Priority
-  dueDate?: string
-  dueTime?: string
-  dueTimezone?: string
-  completed: boolean
-  completedAt?: Date
-  listId?: string
-  userId: string
-  createdAt: Date
-  updatedAt: Date
-}
-
 export class UpdateTask {
   constructor(private readonly taskRepository: ITaskRepository) {}
 
-  async execute(request: UpdateTaskRequest): Promise<UpdateTaskResponse> {
+  async execute(request: UpdateTaskRequest): Promise<TaskResponse> {
     const task = await this.taskRepository.findById(request.taskId, request.userId)
     if (!task) {
       throw new AppError('Task not found', 404, 'TASK_NOT_FOUND')
     }
 
-    if (task.userId !== request.userId) {
-      throw new AppError('Unauthorized', 403, 'FORBIDDEN')
-    }
+    ensureOwnership(task, request.userId, 'task')
 
     task.update(
       request.title,
@@ -59,24 +43,6 @@ export class UpdateTask {
     }
 
     const saved = await this.taskRepository.save(task)
-    return this.toResponse(saved)
-  }
-
-  private toResponse(task: { id: string; title: { value: string }; description?: string; priority: Priority; dueDate?: string; dueTime?: string; dueTimezone?: string; completed: boolean; completedAt?: Date; listId?: string; userId: string; createdAt: Date; updatedAt: Date }): UpdateTaskResponse {
-    return {
-      id: task.id,
-      title: task.title.value,
-      description: task.description,
-      priority: task.priority,
-      dueDate: task.dueDate,
-      dueTime: task.dueTime,
-      dueTimezone: task.dueTimezone,
-      completed: task.completed,
-      completedAt: task.completedAt,
-      listId: task.listId,
-      userId: task.userId,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    }
+    return toTaskResponse(saved)
   }
 }

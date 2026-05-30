@@ -4,6 +4,7 @@ import type { Priority } from '../../domain/types/Priority'
 import crypto from 'crypto'
 import type { FastifyBaseLogger } from 'fastify'
 import { getLogger } from '@shared/utils/logger'
+import { toTaskResponse, type TaskResponse } from '../../http/mappers/taskResponse'
 
 interface CreateTaskRequest {
   userId: string
@@ -16,22 +17,6 @@ interface CreateTaskRequest {
   listId?: string
 }
 
-interface CreateTaskResponse {
-  id: string
-  title: string
-  description?: string
-  priority: Priority
-  dueDate?: string
-  dueTime?: string
-  dueTimezone?: string
-  completed: boolean
-  completedAt?: Date
-  listId?: string
-  userId: string
-  createdAt: Date
-  updatedAt: Date
-}
-
 export class CreateTask {
   private logger: FastifyBaseLogger
 
@@ -39,7 +24,7 @@ export class CreateTask {
     this.logger = getLogger('CreateTask')
   }
 
-  async execute(request: CreateTaskRequest): Promise<CreateTaskResponse> {
+  async execute(request: CreateTaskRequest): Promise<TaskResponse> {
     const startTime = Date.now()
     const correlationId = crypto.randomUUID()
 
@@ -84,7 +69,7 @@ export class CreateTask {
         duration,
       }, 'Task created successfully')
 
-      return this.toResponse(created)
+      return toTaskResponse(created)
     } catch (error) {
       const duration = Date.now() - startTime
       this.logger.error({
@@ -95,24 +80,6 @@ export class CreateTask {
         duration,
       }, 'Failed to create task')
       throw error
-    }
-  }
-
-  private toResponse(task: Task): CreateTaskResponse {
-    return {
-      id: task.id,
-      title: task.title.value,
-      description: task.description,
-      priority: task.priority,
-      dueDate: task.dueDate,
-      dueTime: task.dueTime,
-      dueTimezone: task.dueTimezone,
-      completed: task.completed,
-      completedAt: task.completedAt,
-      listId: task.listId,
-      userId: task.userId,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
     }
   }
 }
