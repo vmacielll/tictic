@@ -118,7 +118,7 @@ export default function ListDetailPage() {
           />
         )}
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">{list.name}</h1>
+          <h1 data-testid="page-heading" className="text-2xl font-bold text-text-primary">{list.name}</h1>
           <p className="text-sm text-text-muted mt-1">
             {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
           </p>

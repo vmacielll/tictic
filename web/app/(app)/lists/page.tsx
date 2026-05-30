@@ -1,12 +1,38 @@
 'use client'
 
+import { useState } from 'react'
 import { useListsContext } from '@/contexts/ListsContext'
 import { ListForm } from '@/components/lists/ListForm'
 import { ListItem } from '@/components/lists/ListItem'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
+import type { List } from '@/domain/lists/types'
 
 export default function ListsPage() {
-  const { lists, loading, error, addList } = useListsContext()
+  const { lists, loading, error, addList, renameList, removeList } = useListsContext()
+  const [editingList, setEditingList] = useState<List | null>(null)
+
+  async function handleRename(list: List) {
+    setEditingList(list)
+  }
+
+  async function handleDelete(list: List) {
+    if (confirm(`Delete "${list.name}"? Tasks will be moved to Inbox.`)) {
+      try {
+        await removeList(list.id)
+      } catch {
+        // Error handled by context
+      }
+    }
+  }
+
+  async function handleSubmit(name: string, color?: string) {
+    if (editingList) {
+      await renameList(editingList.id, name)
+      setEditingList(null)
+    } else {
+      await addList(name, color)
+    }
+  }
 
   return (
     <div data-testid="lists-page" className="max-w-2xl animate-fade-in">
@@ -18,7 +44,18 @@ export default function ListsPage() {
       {error && <ErrorMessage message={error} />}
 
       <div className="mb-6">
-        <ListForm onSubmit={addList} />
+        <ListForm
+          onSubmit={handleSubmit}
+          initialName={editingList?.name}
+        />
+        {editingList && (
+          <button
+            onClick={() => setEditingList(null)}
+            className="mt-2 text-xs text-text-muted hover:text-text-primary transition-colors"
+          >
+            Cancel editing
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -39,7 +76,12 @@ export default function ListsPage() {
       ) : (
         <div className="space-y-1.5">
           {lists.map((list) => (
-            <ListItem key={list.id} list={list} />
+            <ListItem
+              key={list.id}
+              list={list}
+              onRename={handleRename}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
