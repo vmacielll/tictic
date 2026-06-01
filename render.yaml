@@ -15,8 +15,7 @@ services:
     rootDir: server
 
     buildCommand: npm install && npx prisma generate --schema=src/infra/database/prisma/schema.prisma && npm run build
-    preDeployCommand: npx prisma migrate deploy --schema=src/infra/database/prisma/schema.prisma
-    startCommand: node -r tsconfig-paths/register dist/app.js
+    startCommand: npx prisma migrate deploy --schema=src/infra/database/prisma/schema.prisma && node -r tsconfig-paths/register dist/app.js
 
     healthCheckPath: /health
 
@@ -40,4 +39,3 @@ services:
 
       - key: FRONTEND_URL
         value: https://tictic-app.vercel.app
-        sync: false
