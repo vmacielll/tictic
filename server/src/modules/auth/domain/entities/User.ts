@@ -30,12 +30,14 @@ export class User {
   static create(name: string, email: string, passwordHash: string): User {
     const id = crypto.randomUUID()
     const emailVO = new Email(email)
+    const now = new Date()
     return new User({
       id,
       name,
       email: emailVO,
       passwordHash,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     })
   }
 
