@@ -49,6 +49,7 @@ export const updateTaskSchema = z.object({
   dueDate: dateIsoString.optional(),
   dueTime: timeString.optional(),
   listId: uuidSchema.optional(),
+  completed: z.boolean().optional(),
 })
 
 export type UpdateTaskInput = z.output<typeof updateTaskSchema>

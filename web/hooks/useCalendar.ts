@@ -63,12 +63,12 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
         const year = currentDate.getFullYear()
         const result = await getCalendarMonth(month, year, signal)
         if (!result) return { days: [], singleDay: null }
-        const parsed = result as { days: unknown[] }
+        const parsed = result as unknown as { days: unknown[] }
         return { days: parseCalendarDays(parsed.days), singleDay: null }
       } else if (view === 'week') {
         const result = await getCalendarWeek(formatDateParam(currentDate), signal)
         if (!result) return { days: [], singleDay: null }
-        const parsed = result as { days: unknown[] }
+        const parsed = result as unknown as { days: unknown[] }
         return { days: parseCalendarDays(parsed.days), singleDay: null }
       } else {
         const result = await getCalendarDay(formatDateParam(currentDate), signal)

@@ -140,12 +140,14 @@ export function useTasks(source: TaskSource = 'inbox'): UseTasksReturn {
     tasks,
     loading: isLoading,
     error,
-    addTask: (data: CreateTaskInput) => addTaskMutation.mutateAsync(data),
+    addTask: (data: CreateTaskInput): Promise<void> =>
+      addTaskMutation.mutateAsync(data).then(() => {}),
     updateTask: (id: string, data: UpdateTaskInput) =>
       updateTaskMutation.mutateAsync({ id, data }),
-    toggleTask: (id: string, currentCompleted: boolean) =>
-      toggleTaskMutation.mutateAsync({ id, completed: !currentCompleted }),
-    removeTask: (id: string) => removeTaskMutation.mutateAsync(id),
+    toggleTask: (id: string, currentCompleted: boolean): Promise<void> =>
+      toggleTaskMutation.mutateAsync({ id, completed: !currentCompleted }).then(() => {}),
+    removeTask: (id: string): Promise<void> =>
+      removeTaskMutation.mutateAsync(id).then(() => {}),
     refresh: () => refresh(),
   }
 }

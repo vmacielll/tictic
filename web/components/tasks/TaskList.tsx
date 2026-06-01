@@ -70,7 +70,7 @@ export function TaskList({
               onToggle={onToggleTask}
               onDelete={onDeleteTask}
               onViewDetails={onViewDetails}
-              list={listMap.get(task.listId)}
+              list={task.listId ? listMap.get(task.listId) : undefined}
             />
           ))}
         </div>

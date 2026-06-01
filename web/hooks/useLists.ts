@@ -143,14 +143,14 @@ export function useLists(): UseListsReturn {
     lists,
     loading: isLoading,
     error,
-    addList: (name: string, color?: string) =>
-      addListMutation.mutateAsync({ name, color }),
-    renameList: (id: string, name: string) =>
-      renameListMutation.mutateAsync({ id, name }),
-    changeColor: (id: string, color: string) =>
-      changeColorMutation.mutateAsync({ id, color }),
-    removeList: (id: string) =>
-      removeListMutation.mutateAsync(id),
+    addList: (name: string, color?: string): Promise<void> =>
+      addListMutation.mutateAsync({ name, color }).then(() => {}),
+    renameList: (id: string, name: string): Promise<void> =>
+      renameListMutation.mutateAsync({ id, name }).then(() => {}),
+    changeColor: (id: string, color: string): Promise<void> =>
+      changeColorMutation.mutateAsync({ id, color }).then(() => {}),
+    removeList: (id: string): Promise<void> =>
+      removeListMutation.mutateAsync(id).then(() => {}),
     refresh: () => refresh(),
   }
 }
