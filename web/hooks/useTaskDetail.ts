@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useState, useCallback } from 'react'
 import { DateTime } from 'luxon'
 import { type Task } from '@/domain/tasks/types'
 import { getTask } from '@/lib/api'
@@ -23,29 +24,23 @@ export function useTaskDetail(
 ): UseTaskDetailReturn {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const abortRef = useRef<AbortController | null>(null)
+  const queryClient = useQueryClient()
 
   const openModal = useCallback(async (taskId: string) => {
-    // Abort any previous in-flight request
-    if (abortRef.current) {
-      abortRef.current.abort()
-    }
-    abortRef.current = new AbortController()
-
     try {
-      const raw = await getTask(taskId, abortRef.current.signal)
-      if (!raw) return // Request was aborted
-      const task = parseTask(raw)
+      const task = await queryClient.fetchQuery({
+        queryKey: ['task', taskId],
+        queryFn: ({ signal }) => getTask(taskId, signal).then(parseTask),
+        staleTime: 0,
+      })
       setSelectedTask(task)
       setIsModalOpen(true)
     } catch (error) {
       console.error('Failed to fetch task:', error)
     }
-  }, [])
+  }, [queryClient])
 
   const closeModal = useCallback(() => {
-    abortRef.current?.abort()
-    abortRef.current = null
     setIsModalOpen(false)
     setSelectedTask(null)
   }, [])

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useCalendar } from './useCalendar'
 
 // ── Mock @/lib/api ──
@@ -16,6 +18,30 @@ import {
   getCalendarDay,
   updateTask,
 } from '@/lib/api'
+
+// ── Test QueryClient ──
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        refetchOnWindowFocus: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  })
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
+}
 
 // ── Mock data ──
 // Must pass through calendarDaySchema / calendarDayDetailSchema Zod parsers.
@@ -76,7 +102,7 @@ describe('useCalendar', () => {
   it('fetches month data on mount with default initialView', async () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
 
     expect(result.current.loading).toBe(true)
     expect(result.current.days).toEqual([])
@@ -97,7 +123,7 @@ describe('useCalendar', () => {
   it('fetches week data on mount when initialView is week', async () => {
     vi.mocked(getCalendarWeek).mockResolvedValue({ days: mockDaysData })
 
-    const { result } = renderHook(() => useCalendar('week'))
+    const { result } = renderHook(() => useCalendar('week'), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -114,7 +140,7 @@ describe('useCalendar', () => {
   it('fetches day data on mount when initialView is day', async () => {
     vi.mocked(getCalendarDay).mockResolvedValue(mockDayDetail)
 
-    const { result } = renderHook(() => useCalendar('day'))
+    const { result } = renderHook(() => useCalendar('day'), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -132,7 +158,7 @@ describe('useCalendar', () => {
   it('goToNext advances the date and re-fetches (month view)', async () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -155,7 +181,7 @@ describe('useCalendar', () => {
   it('goToPrev goes back and re-fetches (month view)', async () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -175,7 +201,7 @@ describe('useCalendar', () => {
   it('goToToday resets currentDate to today and re-fetches', async () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -209,7 +235,7 @@ describe('useCalendar', () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
     vi.mocked(getCalendarDay).mockResolvedValue(mockDayDetail)
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -234,7 +260,7 @@ describe('useCalendar', () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
     vi.mocked(getCalendarWeek).mockResolvedValue({ days: mockDaysData })
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -255,11 +281,11 @@ describe('useCalendar', () => {
   })
 
   // ── 9. onToggleTask ──
-  it('onToggleTask calls updateTask then re-fetches', async () => {
+  it('onToggleTask calls updateTask then invalidates (refetches)', async () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
-    vi.mocked(updateTask).mockResolvedValue({})
+    vi.mocked(updateTask).mockResolvedValue({} as never)
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -270,8 +296,10 @@ describe('useCalendar', () => {
     })
 
     expect(updateTask).toHaveBeenCalledWith(MOCK_TASK_ID_1, { completed: true })
-    // Should have re-fetched after the update
-    expect(getCalendarMonth).toHaveBeenCalledTimes(2)
+    // Invalidation triggers a refetch — wait for the API call
+    await waitFor(() => {
+      expect(getCalendarMonth).toHaveBeenCalledTimes(2)
+    })
     expect(result.current.error).toBeNull()
   })
 
@@ -280,7 +308,7 @@ describe('useCalendar', () => {
     vi.mocked(getCalendarMonth).mockResolvedValue({ days: mockDaysData })
     vi.mocked(updateTask).mockRejectedValue(new Error('Failed to update'))
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -300,7 +328,7 @@ describe('useCalendar', () => {
   it('sets error message when initial fetch fails', async () => {
     vi.mocked(getCalendarMonth).mockRejectedValue(new Error('Network error'))
 
-    const { result } = renderHook(() => useCalendar())
+    const { result } = renderHook(() => useCalendar(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)

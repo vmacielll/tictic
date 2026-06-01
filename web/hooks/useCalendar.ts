@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DateTime } from 'luxon'
 import {
   getCalendarMonth,
@@ -11,12 +12,16 @@ import {
 import {
   type CalendarDay,
   type CalendarDayDetail,
-  type CalendarDetailTask,
   parseCalendarDays,
   parseCalendarDayDetail,
 } from '@/domain/calendar/types'
 
 type CalendarView = 'month' | 'week' | 'day'
+
+interface CalendarQueryResult {
+  days: CalendarDay[]
+  singleDay: CalendarDayDetail | null
+}
 
 interface UseCalendarReturn {
   view: CalendarView
@@ -40,49 +45,47 @@ function formatDateParam(date: Date): string {
 }
 
 export function useCalendar(initialView: CalendarView = 'month'): UseCalendarReturn {
+  const queryClient = useQueryClient()
   const [view, setView] = useState<CalendarView>(initialView)
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [days, setDays] = useState<CalendarDay[]>([])
-  const [singleDay, setSingleDay] = useState<CalendarDayDetail | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const fetchData = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true)
-    setError(null)
-    try {
+  const queryKey = ['calendar', view, currentDate.getTime()] as const
+
+  const {
+    data = { days: [], singleDay: null },
+    isLoading,
+    error: queryError,
+  } = useQuery<CalendarQueryResult>({
+    queryKey,
+    queryFn: async ({ signal }) => {
       if (view === 'month') {
         const month = currentDate.getMonth() + 1
         const year = currentDate.getFullYear()
         const result = await getCalendarMonth(month, year, signal)
-        if (!result) return // Request was aborted
+        if (!result) return { days: [], singleDay: null }
         const parsed = result as { days: unknown[] }
-        setDays(parseCalendarDays(parsed.days))
-        setSingleDay(null)
+        return { days: parseCalendarDays(parsed.days), singleDay: null }
       } else if (view === 'week') {
         const result = await getCalendarWeek(formatDateParam(currentDate), signal)
-        if (!result) return // Request was aborted
+        if (!result) return { days: [], singleDay: null }
         const parsed = result as { days: unknown[] }
-        setDays(parseCalendarDays(parsed.days))
-        setSingleDay(null)
+        return { days: parseCalendarDays(parsed.days), singleDay: null }
       } else {
         const result = await getCalendarDay(formatDateParam(currentDate), signal)
-        if (!result) return // Request was aborted
-        setSingleDay(parseCalendarDayDetail(result))
-        setDays([])
+        if (!result) return { days: [], singleDay: null }
+        return { days: [], singleDay: parseCalendarDayDetail(result) }
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch calendar data')
-    } finally {
-      setLoading(false)
-    }
-  }, [view, currentDate])
+    },
+  })
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchData(controller.signal)
-    return () => controller.abort()
-  }, [fetchData])
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      await updateTask(id, { completed: !completed })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
 
   const goToPrev = () => {
     const dt = DateTime.fromJSDate(currentDate)
@@ -108,19 +111,32 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
     setView('day')
   }
 
-  const refresh = useCallback(async () => {
-    await fetchData()
-  }, [fetchData])
+  const refresh = () => queryClient.invalidateQueries({ queryKey })
 
-  const onToggleTask = useCallback(async (id: string, completed: boolean) => {
-    try {
-      await updateTask(id, { completed: !completed })
-      await fetchData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle task')
-      throw err
-    }
-  }, [fetchData])
+  const onToggleTask = async (id: string, completed: boolean) => {
+    await toggleMutation.mutateAsync({ id, completed })
+  }
 
-  return { view, setView, currentDate, days, singleDay, loading, error, goToPrev, goToNext, goToToday, goToDay, onToggleTask, refresh }
+  const error =
+    toggleMutation.error instanceof Error
+      ? toggleMutation.error.message
+      : queryError instanceof Error
+        ? queryError.message
+        : null
+
+  return {
+    view,
+    setView,
+    currentDate,
+    days: data.days,
+    singleDay: data.singleDay,
+    loading: isLoading,
+    error,
+    goToPrev,
+    goToNext,
+    goToToday,
+    goToDay,
+    onToggleTask,
+    refresh,
+  }
 }

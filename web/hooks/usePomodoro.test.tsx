@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider, notifyManager } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { usePomodoro } from './usePomodoro'
 
 // ── Mock @/lib/api ──
-// vi.mock is hoisted to the top, so the factory must use inline vi.fn().
 vi.mock('@/lib/api', () => ({
   startPomodoro: vi.fn(),
   completePomodoro: vi.fn(),
@@ -20,12 +21,35 @@ import {
   getActivePomodoro,
 } from '@/lib/api'
 
+// React Query v5 uses setTimeout(cb, 0) for notification batching by default.
+// With vi.useFakeTimers(), those timers never fire, so queries/mutations
+// never settle. Switch to queueMicrotask so they work with fake timers.
+notifyManager.setScheduler((cb) => queueMicrotask(cb))
+
 // ── Constants ──
 const UUID = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890'
 const USER_ID = 'b2c3d4e5-f6a7-4901-bcde-f12345678901'
 const TASK_ID = 'c3d4e5f6-a7b8-4012-8def-123456789012'
 const DURATION = 25
 const BASE_TIME = new Date('2026-04-10T10:00:00.000Z')
+
+// ── Test QueryClient ──
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0, refetchOnWindowFocus: false },
+      mutations: { retry: false },
+    },
+  })
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
+}
 
 // ── Helpers ──
 function createRawSession(overrides: Record<string, unknown> = {}) {
@@ -46,6 +70,8 @@ function flushMicrotasks(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve))
 }
 
+
+
 // ── Tests ──
 describe('usePomodoro', () => {
   beforeEach(() => {
@@ -65,7 +91,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       expect(result.current.loading).toBe(true)
 
@@ -92,8 +118,9 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({ pomodoroSession: sessionRaw })
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
+      // Flush microtasks (promises) AND React Query's setTimeout(0) scheduler
       await act(async () => {
         await flushMicrotasks()
       })
@@ -112,7 +139,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockRejectedValue(new Error('Network error'))
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false)
@@ -127,7 +154,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockRejectedValue(new Error('List error'))
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false)
@@ -150,7 +177,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -160,6 +187,11 @@ describe('usePomodoro', () => {
 
       await act(async () => {
         await result.current.startSession()
+      })
+
+      // Let the mutation's onSuccess fire and React re-render
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(startPomodoro).toHaveBeenCalledTimes(1)
@@ -172,7 +204,7 @@ describe('usePomodoro', () => {
       expect(result.current.isRunning).toBe(true)
       expect(result.current.timeLeft).toBe(25 * 60 * 1000)
       expect(result.current.loading).toBe(false)
-      // Called on mount + after startSession (via loadSessions)
+      // Called on mount + refetch after startSession (via invalidateQueries)
       expect(listPomodoros).toHaveBeenCalledTimes(2)
     })
 
@@ -183,7 +215,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro(TASK_ID))
+      const { result } = renderHook(() => usePomodoro(TASK_ID), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -193,6 +225,10 @@ describe('usePomodoro', () => {
 
       await act(async () => {
         await result.current.startSession(15)
+      })
+
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(startPomodoro).toHaveBeenCalledWith({
@@ -209,7 +245,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -219,6 +255,10 @@ describe('usePomodoro', () => {
 
       await act(async () => {
         await result.current.startSession(25, TASK_ID)
+      })
+
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(startPomodoro).toHaveBeenCalledWith({
@@ -231,7 +271,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false)
@@ -254,7 +294,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false)
@@ -281,7 +321,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -293,6 +333,10 @@ describe('usePomodoro', () => {
         await result.current.startSession()
       })
 
+      await act(async () => {
+        await flushMicrotasks()
+      })
+
       vi.mocked(completePomodoro).mockResolvedValue(
         createRawSession({
           status: 'COMPLETED',
@@ -302,6 +346,10 @@ describe('usePomodoro', () => {
 
       await act(async () => {
         await result.current.completeSession()
+      })
+
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(completePomodoro).toHaveBeenCalledTimes(1)
@@ -316,7 +364,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false)
@@ -336,7 +384,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -348,10 +396,19 @@ describe('usePomodoro', () => {
         await result.current.startSession()
       })
 
+      await act(async () => {
+        await flushMicrotasks()
+      })
+
       vi.mocked(completePomodoro).mockRejectedValue(new Error('Complete failed'))
 
       await act(async () => {
         await result.current.completeSession()
+      })
+
+      // After mutation onError fires, React Query notifies via setTimeout(0)
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(result.current.error).toBe('Complete failed')
@@ -370,7 +427,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -382,12 +439,20 @@ describe('usePomodoro', () => {
         await result.current.startSession()
       })
 
+      await act(async () => {
+        await flushMicrotasks()
+      })
+
       vi.mocked(cancelPomodoro).mockResolvedValue(
         createRawSession({ status: 'CANCELLED' }),
       )
 
       await act(async () => {
         await result.current.cancelSession()
+      })
+
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(cancelPomodoro).toHaveBeenCalledTimes(1)
@@ -402,7 +467,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false)
@@ -422,7 +487,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -434,10 +499,18 @@ describe('usePomodoro', () => {
         await result.current.startSession()
       })
 
+      await act(async () => {
+        await flushMicrotasks()
+      })
+
       vi.mocked(cancelPomodoro).mockRejectedValue(new Error('Cancel failed'))
 
       await act(async () => {
         await result.current.cancelSession()
+      })
+
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(result.current.error).toBe('Cancel failed')
@@ -456,7 +529,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -466,6 +539,10 @@ describe('usePomodoro', () => {
 
       await act(async () => {
         await result.current.startSession()
+      })
+
+      await act(async () => {
+        await flushMicrotasks()
       })
 
       expect(result.current.activeSession).not.toBeNull()
@@ -482,7 +559,7 @@ describe('usePomodoro', () => {
     })
 
     it('is safe to call when no active session', () => {
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       act(() => {
         result.current.resetSession()
@@ -504,7 +581,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({})
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -522,7 +599,10 @@ describe('usePomodoro', () => {
         await result.current.refreshSessions()
       })
 
-      // Flush microtasks for the async refresh flow
+      // Flush microtasks + React Query scheduler for the refetches
+      await act(async () => {
+        await flushMicrotasks()
+      })
       await act(async () => {
         await flushMicrotasks()
       })
@@ -549,7 +629,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({ pomodoroSession: sessionRaw })
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -583,7 +663,7 @@ describe('usePomodoro', () => {
       vi.mocked(getActivePomodoro).mockResolvedValue({ pomodoroSession: sessionRaw })
       vi.mocked(listPomodoros).mockResolvedValue({ pomodoroSessions: [] })
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -633,7 +713,7 @@ describe('usePomodoro', () => {
         }),
       )
 
-      const { result } = renderHook(() => usePomodoro())
+      const { result } = renderHook(() => usePomodoro(), { wrapper })
 
       await act(async () => {
         await flushMicrotasks()
@@ -647,7 +727,7 @@ describe('usePomodoro', () => {
         vi.advanceTimersByTime(1000)
       })
 
-      // Flush microtasks for completeSession continuation + loadSessions
+      // Flush microtasks for mutation to resolve + onSuccess + invalidation
       await act(async () => {
         await flushMicrotasks()
       })

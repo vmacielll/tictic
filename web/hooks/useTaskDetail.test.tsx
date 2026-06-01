@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { type ReactNode } from 'react'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { getTask } from '@/lib/api'
 import { parseTask, type Task } from '@/domain/tasks/types'
@@ -7,6 +9,18 @@ import { parseTask, type Task } from '@/domain/tasks/types'
 vi.mock('@/lib/api', () => ({
   getTask: vi.fn(),
 }))
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0, refetchOnWindowFocus: false },
+    },
+  })
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+}
 
 // ── Test Data ──
 
@@ -34,7 +48,10 @@ function setup() {
   const onUpdateTask = vi.fn()
   const onDeleteTask = vi.fn()
   const onToggleTask = vi.fn()
-  const { result } = renderHook(() => useTaskDetail(onUpdateTask, onDeleteTask, onToggleTask))
+  const { result } = renderHook(
+    () => useTaskDetail(onUpdateTask, onDeleteTask, onToggleTask),
+    { wrapper }
+  )
   return { result, onUpdateTask, onDeleteTask, onToggleTask }
 }
 

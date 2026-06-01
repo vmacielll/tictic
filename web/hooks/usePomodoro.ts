@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   startPomodoro,
   completePomodoro,
@@ -35,31 +36,106 @@ interface UsePomodoroReturn {
 const DEFAULT_DURATION = 25 // minutes
 
 export function usePomodoro(taskId?: string): UsePomodoroReturn {
+  const queryClient = useQueryClient()
+
   const [activeSession, setActiveSession] = useState<PomodoroSession | null>(null)
-  const [sessions, setSessions] = useState<PomodoroSession[]>([])
   const [timeLeft, setTimeLeft] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  // Load sessions on mount
+  // ── Data fetching via React Query ──
+  const activeQuery = useQuery({
+    queryKey: ['pomodoro', 'active'],
+    queryFn: async ({ signal }) => {
+      const raw = await getActivePomodoro(signal)
+      return parseActivePomodoro(raw)
+    },
+    staleTime: 0,
+  })
+
+  const sessionsQuery = useQuery({
+    queryKey: ['pomodoro', 'sessions'],
+    queryFn: async ({ signal }) => {
+      const raw = await listPomodoros(signal)
+      return parsePomodoroList(raw)
+    },
+  })
+
+  // Sync React Query data → timer state on mount and when activeData changes
   useEffect(() => {
-    const controller = new AbortController()
-    async function init() {
-      try {
-        await Promise.all([loadActiveSession(controller.signal), loadSessions(controller.signal)])
-      } catch {
-        // Error handled in individual functions
-      } finally {
-        setLoading(false)
-      }
+    if (activeQuery.data && activeQuery.data.status === 'RUNNING') {
+      setActiveSession(activeQuery.data)
+      setStartedAt(activeQuery.data.startedAt.getTime())
+      setTimeLeft(getTimeLeft(activeQuery.data))
+      setIsRunning(true)
+    } else if (activeQuery.data !== undefined) {
+      setActiveSession(null)
+      setStartedAt(null)
+      setTimeLeft(0)
+      setIsRunning(false)
     }
-    init()
-    return () => controller.abort()
-  }, [])
+  }, [activeQuery.data])
 
-  // Timer countdown - uses startedAt for accurate calculation (no drift)
+  // ── Mutations ──
+
+  const startMutation = useMutation({
+    mutationFn: async ({ duration, taskIdOverride }: { duration: number; taskIdOverride?: string }) => {
+      const input: StartPomodoroInput = {
+        duration,
+        taskId: taskIdOverride ?? taskId,
+      }
+      const validated = startPomodoroSchema.parse(input)
+      const raw = await startPomodoro(validated)
+      return parsePomodoro(raw)
+    },
+    onSuccess: (session) => {
+      setActiveSession(session)
+      setStartedAt(Date.now())
+      setTimeLeft(session.duration * 60 * 1000)
+      setIsRunning(true)
+      queryClient.invalidateQueries({ queryKey: ['pomodoro', 'sessions'] })
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Failed to start Pomodoro')
+    },
+  })
+
+  const completeMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeSession) throw new Error('No active session')
+      const raw = await completePomodoro(activeSession.id)
+      return parsePomodoro(raw)
+    },
+    onSuccess: (session) => {
+      setActiveSession(session)
+      setIsRunning(false)
+      setTimeLeft(0)
+      queryClient.invalidateQueries({ queryKey: ['pomodoro', 'sessions'] })
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Failed to complete Pomodoro')
+    },
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeSession) throw new Error('No active session')
+      const raw = await cancelPomodoro(activeSession.id)
+      return parsePomodoro(raw)
+    },
+    onSuccess: (session) => {
+      setActiveSession(session)
+      setIsRunning(false)
+      setTimeLeft(0)
+      queryClient.invalidateQueries({ queryKey: ['pomodoro', 'sessions'] })
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Failed to cancel Pomodoro')
+    },
+  })
+
+  // ── Timer countdown — uses startedAt for accurate calculation (no drift) ──
   useEffect(() => {
     if (!isRunning || !startedAt || !activeSession) return
 
@@ -67,7 +143,7 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
       const totalMs = activeSession.duration * 60 * 1000
       const elapsed = Date.now() - startedAt
       const remaining = Math.max(0, totalMs - elapsed)
-      
+
       if (remaining <= 0) {
         setIsRunning(false)
         setTimeLeft(0)
@@ -78,114 +154,46 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
 
     // Update immediately
     updateTimer()
-    
+
     // Then update every second
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
   }, [isRunning, startedAt, activeSession])
 
-  // Auto-complete when timer reaches 0
+  // ── Auto-complete when timer reaches 0 ──
   useEffect(() => {
     if (timeLeft === 0 && activeSession && !isRunning && activeSession.status === 'RUNNING') {
-      completeSession()
+      completeMutation.mutate()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, isRunning, activeSession])
 
-  const loadActiveSession = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const raw = await getActivePomodoro(signal)
-      if (!raw) return // Request was aborted
-      const session = parseActivePomodoro(raw)
-      if (session && session.status === 'RUNNING') {
-        setActiveSession(session)
-        setStartedAt(session.startedAt.getTime())
-        const remaining = getTimeLeft(session)
-        setTimeLeft(remaining)
-        setIsRunning(true)
-      } else {
-        setActiveSession(null)
-        setStartedAt(null)
-        setTimeLeft(0)
-        setIsRunning(false)
-      }
-    } catch {
-      setActiveSession(null)
-      setStartedAt(null)
-      setTimeLeft(0)
-      setIsRunning(false)
-    }
-  }, [])
-
-  const loadSessions = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const raw = await listPomodoros(signal)
-      if (!raw) return // Request was aborted
-      setSessions(parsePomodoroList(raw))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sessions')
-    }
-  }, [])
+  // ── Public interface ──
 
   const startSession = useCallback(async (duration: number = DEFAULT_DURATION, taskIdOverride?: string) => {
-    setLoading(true)
     setError(null)
-    try {
-      const input: StartPomodoroInput = {
-        duration,
-        taskId: taskIdOverride ?? taskId,
-      }
-      const validated = startPomodoroSchema.parse(input)
-      const raw = await startPomodoro(validated)
-      const newSession = parsePomodoro(raw)
-      setActiveSession(newSession)
-      setStartedAt(Date.now())
-      setTimeLeft(newSession.duration * 60 * 1000)
-      setIsRunning(true)
-      await loadSessions()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start Pomodoro')
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }, [taskId, loadSessions])
+    await startMutation.mutateAsync({ duration, taskIdOverride })
+  }, [startMutation])
 
   const completeSession = useCallback(async () => {
     if (!activeSession) return
-    setLoading(true)
     setError(null)
     try {
-      const raw = await completePomodoro(activeSession.id)
-      const updated = parsePomodoro(raw)
-      setActiveSession(updated)
-      setIsRunning(false)
-      setTimeLeft(0)
-      await loadSessions()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to complete Pomodoro')
-    } finally {
-      setLoading(false)
+      await completeMutation.mutateAsync()
+    } catch {
+      // Error is already handled by onError – match original behavior of swallowing
     }
-  }, [activeSession, loadSessions])
+  }, [activeSession, completeMutation])
 
   const cancelSession = useCallback(async () => {
     if (!activeSession) return
-    setLoading(true)
     setError(null)
     try {
-      const raw = await cancelPomodoro(activeSession.id)
-      const updated = parsePomodoro(raw)
-      setActiveSession(updated)
-      setIsRunning(false)
-      setTimeLeft(0)
-      await loadSessions()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel Pomodoro')
-    } finally {
-      setLoading(false)
+      await cancelMutation.mutateAsync()
+    } catch {
+      // Error is already handled by onError – match original behavior of swallowing
     }
-  }, [activeSession, loadSessions])
+  }, [activeSession, cancelMutation])
 
   const resetSession = useCallback(() => {
     setActiveSession(null)
@@ -194,8 +202,24 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
   }, [])
 
   const refreshSessions = useCallback(async () => {
-    await Promise.all([loadActiveSession(), loadSessions()])
-  }, [loadActiveSession, loadSessions])
+    await queryClient.invalidateQueries({ queryKey: ['pomodoro', 'active'] })
+    await queryClient.invalidateQueries({ queryKey: ['pomodoro', 'sessions'] })
+  }, [queryClient])
+
+  const loading =
+    activeQuery.isLoading ||
+    sessionsQuery.isLoading ||
+    startMutation.isPending ||
+    completeMutation.isPending ||
+    cancelMutation.isPending
+
+  const sessions = sessionsQuery.data ?? []
+
+  const combinedError =
+    error ??
+    (activeQuery.error instanceof Error ? activeQuery.error.message : null) ??
+    (sessionsQuery.error instanceof Error ? sessionsQuery.error.message : null) ??
+    null
 
   return {
     activeSession,
@@ -203,7 +227,7 @@ export function usePomodoro(taskId?: string): UsePomodoroReturn {
     timeLeft,
     isRunning,
     loading,
-    error,
+    error: combinedError,
     startSession,
     completeSession,
     cancelSession,
