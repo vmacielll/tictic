@@ -134,6 +134,19 @@ export class PrismaTaskRepository implements ITaskRepository {
     await this.prisma.task.delete({ where: { id, userId } })
   }
 
+  async findByListId(userId: string, listId: string, pagination?: PaginationParams): Promise<Task[]> {
+    const prismaTasks = await this.prisma.task.findMany({
+      where: { userId, listId },
+      orderBy: { createdAt: 'desc' },
+      ...normalizePagination(pagination),
+    })
+    return prismaTasks.map(prismaTaskToDomain)
+  }
+
+  async countByListId(userId: string, listId: string): Promise<number> {
+    return this.prisma.task.count({ where: { userId, listId } })
+  }
+
   async countByUserId(userId: string): Promise<number> {
     return this.prisma.task.count({ where: { userId } })
   }

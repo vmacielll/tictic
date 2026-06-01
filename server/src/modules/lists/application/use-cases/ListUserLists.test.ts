@@ -22,13 +22,18 @@ describe('ListUserLists', () => {
     const list1 = List.create('user-1', 'List 1')
     const list2 = List.create('user-1', 'List 2')
 
-    vi.spyOn(mockListRepository, 'findByUserId').mockResolvedValue([list1, list2])
+    vi.spyOn(mockListRepository, 'findByUserId').mockResolvedValue([
+      Object.assign(list1, { taskCount: 0 }),
+      Object.assign(list2, { taskCount: 0 }),
+    ])
 
     const result = await useCase.execute({ userId: 'user-1' })
 
     expect(result).toHaveLength(2)
     expect(result[0].name).toBe('List 1')
+    expect(result[0].taskCount).toBe(0)
     expect(result[1].name).toBe('List 2')
+    expect(result[1].taskCount).toBe(0)
   })
 
   it('should return empty list when user has no lists', async () => {
@@ -41,7 +46,7 @@ describe('ListUserLists', () => {
 
   it('should call repository with correct userId', async () => {
     const list = List.create('user-1', 'List 1')
-    const findByUserIdSpy = vi.spyOn(mockListRepository, 'findByUserId').mockResolvedValue([list])
+    const findByUserIdSpy = vi.spyOn(mockListRepository, 'findByUserId').mockResolvedValue([Object.assign(list, { taskCount: 0 })])
 
     await useCase.execute({ userId: 'user-1' })
 
@@ -59,7 +64,7 @@ describe('ListUserLists', () => {
   it('should map lists to response format', async () => {
     const list = List.create('user-1', 'My List', '#FF0000')
 
-    vi.spyOn(mockListRepository, 'findByUserId').mockResolvedValue([list])
+    vi.spyOn(mockListRepository, 'findByUserId').mockResolvedValue([Object.assign(list, { taskCount: 5 })])
 
     const result = await useCase.execute({ userId: 'user-1' })
 
@@ -67,5 +72,6 @@ describe('ListUserLists', () => {
     expect(result[0].name).toBe('My List')
     expect(result[0].color).toBe('#FF0000')
     expect(result[0].userId).toBe('user-1')
+    expect(result[0].taskCount).toBe(5)
   })
 })

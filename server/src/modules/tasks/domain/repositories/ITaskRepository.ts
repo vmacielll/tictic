@@ -25,4 +25,6 @@ export interface ITaskRepository {
   save(task: Task): Promise<Task>
   delete(id: string, userId: string): Promise<void>
   countByUserId(userId: string): Promise<number>
+  findByListId(userId: string, listId: string, pagination?: PaginationParams): Promise<Task[]>
+  countByListId(userId: string, listId: string): Promise<number>
 }

@@ -10,6 +10,7 @@ interface ListUserListsResponse {
   color?: string
   userId: string
   createdAt: Date
+  taskCount: number
 }
 
 export class ListUserLists {
@@ -20,13 +21,14 @@ export class ListUserLists {
     return lists.map(this.toResponse)
   }
 
-  private toResponse(list: { id: string; name: { value: string }; color?: string; userId: string; createdAt: Date }): ListUserListsResponse {
+  private toResponse(list: { id: string; name: { value: string }; color?: string; userId: string; createdAt: Date; taskCount: number }): ListUserListsResponse {
     return {
       id: list.id,
       name: list.name.value,
       color: list.color,
       userId: list.userId,
       createdAt: list.createdAt,
+      taskCount: list.taskCount,
     }
   }
 }

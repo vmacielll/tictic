@@ -75,6 +75,7 @@ model Task {
   @@index([userId, completed])
   @@index([userId, dueDate])
   @@index([userId, priority])
+  @@index([userId, listId])
   @@map("tasks")
 }
 

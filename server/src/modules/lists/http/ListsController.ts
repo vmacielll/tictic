@@ -3,9 +3,10 @@ import { CreateList } from '../application/use-cases/CreateList'
 import { UpdateList } from '../application/use-cases/UpdateList'
 import { DeleteList } from '../application/use-cases/DeleteList'
 import { ListUserLists } from '../application/use-cases/ListUserLists'
+import { ListTasksByList } from '../../tasks/application/use-cases/ListTasksByList'
 import { handleError } from '../../../shared/utils/handleError'
 import { validationError } from '../../../shared/utils/validationError'
-import { CreateListSchema, UpdateListSchema, ListIdSchema } from './schemas'
+import { CreateListSchema, UpdateListSchema, ListIdSchema, ListTasksQuerySchema } from './schemas'
 import type { AuthenticatedRequest } from '../../../shared/middleware/authMiddleware'
 
 export class ListsController {
@@ -14,6 +15,7 @@ export class ListsController {
     private readonly updateList: UpdateList,
     private readonly deleteList: DeleteList,
     private readonly listUserLists: ListUserLists,
+    private readonly listTasksByList: ListTasksByList,
   ) {}
 
   async create(request: FastifyRequest, reply: FastifyReply) {
@@ -58,6 +60,37 @@ export class ListsController {
         userId: req.userId,
         name: body.name,
         color: body.color,
+      })
+      return reply.send(result)
+    } catch (error) {
+      return handleError(error, reply)
+    }
+  }
+
+  async listTasks(request: FastifyRequest, reply: FastifyReply) {
+    const req = request as AuthenticatedRequest
+
+    const paramsResult = ListIdSchema.safeParse(request.params)
+    if (!paramsResult.success) {
+      return validationError(reply, paramsResult.error)
+    }
+    const { id } = paramsResult.data
+
+    const queryResult = ListTasksQuerySchema.safeParse(request.query)
+    if (!queryResult.success) {
+      return validationError(reply, queryResult.error)
+    }
+    const query = queryResult.data
+
+    const page = Number(query.page) || 1
+    const size = Number(query.size) || 20
+    const pagination = { skip: (page - 1) * size, take: size }
+
+    try {
+      const result = await this.listTasksByList.execute({
+        userId: req.userId,
+        listId: id,
+        pagination,
       })
       return reply.send(result)
     } catch (error) {

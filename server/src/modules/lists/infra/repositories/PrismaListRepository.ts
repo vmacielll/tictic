@@ -25,12 +25,16 @@ export class PrismaListRepository implements IListRepository {
     return prismaListToDomain(prismaList)
   }
 
-  async findByUserId(userId: string): Promise<List[]> {
+  async findByUserId(userId: string): Promise<(List & { taskCount: number })[]> {
     const prismaLists = await this.prisma.list.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
+      include: { _count: { select: { tasks: true } } },
     })
-    return prismaLists.map(prismaListToDomain)
+    return prismaLists.map((prismaList) => {
+      const list = prismaListToDomain(prismaList)
+      return Object.assign(list, { taskCount: prismaList._count.tasks })
+    })
   }
 
   async save(list: List): Promise<List> {
