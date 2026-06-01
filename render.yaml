@@ -1,0 +1,43 @@
+# TickTick Clone — Render Blueprint
+# Deploy to Render using this single file: Infrastructure as Code
+
+databases:
+  - name: tictic-db
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: tictic-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: server
+
+    buildCommand: npm install && npx prisma generate --schema=src/infra/database/prisma/schema.prisma && npm run build
+    preDeployCommand: npx prisma migrate deploy --schema=src/infra/database/prisma/schema.prisma
+    startCommand: node -r tsconfig-paths/register dist/app.js
+
+    healthCheckPath: /health
+
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tictic-db
+          property: connectionString
+
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+      - key: PORT
+        value: "3333"
+
+      - key: NODE_ENV
+        value: production
+
+      - key: FRONTEND_URL
+        value: https://tictic-app.vercel.app
+        sync: false
