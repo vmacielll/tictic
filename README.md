@@ -1,106 +1,82 @@
 # TickTick Clone
 
-A clone of [TickTick](https://ticktick.com) — productivity app with task management, lists, and Pomodoro timer.
+A productivity app clone of [TickTick](https://ticktick.com) — tasks, lists, calendar views, and Pomodoro timer. Built with Clean Architecture + DDD.
 
-## 🚀 Stack
+**AI-ready** — includes `AGENTS.md` and `docs/` for coding agent guidance.
 
-| Layer          | Technologies                          |
-|---------------|------------------------------------|
-| **Backend**    | Fastify, TypeScript, Prisma         |
-| **Frontend**   | Next.js 14, React, TailwindCSS   |
-| **Database**   | PostgreSQL, Prisma ORM            |
-| **Auth**      | JWT cookies, bcrypt            |
-| **Tests**     | Vitest, Playwright           |
-| **Task Runner**| Makefile                     |
+## Stack
 
-## 🛠️ Prerequisites
+| Layer | Tech |
+|---|---|
+| Backend | Fastify, TypeScript, Prisma, PostgreSQL |
+| Frontend | Next.js 14, React, Tailwind CSS |
+| Auth | JWT (access + refresh tokens), bcrypt, CSRF double-submit cookies |
+| Testing | Vitest (488 unit tests), Playwright (35 E2E tests) |
+| CI | GitHub Actions |
 
-- **Node.js** >= 18
-- **Docker** and **Docker Compose**
-
-## ⚡ Getting Started
+## Quick Start
 
 ```bash
-make setup   # Install deps + generate Prisma
-make dev    # Start DB + server + web
+cp .env.example .env          # Set DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, PORT
+make setup                    # Install deps + generate Prisma client
+make dev                      # Start PostgreSQL (Docker) + API + Web
 ```
 
-- **API**: `http://localhost:3333`
-- **Web**: `http://localhost:3000`
+- **API:** `http://localhost:3333`
+- **Web:** `http://localhost:3000`
+- **Stop:** `make down`
 
-## 📜 Commands
+**Prerequisites:** Node.js ≥ 18, Docker and Docker Compose.
 
-| Command        | Description                    |
-|---------------|-------------------------------|
-| `make dev`    | Start development             |
-| `make test`   | Run unit tests               |
-| `make e2e`   | Run E2E tests              |
-| `make db-migrate` | Run migrations            |
-| `make down`   | Stop all services           |
-
-## 📁 Project Structure
-
-```
-tictic/
-├── server/                 # Backend (Fastify)
-│   └── src/
-│       ├── modules/       # Domain modules (auth, tasks, lists, calendar, pomodoro)
-│       ├── infra/         # Database (Prisma)
-│       ├── shared/        # Errors, middleware, utils
-│       └── __tests__/     # Test utilities
-├── web/                    # Frontend (Next.js 14 App Router)
-├── e2e/                    # E2E tests (Playwright)
-└── Makefile                # Orchestrated commands
-```
-
-Path aliases: `@modules/*`, `@shared/*`, `@infra/*`, `@prisma/*`
-
-## ✨ Features
-
-- User authentication (JWT + bcrypt)
-- Task management (CRUD, priorities, due dates/times)
-- List organization (custom lists)
-- Calendar views (day, week, month)
-- Pomodoro timer with active session tracking
-- Timezone-aware date handling
-
-## 🛠️ Run Locally
+## Commands
 
 ```bash
-# Install dependencies and generate Prisma client
-make setup
-
-# Start all services (DB + server + web)
-make dev
+make setup         # Install deps + generate Prisma client (first run)
+make dev           # Start everything (DB + server + web)
+make test          # Server (289) + web (199) unit tests
+make test-all      # Unit + E2E tests
+make e2e           # Playwright E2E (35 tests)
+make db-migrate    # Run Prisma migrations
+make db-studio     # Open Prisma Studio
+make down          # Stop all services
 ```
 
-- **API**: `http://localhost:3333`
-- **Web**: `http://localhost:3000`
-- **Stop**: `make down`
+Run `make help` for the full list.
 
-## 🏗️ Architecture
+## Features
 
-This project follows **Clean Architecture + DDD** (Domain-Driven Design):
+- **Tasks** — CRUD with priorities, due dates/times, timezone-aware
+- **Lists** — Custom lists with colors, task counts, pagination
+- **Calendar** — Day, week, and month views
+- **Pomodoro** — Active session tracking, accurate timer
+- **Auth** — JWT with refresh token rotation, CSRF protection
+
+## Architecture
+
+Follows **Clean Architecture + DDD** with strict layer separation:
 
 ```
-HTTP Request → Controller → Use Case → Repository Interface ← Prisma Repository → PostgreSQL
+HTTP → Controller → Use Case → Repository Interface ← Prisma → PostgreSQL
 ```
 
-### Modules
+| Module | Domain |
+|---|---|
+| `auth` | Registration, login, refresh tokens |
+| `tasks` | Task CRUD, inbox, date-based queries |
+| `lists` | List CRUD, task assignment |
+| `calendar` | Date-range task views |
+| `pomodoro` | Timer sessions |
 
-| Module | Responsibility |
-|-------|---------------|
-| **auth** | JWT authentication, login/register |
-| **tasks** | CRUD tasks, priorities, due dates |
-| **lists** | Task lists organization |
-| **calendar** | Day/week/month view |
-| **pomodoro** | Pomodoro timer |
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full module layout, data flow, and component tree.
 
-### Testing
+## AI Agent Support
 
-- **Unit**: Vitest
-- **E2E**: Playwright
+This project is configured for AI coding agents:
 
-## 📄 License
+- **[`AGENTS.md`](AGENTS.md)** — Root instructions for coding agents
+- **[`docs/`](docs/)** — Progressive disclosure docs (architecture, testing, security, conventions)
+- **[`.planning/`](.planning/)** — GSD roadmap with 15 phases, 83 items, 97.6% complete
+
+## License
 
 MIT
