@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useLists } from './useLists'
 
 // ── Mock @/lib/api ──
@@ -17,8 +19,31 @@ import {
   deleteList,
 } from '@/lib/api'
 
+// ── Test QueryClient ──
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        refetchOnWindowFocus: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  })
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
 // ── Mock data ──
-// Matches the List shape so it passes through parseList() → listSchema.
 const mockListResponse = {
   id: 'a1b2c3d4-e5f6-4890-abcd-ef1234567890',
   name: 'Work',
@@ -43,13 +68,12 @@ describe('useLists', () => {
   it('loads lists on mount and sets loading to false', async () => {
     vi.mocked(listLists).mockResolvedValue(mockListsResponse)
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     // Starts in loading state with empty lists
     expect(result.current.loading).toBe(true)
     expect(result.current.lists).toEqual([])
 
-    // Wait for the effect to resolve
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -73,7 +97,7 @@ describe('useLists', () => {
     }
     vi.mocked(createList).mockResolvedValue(newListResponse)
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -86,8 +110,10 @@ describe('useLists', () => {
 
     // API was called with the correct args
     expect(createList).toHaveBeenCalledWith('Personal', '#0891b2')
-    // List was prepended
-    expect(result.current.lists).toHaveLength(1)
+
+    await waitFor(() => {
+      expect(result.current.lists).toHaveLength(1)
+    })
     expect(result.current.lists[0].id).toBe(newListResponse.id)
     expect(result.current.lists[0].name).toBe('Personal')
     expect(result.current.error).toBeNull()
@@ -98,7 +124,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue([])
     vi.mocked(createList).mockRejectedValue(new Error('Create failed'))
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -108,7 +134,9 @@ describe('useLists', () => {
       await expect(result.current.addList('Fail')).rejects.toThrow('Create failed')
     })
 
-    expect(result.current.error).toBe('Create failed')
+    await waitFor(() => {
+      expect(result.current.error).toBe('Create failed')
+    })
     expect(result.current.lists).toHaveLength(0)
   })
 
@@ -117,7 +145,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue(mockListsResponse)
     vi.mocked(updateList).mockResolvedValue({ ...mockListResponse, name: 'Updated' })
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -129,7 +157,9 @@ describe('useLists', () => {
     })
 
     // Optimistic update changed the name immediately
-    expect(result.current.lists[0].name).toBe('Updated')
+    await waitFor(() => {
+      expect(result.current.lists[0].name).toBe('Updated')
+    })
     // API was called with the new name
     expect(updateList).toHaveBeenCalledWith(mockListResponse.id, { name: 'Updated' })
     expect(result.current.error).toBeNull()
@@ -140,7 +170,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue(mockListsResponse)
     vi.mocked(updateList).mockRejectedValue(new Error('Rename failed'))
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -152,8 +182,12 @@ describe('useLists', () => {
     })
 
     // Reverted back to original name
-    expect(result.current.lists[0].name).toBe('Work')
-    expect(result.current.error).toBe('Rename failed')
+    await waitFor(() => {
+      expect(result.current.lists[0].name).toBe('Work')
+    })
+    await waitFor(() => {
+      expect(result.current.error).toBe('Rename failed')
+    })
   })
 
   // ── 6. changeColor ──
@@ -161,7 +195,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue([{ ...mockListResponse, color: '#4f46e5' }])
     vi.mocked(updateList).mockResolvedValue({ ...mockListResponse, color: '#0891b2' })
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -173,7 +207,9 @@ describe('useLists', () => {
     })
 
     // Optimistic update changed the color immediately
-    expect(result.current.lists[0].color).toBe('#0891b2')
+    await waitFor(() => {
+      expect(result.current.lists[0].color).toBe('#0891b2')
+    })
     // API was called with the new color
     expect(updateList).toHaveBeenCalledWith(mockListResponse.id, { color: '#0891b2' })
     expect(result.current.error).toBeNull()
@@ -184,7 +220,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue([{ ...mockListResponse, color: '#4f46e5' }])
     vi.mocked(updateList).mockRejectedValue(new Error('Color update failed'))
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -196,8 +232,12 @@ describe('useLists', () => {
     })
 
     // Reverted back to original color
-    expect(result.current.lists[0].color).toBe('#4f46e5')
-    expect(result.current.error).toBe('Color update failed')
+    await waitFor(() => {
+      expect(result.current.lists[0].color).toBe('#4f46e5')
+    })
+    await waitFor(() => {
+      expect(result.current.error).toBe('Color update failed')
+    })
   })
 
   // ── 8. removeList ──
@@ -205,7 +245,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue(mockListsResponse)
     vi.mocked(deleteList).mockResolvedValue(undefined)
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -218,7 +258,9 @@ describe('useLists', () => {
     })
 
     // List was removed optimistically
-    expect(result.current.lists).toHaveLength(0)
+    await waitFor(() => {
+      expect(result.current.lists).toHaveLength(0)
+    })
     // API was called to delete
     expect(deleteList).toHaveBeenCalledWith(mockListResponse.id)
     expect(result.current.error).toBeNull()
@@ -229,7 +271,7 @@ describe('useLists', () => {
     vi.mocked(listLists).mockResolvedValue(mockListsResponse)
     vi.mocked(deleteList).mockRejectedValue(new Error('Delete failed'))
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -242,16 +284,20 @@ describe('useLists', () => {
     })
 
     // List was re-added on error
-    expect(result.current.lists).toHaveLength(1)
+    await waitFor(() => {
+      expect(result.current.lists).toHaveLength(1)
+    })
     expect(result.current.lists[0].id).toBe(mockListResponse.id)
-    expect(result.current.error).toBe('Delete failed')
+    await waitFor(() => {
+      expect(result.current.error).toBe('Delete failed')
+    })
   })
 
   // ── 10. refresh ──
   it('refresh — refetches lists', async () => {
     vi.mocked(listLists).mockResolvedValue(mockListsResponse)
 
-    const { result } = renderHook(() => useLists())
+    const { result } = renderHook(() => useLists(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -269,10 +315,12 @@ describe('useLists', () => {
 
     // Fetch was called again
     expect(listLists).toHaveBeenCalledTimes(2)
-    // Loading finishes after refresh
+    // Loading stays false during refetch
     expect(result.current.loading).toBe(false)
     // List is replaced with fresh data
-    expect(result.current.lists).toHaveLength(1)
+    await waitFor(() => {
+      expect(result.current.lists).toHaveLength(1)
+    })
     expect(result.current.lists[0].name).toBe('Refreshed')
     expect(result.current.error).toBeNull()
   })

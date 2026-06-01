@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useListTasks } from './useListTasks'
 
 // ── Mock @/lib/api ──
@@ -16,6 +18,30 @@ import {
   updateTask,
   deleteTask,
 } from '@/lib/api'
+
+// ── Test QueryClient ──
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        refetchOnWindowFocus: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  })
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
+}
 
 // ── Mock data ──
 // Matches the TaskResponse shape so it passes through parseTask() → taskSchema.
@@ -55,7 +81,7 @@ describe('useListTasks', () => {
   it('loads tasks for the given listId on mount', async () => {
     vi.mocked(listListTasks).mockResolvedValue(mockListTasksResponse)
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     // Starts in loading state with empty tasks
     expect(result.current.loading).toBe(true)
@@ -82,7 +108,7 @@ describe('useListTasks', () => {
   it('setPage — triggers refetch with new page number', async () => {
     vi.mocked(listListTasks).mockResolvedValue(mockListTasksResponse)
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -123,7 +149,7 @@ describe('useListTasks', () => {
     expect(result.current.error).toBeNull()
   })
 
-  // ── 3. addTask ──
+  // ── 3. addTask success ──
   it('addTask — creates task with listId included and prepends to state', async () => {
     vi.mocked(listListTasks).mockResolvedValue({
       items: [],
@@ -137,7 +163,7 @@ describe('useListTasks', () => {
     }
     vi.mocked(createTask).mockResolvedValue(newTaskResponse)
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -152,8 +178,10 @@ describe('useListTasks', () => {
     expect(createTask).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'New task', priority: 'HIGH', listId })
     )
-    // Task was prepended
-    expect(result.current.tasks).toHaveLength(1)
+    // Task was prepended (waitFor ensures React Query cache propagates)
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(1)
+    })
     expect(result.current.tasks[0].id).toBe(newTaskResponse.id)
     expect(result.current.tasks[0].title).toBe('New task')
     // Total count was incremented
@@ -169,7 +197,7 @@ describe('useListTasks', () => {
     })
     vi.mocked(createTask).mockRejectedValue(new Error('Create failed'))
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -179,16 +207,18 @@ describe('useListTasks', () => {
       await expect(result.current.addTask({ title: 'Fail task' })).rejects.toThrow('Create failed')
     })
 
-    expect(result.current.error).toBe('Create failed')
+    await waitFor(() => {
+      expect(result.current.error).toBe('Create failed')
+    })
     expect(result.current.tasks).toHaveLength(0)
   })
 
-  // ── 5. toggleTask ──
+  // ── 5. toggleTask success ──
   it('toggleTask — optimistically toggles completed and calls API', async () => {
     vi.mocked(listListTasks).mockResolvedValue(mockListTasksResponse)
     vi.mocked(updateTask).mockResolvedValue({ ...mockTaskResponse, completed: true })
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -200,7 +230,9 @@ describe('useListTasks', () => {
     })
 
     // Optimistic update flipped completed
-    expect(result.current.tasks[0].completed).toBe(true)
+    await waitFor(() => {
+      expect(result.current.tasks[0].completed).toBe(true)
+    })
     // API was called with new completed state
     expect(updateTask).toHaveBeenCalledWith(mockTaskResponse.id, { completed: true })
     expect(result.current.error).toBeNull()
@@ -211,7 +243,7 @@ describe('useListTasks', () => {
     vi.mocked(listListTasks).mockResolvedValue(mockListTasksResponse)
     vi.mocked(updateTask).mockRejectedValue(new Error('Update failed'))
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -223,16 +255,20 @@ describe('useListTasks', () => {
     })
 
     // Reverted back to original completed state
-    expect(result.current.tasks[0].completed).toBe(false)
-    expect(result.current.error).toBe('Update failed')
+    await waitFor(() => {
+      expect(result.current.tasks[0].completed).toBe(false)
+    })
+    await waitFor(() => {
+      expect(result.current.error).toBe('Update failed')
+    })
   })
 
-  // ── 7. removeTask ──
+  // ── 7. removeTask success ──
   it('removeTask — optimistically removes task and calls API', async () => {
     vi.mocked(listListTasks).mockResolvedValue(mockListTasksResponse)
     vi.mocked(deleteTask).mockResolvedValue(undefined)
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -246,7 +282,9 @@ describe('useListTasks', () => {
     })
 
     // Task was removed optimistically
-    expect(result.current.tasks).toHaveLength(0)
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(0)
+    })
     // Total count was decremented
     expect(result.current.totalCount).toBe(0)
     // API was called to delete
@@ -255,11 +293,11 @@ describe('useListTasks', () => {
   })
 
   // ── 8. removeTask error ──
-  it('removeTask — sets error when API fails (task stays removed)', async () => {
+  it('removeTask — reverts optimistic update when API fails', async () => {
     vi.mocked(listListTasks).mockResolvedValue(mockListTasksResponse)
     vi.mocked(deleteTask).mockRejectedValue(new Error('Delete failed'))
 
-    const { result } = renderHook(() => useListTasks(listId))
+    const { result } = renderHook(() => useListTasks(listId), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -271,9 +309,12 @@ describe('useListTasks', () => {
       await expect(result.current.removeTask(mockTaskResponse.id)).rejects.toThrow('Delete failed')
     })
 
-    // Task was already removed optimistically and is not re-added on error
-    expect(result.current.tasks).toHaveLength(0)
-    expect(result.current.totalCount).toBe(0)
-    expect(result.current.error).toBe('Delete failed')
+    // Task was removed optimistically but restored by onError rollback
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(1)
+    })
+    await waitFor(() => {
+      expect(result.current.error).toBe('Delete failed')
+    })
   })
 })

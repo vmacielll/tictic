@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   listLists,
   createList,
@@ -25,103 +25,132 @@ interface UseListsReturn {
 }
 
 export function useLists(): UseListsReturn {
-  const [lists, setLists] = useState<List[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  const queryKey = ['lists']
 
-  const fetchLists = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true)
-    setError(null)
-    try {
+  const {
+    data: lists = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey,
+    queryFn: async ({ signal }) => {
       const result = await listLists(signal)
-      if (!result) return // Request was aborted
-      setLists(parseLists(result))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch lists')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+      return parseLists(result)
+    },
+  })
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchLists(controller.signal)
-    return () => controller.abort()
-  }, [fetchLists])
-
-  const addList = useCallback(async (name: string, color?: string) => {
-    try {
+  // ── Add list ──
+  const addListMutation = useMutation({
+    mutationFn: async ({ name, color }: { name: string; color?: string }) => {
       const raw = await createList(name, color)
-      const created = parseList(raw)
-      setLists((prev) => [created, ...prev])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create list')
-      throw err
-    }
-  }, [])
+      return parseList(raw)
+    },
+    onSuccess: (created) => {
+      queryClient.setQueryData<List[]>(queryKey, (prev = []) => [created, ...prev])
+    },
+  })
 
-  const renameList = useCallback(async (id: string, name: string) => {
-    // Snapshot for rollback
-    const snapshot = lists.find((l) => l.id === id)
-    // Optimistic update
-    setLists((prev) => prev.map((l) => (l.id === id ? { ...l, name } : l)))
-
-    try {
+  // ── Rename list (optimistic) ──
+  const renameListMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
       await updateList(id, { name })
-    } catch (err) {
-      // Revert on error
+    },
+    onMutate: async ({ id, name }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<List[]>(queryKey)
+
+      queryClient.setQueryData<List[]>(queryKey, (prev = []) =>
+        prev.map((l) => (l.id === id ? { ...l, name } : l))
+      )
+
+      return { previous }
+    },
+    onError: (_err, { id }, context) => {
+      if (!context?.previous) return
+      const snapshot = context.previous.find((l: List) => l.id === id)
       if (snapshot) {
-        setLists((prev) => prev.map((l) => (l.id === id ? snapshot : l)))
+        queryClient.setQueryData<List[]>(queryKey, (prev = []) =>
+          prev.map((l) => (l.id === id ? snapshot : l))
+        )
       }
-      setError(err instanceof Error ? err.message : 'Failed to rename list')
-      throw err
-    }
-  }, [lists])
+    },
+  })
 
-  const changeColor = useCallback(async (id: string, color: string) => {
-    // Snapshot for rollback
-    const snapshot = lists.find((l) => l.id === id)
-    // Optimistic update
-    setLists((prev) => prev.map((l) => (l.id === id ? { ...l, color } : l)))
-
-    try {
+  // ── Change color (optimistic) ──
+  const changeColorMutation = useMutation({
+    mutationFn: async ({ id, color }: { id: string; color: string }) => {
       await updateList(id, { color })
-    } catch (err) {
-      // Revert on error
+    },
+    onMutate: async ({ id, color }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<List[]>(queryKey)
+
+      queryClient.setQueryData<List[]>(queryKey, (prev = []) =>
+        prev.map((l) => (l.id === id ? { ...l, color } : l))
+      )
+
+      return { previous }
+    },
+    onError: (_err, { id }, context) => {
+      if (!context?.previous) return
+      const snapshot = context.previous.find((l: List) => l.id === id)
       if (snapshot) {
-        setLists((prev) => prev.map((l) => (l.id === id ? snapshot : l)))
+        queryClient.setQueryData<List[]>(queryKey, (prev = []) =>
+          prev.map((l) => (l.id === id ? snapshot : l))
+        )
       }
-      setError(err instanceof Error ? err.message : 'Failed to change list color')
-      throw err
-    }
-  }, [lists])
+    },
+  })
 
-  const removeList = useCallback(async (id: string) => {
-    // Snapshot for rollback
-    const snapshot = lists.find((l) => l.id === id)
-    // Optimistic update
-    setLists((prev) => prev.filter((l) => l.id !== id))
-
-    try {
+  // ── Remove list (optimistic) ──
+  const removeListMutation = useMutation({
+    mutationFn: async (id: string) => {
       await deleteList(id)
-    } catch (err) {
-      // Revert on error
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<List[]>(queryKey)
+
+      queryClient.setQueryData<List[]>(queryKey, (prev = []) =>
+        prev.filter((l) => l.id !== id)
+      )
+
+      return { previous }
+    },
+    onError: (_err, id, context) => {
+      if (!context?.previous) return
+      const snapshot = context.previous.find((l: List) => l.id === id)
       if (snapshot) {
-        setLists((prev) => [snapshot, ...prev])
+        queryClient.setQueryData<List[]>(queryKey, (prev = []) =>
+          prev.some((l) => l.id === id) ? prev : [snapshot, ...prev]
+        )
       }
-      setError(err instanceof Error ? err.message : 'Failed to delete list')
-      throw err
-    }
-  }, [lists])
+    },
+  })
+
+  // Combine query errors and the most recent mutation error
+  const error =
+    addListMutation.error instanceof Error ? addListMutation.error.message :
+    renameListMutation.error instanceof Error ? renameListMutation.error.message :
+    changeColorMutation.error instanceof Error ? changeColorMutation.error.message :
+    removeListMutation.error instanceof Error ? removeListMutation.error.message :
+    queryError instanceof Error ? queryError.message : null
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey })
 
   return {
     lists,
-    loading,
+    loading: isLoading,
     error,
-    addList,
-    renameList,
-    changeColor,
-    removeList,
-    refresh: fetchLists,
+    addList: (name: string, color?: string) =>
+      addListMutation.mutateAsync({ name, color }),
+    renameList: (id: string, name: string) =>
+      renameListMutation.mutateAsync({ id, name }),
+    changeColor: (id: string, color: string) =>
+      changeColorMutation.mutateAsync({ id, color }),
+    removeList: (id: string) =>
+      removeListMutation.mutateAsync(id),
+    refresh: () => refresh(),
   }
 }

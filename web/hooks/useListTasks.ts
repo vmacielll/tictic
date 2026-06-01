@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DateTime } from 'luxon'
 import {
   listListTasks,
@@ -18,15 +19,9 @@ import {
   updateTaskSchema,
 } from '@/domain/tasks/types'
 
-interface ListTasksMeta {
-  page: number
-  size: number
-  totalCount: number
-}
-
-interface ListTasksResponse {
-  items: unknown[]
-  meta: ListTasksMeta
+interface QueryData {
+  items: Task[]
+  meta: { page: number; size: number; totalCount: number }
 }
 
 interface UseListTasksReturn {
@@ -45,119 +40,142 @@ interface UseListTasksReturn {
 }
 
 export function useListTasks(listId: string): UseListTasksReturn {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
   const [page, setPageState] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
+  const queryKey = ['tasks', 'list', listId, { page }] as const
 
-  const fetchTasks = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const raw = await listListTasks(listId, page, 20, signal) as ListTasksResponse
-      if (!raw) return // Request was aborted
-      setTasks(parseTasks(raw.items))
-      setTotalPages(Math.ceil(raw.meta.totalCount / raw.meta.size) || 1)
-      setTotalCount(raw.meta.totalCount)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch tasks')
-    } finally {
-      setLoading(false)
-    }
-  }, [listId, page])
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey,
+    queryFn: async ({ signal }) => {
+      const raw = await listListTasks(listId, page, 20, signal)
+      return { items: parseTasks(raw.items), meta: raw.meta } as QueryData
+    },
+  })
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchTasks(controller.signal)
-    return () => controller.abort()
-  }, [fetchTasks])
+  const tasks = data?.items ?? []
+  const totalPages = Math.ceil((data?.meta.totalCount ?? 0) / 20) || 1
+  const totalCount = data?.meta.totalCount ?? 0
 
-  const setPage = useCallback((newPage: number) => {
-    setPageState(newPage)
-  }, [])
-
-  const addTask = useCallback(async (data: CreateTaskInput) => {
-    try {
+  // ── Create task ──
+  const addTaskMutation = useMutation({
+    mutationFn: async (data: CreateTaskInput) => {
       const validated = createTaskSchema.parse({ ...data, listId })
       const raw = await createTask(validated)
-      const created = parseTask(raw)
-      setTasks((prev) => [created, ...prev])
-      setTotalCount((prev) => prev + 1)
-      setTotalPages((prev) => Math.ceil((totalCount + 1) / 20) || 1)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task')
-      throw err
-    }
-  }, [listId, totalCount])
+      return parseTask(raw)
+    },
+    onSuccess: (created) => {
+      queryClient.setQueryData<QueryData>(queryKey, (prev) => {
+        if (!prev) return prev
+        return {
+          items: [created, ...prev.items],
+          meta: { ...prev.meta, totalCount: prev.meta.totalCount + 1 },
+        }
+      })
+    },
+  })
 
-  const updateTaskFn = useCallback(async (id: string, data: UpdateTaskInput) => {
-    try {
+  // ── Update task ──
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateTaskInput }) => {
       const validated = updateTaskSchema.parse(data)
       const raw = await updateTask(id, validated)
-      const updated = parseTask(raw)
-      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
-      return updated
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update task')
-      throw err
-    }
-  }, [])
+      return parseTask(raw)
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<QueryData>(queryKey, (prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          items: prev.items.map((t) => (t.id === updated.id ? updated : t)),
+        }
+      })
+    },
+  })
 
-  const toggleTask = useCallback(async (id: string, currentCompleted: boolean) => {
-    const newCompleted = !currentCompleted
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? { ...t, completed: newCompleted, completedAt: newCompleted ? DateTime.now().toJSDate() : undefined }
-          : t
-      )
-    )
+  // ── Toggle task (optimistic) ──
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      await updateTask(id, { completed })
+    },
+    onMutate: async ({ id, completed }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<QueryData>(queryKey)
 
-    try {
-      await updateTask(id, { completed: newCompleted })
-    } catch (err) {
-      // Revert on error
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === id
-            ? { ...t, completed: currentCompleted, completedAt: t.completedAt }
-            : t
-        )
-      )
-      setError(err instanceof Error ? err.message : 'Failed to update task')
-      throw err
-    }
-  }, [])
+      queryClient.setQueryData<QueryData>(queryKey, (prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          items: prev.items.map((t) =>
+            t.id === id
+              ? { ...t, completed, completedAt: completed ? DateTime.now().toJSDate() : undefined }
+              : t
+          ),
+        }
+      })
 
-  const removeTask = useCallback(async (id: string) => {
-    // Optimistic update
-    setTasks((prev) => prev.filter((t) => t.id !== id))
-    setTotalCount((prev) => prev - 1)
-    setTotalPages((prev) => Math.ceil((totalCount - 1) / 20) || 1)
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous)
+      }
+    },
+  })
 
-    try {
+  // ── Remove task (optimistic) ──
+  const removeTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
       await deleteTask(id)
-    } catch (err) {
-      // Revert on error
-      setError(err instanceof Error ? err.message : 'Failed to delete task')
-      throw err
-    }
-  }, [totalCount])
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<QueryData>(queryKey)
+
+      queryClient.setQueryData<QueryData>(queryKey, (prev) => {
+        if (!prev) return prev
+        return {
+          items: prev.items.filter((t) => t.id !== id),
+          meta: { ...prev.meta, totalCount: prev.meta.totalCount - 1 },
+        }
+      })
+
+      return { previous }
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous)
+      }
+    },
+  })
+
+  // Combine errors
+  const error =
+    addTaskMutation.error instanceof Error ? addTaskMutation.error.message :
+    updateTaskMutation.error instanceof Error ? updateTaskMutation.error.message :
+    toggleTaskMutation.error instanceof Error ? toggleTaskMutation.error.message :
+    removeTaskMutation.error instanceof Error ? removeTaskMutation.error.message :
+    queryError instanceof Error ? queryError.message : null
+
+  const setPage = (newPage: number) => {
+    setPageState(newPage)
+  }
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey })
 
   return {
     tasks,
-    loading,
+    loading: isLoading,
     error,
     page,
     totalPages,
     totalCount,
-    addTask,
-    updateTask: updateTaskFn,
-    toggleTask,
-    removeTask,
+    addTask: (data: CreateTaskInput) => addTaskMutation.mutateAsync(data),
+    updateTask: (id: string, data: UpdateTaskInput) =>
+      updateTaskMutation.mutateAsync({ id, data }),
+    toggleTask: (id: string, currentCompleted: boolean) =>
+      toggleTaskMutation.mutateAsync({ id, completed: !currentCompleted }),
+    removeTask: (id: string) => removeTaskMutation.mutateAsync(id),
     setPage,
-    refresh: fetchTasks,
+    refresh,
   }
 }

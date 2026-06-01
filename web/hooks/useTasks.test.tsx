@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useTasks } from './useTasks'
 
 // ── Mock @/lib/api ──
-// All API functions are replaced with vi.fn() so we can control their behavior per test.
 vi.mock('@/lib/api', () => ({
   listInboxTasks: vi.fn(),
   listTodayTasks: vi.fn(),
@@ -20,8 +21,31 @@ import {
   deleteTask,
 } from '@/lib/api'
 
+// ── Test QueryClient ──
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        refetchOnWindowFocus: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  })
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
 // ── Mock data ──
-// Matches the TaskResponse shape so it passes through parseTask() → taskSchema.
 const mockTaskResponse = {
   id: 'a1b2c3d4-e5f6-4890-abcd-ef1234567890',
   title: 'Test task',
@@ -53,13 +77,13 @@ describe('useTasks', () => {
   it('loads inbox tasks on mount and sets loading to false', async () => {
     vi.mocked(listInboxTasks).mockResolvedValue(mockTasksResponse)
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     // Starts in loading state with empty tasks
     expect(result.current.loading).toBe(true)
     expect(result.current.tasks).toEqual([])
 
-    // Wait for the effect to resolve
+    // Wait for the query to resolve
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
@@ -77,7 +101,7 @@ describe('useTasks', () => {
   it('fetches today tasks when source is "today"', async () => {
     vi.mocked(listTodayTasks).mockResolvedValue(mockTasksResponse)
 
-    const { result } = renderHook(() => useTasks('today'))
+    const { result } = renderHook(() => useTasks('today'), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -100,7 +124,7 @@ describe('useTasks', () => {
     }
     vi.mocked(createTask).mockResolvedValue(newTaskResponse)
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -113,8 +137,10 @@ describe('useTasks', () => {
 
     // API was called with the validated input
     expect(createTask).toHaveBeenCalledWith({ title: 'New task title', priority: 'HIGH' })
-    // Task was prepended
-    expect(result.current.tasks).toHaveLength(1)
+    // Task was prepended (waitFor ensures React Query cache propagates to render)
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(1)
+    })
     expect(result.current.tasks[0].id).toBe('11111111-2222-4333-8444-555555555555')
     expect(result.current.tasks[0].title).toBe('New task title')
     expect(result.current.error).toBeNull()
@@ -125,7 +151,7 @@ describe('useTasks', () => {
     vi.mocked(listInboxTasks).mockResolvedValue([])
     vi.mocked(createTask).mockRejectedValue(new Error('Network error'))
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -135,7 +161,9 @@ describe('useTasks', () => {
       await expect(result.current.addTask({ title: 'Fail task' })).rejects.toThrow('Network error')
     })
 
-    expect(result.current.error).toBe('Network error')
+    await waitFor(() => {
+      expect(result.current.error).toBe('Network error')
+    })
   })
 
   // ── 5. updateTask ──
@@ -149,7 +177,7 @@ describe('useTasks', () => {
     }
     vi.mocked(updateTask).mockResolvedValue(updatedResponse)
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -161,7 +189,9 @@ describe('useTasks', () => {
     })
 
     expect(updateTask).toHaveBeenCalledWith(mockTaskResponse.id, { title: 'Updated title' })
-    expect(result.current.tasks).toHaveLength(1)
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(1)
+    })
     expect(result.current.tasks[0].title).toBe('Updated title')
     expect(returnedTask.title).toBe('Updated title')
     expect(result.current.error).toBeNull()
@@ -172,7 +202,7 @@ describe('useTasks', () => {
     vi.mocked(listInboxTasks).mockResolvedValue(mockTasksResponse)
     vi.mocked(updateTask).mockResolvedValue({ ...mockTaskResponse, completed: true })
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -184,7 +214,9 @@ describe('useTasks', () => {
     })
 
     // Optimistic update flipped completed
-    expect(result.current.tasks[0].completed).toBe(true)
+    await waitFor(() => {
+      expect(result.current.tasks[0].completed).toBe(true)
+    })
     // API was called with new completed state
     expect(updateTask).toHaveBeenCalledWith(mockTaskResponse.id, { completed: true })
     expect(result.current.error).toBeNull()
@@ -195,7 +227,7 @@ describe('useTasks', () => {
     vi.mocked(listInboxTasks).mockResolvedValue(mockTasksResponse)
     vi.mocked(updateTask).mockRejectedValue(new Error('Update failed'))
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -207,8 +239,12 @@ describe('useTasks', () => {
     })
 
     // Reverted back to original completed state
-    expect(result.current.tasks[0].completed).toBe(false)
-    expect(result.current.error).toBe('Update failed')
+    await waitFor(() => {
+      expect(result.current.tasks[0].completed).toBe(false)
+    })
+    await waitFor(() => {
+      expect(result.current.error).toBe('Update failed')
+    })
   })
 
   // ── 8. removeTask ──
@@ -216,7 +252,7 @@ describe('useTasks', () => {
     vi.mocked(listInboxTasks).mockResolvedValue(mockTasksResponse)
     vi.mocked(deleteTask).mockResolvedValue(undefined)
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -228,7 +264,9 @@ describe('useTasks', () => {
       await result.current.removeTask(mockTaskResponse.id)
     })
 
-    expect(result.current.tasks).toHaveLength(0)
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(0)
+    })
     expect(deleteTask).toHaveBeenCalledWith(mockTaskResponse.id)
     expect(result.current.error).toBeNull()
   })
@@ -238,7 +276,7 @@ describe('useTasks', () => {
     vi.mocked(listInboxTasks).mockResolvedValue(mockTasksResponse)
     vi.mocked(deleteTask).mockRejectedValue(new Error('Delete failed'))
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -250,16 +288,20 @@ describe('useTasks', () => {
       await expect(result.current.removeTask(mockTaskResponse.id)).rejects.toThrow('Delete failed')
     })
 
-    // Task was already removed optimistically and is not re-added on error
-    expect(result.current.tasks).toHaveLength(0)
-    expect(result.current.error).toBe('Delete failed')
+    // Task was already removed optimistically but restored by onError rollback
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(1)
+    })
+    await waitFor(() => {
+      expect(result.current.error).toBe('Delete failed')
+    })
   })
 
   // ── 10. refresh ──
   it('refetch refreshes the task list', async () => {
     vi.mocked(listInboxTasks).mockResolvedValue(mockTasksResponse)
 
-    const { result } = renderHook(() => useTasks())
+    const { result } = renderHook(() => useTasks(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -277,10 +319,12 @@ describe('useTasks', () => {
 
     // Fetch was called again
     expect(listInboxTasks).toHaveBeenCalledTimes(2)
-    // Loading finishes after refresh
+    // Loading stays false during refetch (isFetching becomes true instead)
     expect(result.current.loading).toBe(false)
     // List is replaced with fresh data
-    expect(result.current.tasks).toHaveLength(1)
+    await waitFor(() => {
+      expect(result.current.tasks).toHaveLength(1)
+    })
     expect(result.current.tasks[0].title).toBe('Refreshed task')
     expect(result.current.error).toBeNull()
   })
