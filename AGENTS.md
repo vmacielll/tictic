@@ -66,6 +66,14 @@ testDate(2024, 3, 15) // Returns Date with 12:00 UTC
 - Schema: `apps/server/src/infra/database/prisma/schema.prisma`
 - Generate client: `npx prisma generate --schema=apps/server/src/infra/database/prisma/schema.prisma`
 
+## Commit Convention
+
+- Use `type(scope): subject` format (Conventional Commits)
+- **Subject only, no body** — keep commits concise
+- Types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`, `perf`
+- Scopes: `web`, `server`, `e2e`
+- Examples: `fix(web): send x-csrf-token header on state-changing requests`
+
 ## Architecture Notes
 
 - **Clean Architecture + DDD** in server

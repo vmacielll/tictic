@@ -35,6 +35,15 @@ export async function cleanupUserData(): Promise<void> {
       }
     }
 
+    const listsResponse = await context.get('/lists')
+    if (listsResponse.ok()) {
+      const data = await listsResponse.json()
+      const lists = Array.isArray(data) ? data : (data.lists || [])
+      for (const list of lists) {
+        await context.delete(`/lists/${list.id}`).catch(() => {})
+      }
+    }
+
     const sessionsResponse = await context.get('/pomodoro')
     if (sessionsResponse.ok()) {
       const data = await sessionsResponse.json()
