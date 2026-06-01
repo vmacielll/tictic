@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useListsContext } from '@/contexts/ListsContext'
 import { Icon } from '@/components/ui/Icon'
 
 const navItems = [
@@ -10,11 +11,13 @@ const navItems = [
   { href: '/inbox', label: 'Inbox', icon: 'inbox' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar' },
   { href: '/pomodoro', label: 'Pomodoro', icon: 'pomodoro' },
+  { href: '/lists', label: 'Lists', icon: 'lists' },
 ]
 
 export function Sidebar({ className = '' }: { className?: string }) {
   const pathname = usePathname()
   const { user } = useAuth()
+  const { lists, loading } = useListsContext()
 
   const initials = user
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -57,6 +60,44 @@ export function Sidebar({ className = '' }: { className?: string }) {
           })}
         </ul>
       </nav>
+
+      {/* Lists section */}
+      <div className="px-2.5 py-2 border-t border-border">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <span className="text-xs font-semibold text-text-muted uppercase tracking-wide">Lists</span>
+          <Link href="/lists" className="text-text-muted hover:text-primary-400 transition-colors" data-testid="lists-add-link">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </Link>
+        </div>
+        {loading ? (
+          <div className="px-3 py-2 text-xs text-text-muted">Loading...</div>
+        ) : lists.length === 0 ? (
+          <div className="px-3 py-2 text-xs text-text-muted">No lists yet</div>
+        ) : (
+          <ul className="space-y-0.5">
+            {lists.map((list) => {
+              const isActive = pathname === `/lists/${list.id}`
+              return (
+                <li key={list.id}>
+                  <Link
+                    href={`/lists/${list.id}`}
+                    data-testid={`sidebar-list-${list.id}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-150
+                      ${isActive ? 'bg-primary-600/10 text-primary-400' : 'text-text-secondary hover:bg-surface-raised hover:text-text-primary'}
+                    `}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: list.color || '#6b7280' }} />
+                    <span className="truncate">{list.name}</span>
+                    <span className="ml-auto text-xs text-text-muted">{list.taskCount}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
 
       {/* User */}
       <div className="px-3 py-3 border-t border-border">

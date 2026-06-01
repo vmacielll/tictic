@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { type Task } from '@/domain/tasks/types'
 import { TaskDetailHeader } from './TaskDetailHeader'
 import { TaskDetailForm } from './TaskDetailForm'
+import type { List } from '@/domain/lists/types'
 
 interface TaskDetailModalProps {
   task: Task
@@ -12,6 +13,7 @@ interface TaskDetailModalProps {
   onSave: (updatedTask: Task) => void
   onDelete: (taskId: string) => void
   onToggleComplete: (taskId: string, completed: boolean) => void
+  lists?: List[]
 }
 
 export function TaskDetailModal({
@@ -21,6 +23,7 @@ export function TaskDetailModal({
   onSave,
   onDelete,
   onToggleComplete,
+  lists,
 }: TaskDetailModalProps) {
   // Close on ESC
   useEffect(() => {
@@ -76,6 +79,7 @@ export function TaskDetailModal({
           onClose={onClose}
           onDelete={onDelete}
           onToggleComplete={onToggleComplete}
+          lists={lists}
         />
       </div>
     </div>

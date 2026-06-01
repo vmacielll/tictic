@@ -4,6 +4,7 @@ import { updateTask } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
 import { DateTime } from 'luxon'
+import type { List } from '@/domain/lists/types'
 
 interface TaskDetailFormProps {
   task: Task
@@ -11,6 +12,7 @@ interface TaskDetailFormProps {
   onClose: () => void
   onDelete: (taskId: string) => void
   onToggleComplete: (taskId: string, completed: boolean) => void
+  lists?: List[]
 }
 
 const priorityColors = {
@@ -19,12 +21,13 @@ const priorityColors = {
   LOW: 'bg-success/10 text-success/80 border-success/30',
 }
 
-export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComplete }: TaskDetailFormProps) {
+export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComplete, lists }: TaskDetailFormProps) {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>(task.priority)
   const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.toISOString().split('T')[0] : '')
   const [dueTime, setDueTime] = useState(typeof task.dueTime === 'string' ? task.dueTime : '')
+  const [listId, setListId] = useState<string | undefined>(task.listId)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,6 +37,7 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
     setPriority(task.priority)
     setDueDate(task.dueDate ? task.dueDate.toISOString().split('T')[0] : '')
     setDueTime(typeof task.dueTime === 'string' ? task.dueTime : '')
+    setListId(task.listId)
     setError(null)
   }, [task])
 
@@ -51,6 +55,7 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
         priority,
         dueDate: dueDate || undefined,
         dueTime: dueTime || undefined,
+        listId,
       }
 
       const raw = await updateTask(task.id, updateData)
@@ -134,6 +139,25 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
           ))}
         </div>
       </div>
+
+      {lists && lists.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-text-primary mb-1.5">List</label>
+          <select
+            data-testid="modal-list-select"
+            value={listId || ''}
+            onChange={(e) => setListId(e.target.value || undefined)}
+            className="w-full px-3 py-2 text-sm bg-surface-raised border border-border-light rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+          >
+            <option value="">No list (Inbox)</option>
+            {lists.map((list) => (
+              <option key={list.id} value={list.id}>
+                {list.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Input

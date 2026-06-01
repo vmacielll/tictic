@@ -9,6 +9,7 @@ const navItems = [
   { href: '/inbox', label: 'Inbox', icon: 'inbox' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar' },
   { href: '/pomodoro', label: 'Pomodoro', icon: 'pomodoro' },
+  { href: '/lists', label: 'Lists', icon: 'lists' },
 ]
 
 export function BottomNav() {

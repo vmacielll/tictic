@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { type CreateTaskInput } from '@/domain/tasks/types'
+import type { List } from '@/domain/lists/types'
 
 const PRIORITY_CONFIG = {
   LOW: { bg: 'bg-success/10', text: 'text-success/80', ring: 'ring-success/30' },
@@ -13,13 +14,15 @@ interface TaskFormProps {
   onSubmit: (data: CreateTaskInput) => Promise<void>
   placeholder?: string
   defaultDueDate?: string
+  lists?: List[]
 }
 
-export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDate }: TaskFormProps) {
+export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDate, lists }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState(defaultDueDate || '')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM')
+  const [listId, setListId] = useState<string | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
 
@@ -33,12 +36,14 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
-        dueDate: dueDate || undefined
+        dueDate: dueDate || undefined,
+        listId,
       })
       setTitle('')
       setDescription('')
       setDueDate(defaultDueDate || '')
       setPriority('MEDIUM')
+      setListId(undefined)
       setShowDetails(false)
     } catch {
       // Error handled by parent
@@ -115,6 +120,25 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
               )
             })}
           </div>
+
+          {lists && lists.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-text-muted">List:</label>
+              <select
+                data-testid="task-list-select"
+                value={listId || ''}
+                onChange={(e) => setListId(e.target.value || undefined)}
+                className="px-2 py-1 text-xs bg-surface-raised border border-border-light rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+              >
+                <option value="">No list (Inbox)</option>
+                {lists.map((list) => (
+                  <option key={list.id} value={list.id}>
+                    {list.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       )}
     </form>
