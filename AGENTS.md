@@ -55,3 +55,11 @@ cd server && npx prisma migrate dev --schema=src/infra/database/prisma/schema.pr
 ## Planning
 
 `.planning/` tracks project progress via GSD phases. Run `/gsd:progress` for current state.
+
+## Maintenance
+
+When the project changes in ways that affect documentation, update these files proactively:
+
+- **`AGENTS.md`** — if commands, env vars, or doc links become stale
+- **`README.md`** — if stack, features, or setup steps change
+- **`docs/*.md`** — if architecture, conventions, testing patterns, or security details change
