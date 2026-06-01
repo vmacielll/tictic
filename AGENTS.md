@@ -1,81 +1,57 @@
-# TickTick Clone - Agent Instructions
+# TickTick Clone
 
-## Project Structure
+A full-stack task management app — Fastify API with Clean Architecture + Next.js 14 App Router + PostgreSQL.
+Not a monorepo workspace. Each app (`server`, `web`, `e2e`) has its own `package.json`.
 
-NOT a monorepo. Each app (`apps/server`, `apps/web`, `apps/e2e`) has its own `package.json`.
-Use `Makefile` for orchestrated commands.
-
-```
-tictic/
-├── apps/server/          # Backend (Fastify + Clean Architecture + DDD)
-│   └── src/
-│       ├── modules/     # Domain modules (auth, tasks, lists, calendar, pomodoro)
-│       ├── infra/       # Database (Prisma)
-│       ├── shared/      # Errors, middleware, utils
-│       └── __tests__/   # Shared test utilities
-├── apps/web/            # Frontend (Next.js 14 App Router)
-├── apps/e2e/            # E2E tests (Playwright)
-└── Makefile             # Orchestrated commands
-```
-
-## Key Commands
+## Quick Start
 
 ```bash
-make setup      # First run: install deps + generate Prisma client
-make dev        # Start DB + server + web
-make test       # Run unit tests (server only)
-make db-migrate # Run Prisma migrations
-
-# Individual:
-cd apps/server && npm test              # Run server tests
-cd apps/server && npm run test:watch    # Watch mode
+cp .env.example .env          # Configure DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, PORT
+make setup                    # Install deps + generate Prisma client (first run)
+make dev                      # Start PostgreSQL (Docker) + API (3333) + Web (3000)
 ```
 
-## Path Aliases (Server)
+## Essential Commands
 
-In `apps/server/src/` use these aliases:
-- `@modules/*` → `modules/*`
-- `@shared/*` → `shared/*`
-- `@infra/*` → `infra/*`
-- `@prisma/*` → `infra/database/prisma/*`
-- `@tests/*` → `__tests__/*`
-
-## Testing Utilities
-
-```typescript
-// apps/server/src/__tests__/utils/dateUtils.ts
-import { testDate } from '@/__tests__/utils/dateUtils'
-
-testDate(2024, 3, 15) // Returns Date with 12:00 UTC
-// ⚠️ Luxon uses month 1-12 (NOT 0-11 like JS Date)
+```bash
+make test          # Server (289) + web (199) unit tests
+make e2e           # Start services + run Playwright E2E (35 tests)
+make test-all      # Unit + E2E
+make db-migrate    # Run Prisma migrations
+make db-studio     # Open Prisma Studio
+make down          # Stop all services
 ```
 
-## Code Convention
+Use `make help` for all available commands.
 
-**Write ALL code, comments, and logs in English** - even for internal code, variable names, and console messages. This ensures consistency across the codebase.
+## Environment Variables
 
-## Date Handling
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Access token signing key |
+| `JWT_REFRESH_SECRET` | Refresh token signing key |
+| `PORT` | Fastify server port (default: 3333) |
 
-- Use **Luxon** for all date operations
-- Store dates in **UTC** in the database
-- Convert to user's timezone at display time
-- For tests, use `testDate()` helper to avoid timezone edge cases
+## Project Docs
+
+See `docs/` for detailed guidance. The agent loads these only when relevant to the task.
+
+| File | When to read |
+|---|---|
+| `docs/ARCHITECTURE.md` | Understanding project structure, module layout, data flow |
+| `docs/CONVENTIONS.md` | Commit format, code style, date handling, path aliases, component patterns |
+| `docs/TESTING.md` | Test commands, patterns, testAppFactory, E2E conventions |
+| `docs/SECURITY.md` | CSRF protection, JWT auth, auth middleware |
 
 ## Prisma
 
-- Schema: `apps/server/src/infra/database/prisma/schema.prisma`
-- Generate client: `npx prisma generate --schema=apps/server/src/infra/database/prisma/schema.prisma`
+```bash
+# Schema: server/src/infra/database/prisma/schema.prisma
+cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma
+cd server && npx prisma migrate dev --schema=src/infra/database/prisma/schema.prisma
+```
 
-## Commit Convention
+## Planning
 
-- Use `type(scope): subject` format (Conventional Commits)
-- **Subject only, no body** — keep commits concise
-- Types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`, `perf`
-- Scopes: `web`, `server`, `e2e`
-- Examples: `fix(web): send x-csrf-token header on state-changing requests`
-
-## Architecture Notes
-
-- **Clean Architecture + DDD** in server
-- Modules follow: `application/use-cases/`, `domain/`, `infra/repositories/`, `http/`
-- Dependencies flow: HTTP → Controller → Use Case → Repository Interface ← Prisma
+`.planning/` tracks project progress via GSD phases. Run `/gsd:progress` for current state.
