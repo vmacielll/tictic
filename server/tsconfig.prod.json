@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./dist",
+    "paths": {
+      "@infra/*": ["infra/*"],
+      "@shared/*": ["shared/*"],
+      "@modules/*": ["modules/*"],
+      "@prisma/*": ["infra/database/prisma/*"],
+      "@tests/*": ["__tests__/*"]
+    }
+  }
+}

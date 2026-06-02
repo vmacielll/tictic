@@ -15,7 +15,7 @@ services:
     rootDir: server
 
     buildCommand: npm ci && npx prisma generate --schema=src/infra/database/prisma/schema.prisma && npm run build
-    startCommand: npx prisma migrate deploy --schema=src/infra/database/prisma/schema.prisma && node -r tsconfig-paths/register dist/app.js
+    startCommand: npx prisma migrate deploy --schema=src/infra/database/prisma/schema.prisma && TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/app.js
 
     healthCheckPath: /health
 
