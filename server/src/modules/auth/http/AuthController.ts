@@ -33,19 +33,21 @@ export class AuthController {
   }
 
   private setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string) {
+    const isProduction = process.env.NODE_ENV === 'production'
+
     reply.setCookie('accessToken', accessToken, {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 60 * 15, // 15 minutes
     })
 
     reply.setCookie('refreshToken', refreshToken, {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
   }
@@ -80,7 +82,7 @@ export class AuthController {
       reply.setCookie('csrf_token', csrfToken, {
         path: '/',
         httpOnly: false,  // Must be readable by JavaScript
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24, // 24 hours
       })
