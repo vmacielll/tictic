@@ -14,7 +14,7 @@ services:
     region: oregon
     rootDir: server
 
-    buildCommand: npm install && npx prisma generate --schema=src/infra/database/prisma/schema.prisma && npm run build
+    buildCommand: npm ci && npx prisma generate --schema=src/infra/database/prisma/schema.prisma && npm run build
     startCommand: npx prisma migrate deploy --schema=src/infra/database/prisma/schema.prisma && node -r tsconfig-paths/register dist/app.js
 
     healthCheckPath: /health
@@ -41,4 +41,4 @@ services:
         value: "22"
 
       - key: FRONTEND_URL
-        value: https://tictic-app.vercel.app
+        value: https://tictic-a9ip7ed2u-vitikomack-6003s-projects.vercel.app
