@@ -39,6 +39,3 @@ services:
 
       - key: NODE_VERSION
         value: "22"
-
-      - key: FRONTEND_URL
-        value: https://tictic-app.vercel.app

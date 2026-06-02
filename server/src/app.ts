@@ -73,9 +73,20 @@ app.addHook('preHandler', async (request, _reply) => {
   request.userTimezone = timezone
 })
 
+// Allowed origins — comma-separated FRONTEND_URL for multi-domain (staging + prod)
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim())
+
 // CORS
 app.register(fastifyCors, {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Not allowed by CORS'), false)
+    }
+  },
   credentials: true,
 })
 
@@ -112,8 +123,7 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
     // CSRF validation for state-changing requests
     const origin = request.headers.origin
     if (origin) {
-      const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'
-      if (origin !== allowedOrigin) {
+      if (!allowedOrigins.includes(origin)) {
         return reply.code(403).send({ message: 'Forbidden', code: 'CSRF', statusCode: 403 })
       }
     }
