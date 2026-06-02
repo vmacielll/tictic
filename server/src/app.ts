@@ -111,30 +111,16 @@ app.register(fastifyJwt, {
   sign: {
     expiresIn: '15m',
   },
-  cookie: {
-    cookieName: 'accessToken',
-    signed: false,
-  },
 })
 
 // Auth decorator for protected routes
 app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
   try {
-    // CSRF validation for state-changing requests
+    // Origin check — primary CSRF defense
     const origin = request.headers.origin
     if (origin) {
       if (!allowedOrigins.includes(origin)) {
         return reply.code(403).send({ message: 'Forbidden', code: 'CSRF', statusCode: 403 })
-      }
-    }
-
-    // Double-submit CSRF pattern: for state-changing methods, require header to match cookie
-    const isStateChanging = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method)
-    const cookieToken = request.cookies.csrf_token
-    const headerToken = request.headers['x-csrf-token'] as string | undefined
-    if (isStateChanging && cookieToken) {
-      if (!headerToken || cookieToken !== headerToken) {
-        return reply.code(403).send({ message: 'CSRF: Token mismatch', code: 'CSRF_MISMATCH', statusCode: 403 })
       }
     }
 

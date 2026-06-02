@@ -6,16 +6,38 @@ import type { TaskResponse, CreateTaskInput, UpdateTaskInput } from '@/domain/ta
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
+// ── Token storage ──
+const ACCESS_TOKEN_KEY = 'accessToken'
+const REFRESH_TOKEN_KEY = 'refreshToken'
+
+function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(ACCESS_TOKEN_KEY)
+}
+
+function setAccessToken(token: string): void {
+  localStorage.setItem(ACCESS_TOKEN_KEY, token)
+}
+
+function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
+}
+
+function setRefreshToken(token: string): void {
+  localStorage.setItem(REFRESH_TOKEN_KEY, token)
+}
+
+export function clearTokens(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(ACCESS_TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean
   _retry?: boolean
   signal?: AbortSignal
-}
-
-function getCsrfTokenFromCookie(): string | null {
-  if (typeof document === 'undefined') return null
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/)
-  return match ? match[1] : null
 }
 
 function parseServerError(error: unknown): string {
@@ -48,19 +70,15 @@ export async function apiRequest<T>(
     ...(customHeaders as Record<string, string>),
   }
 
-  const isStateChanging = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(restOptions.method || '')
-  if (isStateChanging) {
-    const csrfToken = getCsrfTokenFromCookie()
-    if (csrfToken) {
-      headers['x-csrf-token'] = csrfToken
-    }
+  const token = getAccessToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...restOptions,
       headers,
-      credentials: 'include',
     })
 
     if (response.status === 401 && !_retry && requiresAuth) {
@@ -68,6 +86,7 @@ export async function apiRequest<T>(
         await refreshToken()
         return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
       } catch {
+        clearTokens()
         throw new Error('Session expired')
       }
     }
@@ -91,20 +110,31 @@ export async function apiRequest<T>(
 }
 
 async function refreshToken(): Promise<void> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) throw new Error('No refresh token')
+
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: 'POST',
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
   })
   if (!response.ok) {
+    clearTokens()
     throw new Error('Failed to refresh token')
   }
+  const data = await response.json()
+  setAccessToken(data.accessToken)
+  setRefreshToken(data.refreshToken)
 }
 
 export async function logout(): Promise<void> {
+  const refreshToken = getRefreshToken()
   await fetch(`${API_BASE_URL}/auth/logout`, {
     method: 'POST',
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
   })
+  clearTokens()
 }
 
 export async function getMe(): Promise<{ id: string; name: string; email: string }> {
@@ -113,10 +143,13 @@ export async function getMe(): Promise<{ id: string; name: string; email: string
 
 // ── Auth ──
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  return apiRequest('/auth/login', {
+  const response = await apiRequest<AuthResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
+  setAccessToken(response.accessToken)
+  setRefreshToken(response.refreshToken)
+  return response
 }
 
 export async function register(name: string, email: string, password: string): Promise<AuthResponse> {

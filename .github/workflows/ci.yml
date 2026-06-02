@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, dev]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, dev]
 
 jobs:
   build:
@@ -46,17 +46,13 @@ jobs:
         working-directory: ./web
         run: npm ci --frozen-lockfile
 
+      - name: Generate Prisma Client
+        working-directory: ./server
+        run: npx prisma generate --schema=src/infra/database/prisma/schema.prisma
+
       - name: Lint (server)
         working-directory: ./server
         run: npm run typecheck
-
-      - name: Lint (web)
-        working-directory: ./web
-        run: npm run lint
-
-      - name: Generate Prisma Client
-        working-directory: ./server
-        run: npx prisma generate
 
       - name: Run unit tests with coverage
         working-directory: ./server

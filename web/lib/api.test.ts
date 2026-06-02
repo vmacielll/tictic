@@ -1,15 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { apiRequest } from './api'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { apiRequest, clearTokens } from './api'
 
 const BASE_URL = 'http://localhost:3333'
 
 beforeEach(() => {
   vi.restoreAllMocks()
-  // Clear cookies between tests
-  document.cookie.split(';').forEach((c) => {
-    const [name] = c.trim().split('=')
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-  })
+  // Clear localStorage between tests
+  localStorage.clear()
 })
 
 function mockFetch(status = 200, body: unknown = { ok: true }) {
@@ -21,100 +18,56 @@ function mockFetch(status = 200, body: unknown = { ok: true }) {
   } as Response)
 }
 
-function setCsrfCookie(value: string) {
-  document.cookie = `csrf_token=${value};path=/`
-}
-
-function clearCsrfCookie() {
-  document.cookie = 'csrf_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
-}
-
 function getFetchHeaders(): Record<string, string> {
   const calls = vi.mocked(global.fetch).mock.calls
   expect(calls.length).toBeGreaterThan(0)
-  // fetch(url, { headers, ... })
   return (calls[calls.length - 1][1] as RequestInit).headers as Record<string, string>
 }
 
-// ── CSRF token from cookie ──
+function login() {
+  localStorage.setItem('accessToken', 'test-access-token')
+  localStorage.setItem('refreshToken', 'test-refresh-token')
+}
 
-describe('getCsrfTokenFromCookie', () => {
-  it('returns null when cookie is not set', async () => {
+// ── Bearer token ──
+
+describe('Authorization header', () => {
+  it('sends Bearer token when accessToken is in localStorage', async () => {
+    login()
     mockFetch()
 
     await apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}) })
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBeUndefined()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 
-  it('sends x-csrf-token header when csrf_token cookie is set', async () => {
+  it('does not send Authorization header when no token in localStorage', async () => {
     mockFetch()
-    setCsrfCookie('abc123')
 
     await apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}) })
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('abc123')
+    expect(headers['Authorization']).toBeUndefined()
   })
 
-  it('sends x-csrf-token with the exact cookie value', async () => {
+  it('sends Authorization header on GET requests', async () => {
+    login()
     mockFetch()
-    setCsrfCookie('token-value-xyz-456')
-
-    await apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}) })
-
-    const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('token-value-xyz-456')
-  })
-})
-
-// ── State-changing methods include CSRF header ──
-
-const STATE_CHANGING_METHODS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const
-
-describe.each(STATE_CHANGING_METHODS)('%s requests', (method) => {
-  it('includes x-csrf-token header when cookie is set', async () => {
-    mockFetch()
-    setCsrfCookie('csrf-test-token')
-
-    await apiRequest('/tasks/123', { method, body: method !== 'DELETE' ? JSON.stringify({}) : undefined })
-
-    const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('csrf-test-token')
-  })
-
-  it('does not include x-csrf-token header when cookie is missing', async () => {
-    mockFetch()
-    clearCsrfCookie()
-
-    await apiRequest('/tasks/123', { method, body: method !== 'DELETE' ? JSON.stringify({}) : undefined })
-
-    const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBeUndefined()
-  })
-})
-
-// ── GET requests do NOT include CSRF header ──
-
-describe('GET requests', () => {
-  it('does not include x-csrf-token header even when cookie is set', async () => {
-    mockFetch()
-    setCsrfCookie('should-not-be-sent')
 
     await apiRequest('/tasks')
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBeUndefined()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 })
 
-// ── Custom headers are preserved alongside CSRF header ──
+// ── Custom headers ──
 
 describe('custom headers', () => {
-  it('passes through custom headers alongside x-csrf-token', async () => {
+  it('passes through custom headers alongside Authorization', async () => {
+    login()
     mockFetch()
-    setCsrfCookie('csrf-abc')
 
     await apiRequest('/tasks', {
       method: 'POST',
@@ -123,105 +76,148 @@ describe('custom headers', () => {
     })
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('csrf-abc')
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
     expect(headers['x-custom']).toBe('custom-value')
   })
+})
 
-  it('cookie value takes precedence over caller-supplied x-csrf-token header', async () => {
-    mockFetch()
-    setCsrfCookie('cookie-token')
+// ── Token refresh ──
 
-    await apiRequest('/tasks', {
-      method: 'POST',
-      body: JSON.stringify({}),
-      headers: { 'x-csrf-token': 'explicit-token' },
-    })
+describe('token refresh', () => {
+  it('attempts refresh on 401 and retries when requiresAuth is true', async () => {
+    login()
+    vi.spyOn(global, 'fetch')
+      // First call: tasks → 401
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers(),
+        json: async () => ({ message: 'Token expired', code: 'UNAUTHORIZED' }),
+      } as Response)
+      // Second call: refresh → 200
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: async () => ({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+      } as Response)
+      // Third call: tasks retry → 200
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-length': '10' }),
+        json: async () => ({ id: '1', title: 'task' }),
+      } as Response)
 
-    const headers = getFetchHeaders()
-    // CSRF token from cookie is set after spreading custom headers, so it wins.
-    // This is a security property: callers cannot override the CSRF token.
-    expect(headers['x-csrf-token']).toBe('cookie-token')
+    await apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}), requiresAuth: true })
+
+    // Verify refresh was called
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls[1][0]).toContain('/auth/refresh')
+    expect(calls[2][0]).toContain('/tasks')
+  })
+
+  it('does not refresh on 401 when requiresAuth is false', async () => {
+    login()
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers(),
+        json: async () => ({ message: 'Unauthorized' }),
+      } as Response)
+
+    await expect(
+      apiRequest('/auth/me', { requiresAuth: false })
+    ).rejects.toThrow()
+
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls.length).toBe(1) // No refresh call
+  })
+
+  it('does not retry refresh more than once', async () => {
+    login()
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValue({
+        ok: false,
+        status: 401,
+        headers: new Headers(),
+        json: async () => ({ message: 'Unauthorized' }),
+      } as Response)
+
+    await expect(
+      apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}), requiresAuth: true })
+    ).rejects.toThrow()
+
+    // Should have: 1 task call + 1 refresh call (from the retry). Total 2, not 3+.
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls.length).toBeLessThanOrEqual(2)
   })
 })
 
-// ── Edge cases ──
+// ── clearTokens ──
 
-describe('edge cases', () => {
-  it('handles cookie with special regex characters in value', async () => {
-    mockFetch()
-    setCsrfCookie('token.with.dots-and-dashes')
-
-    await apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}) })
-
-    const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('token.with.dots-and-dashes')
-  })
-
-  it('reads correct cookie when multiple cookies exist', async () => {
-    mockFetch()
-    document.cookie = 'other=value;path=/'
-    setCsrfCookie('correct-token')
-    document.cookie = 'another=thing;path=/'
-
-    await apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}) })
-
-    const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('correct-token')
+describe('clearTokens', () => {
+  it('removes both tokens from localStorage', () => {
+    login()
+    clearTokens()
+    expect(localStorage.getItem('accessToken')).toBeNull()
+    expect(localStorage.getItem('refreshToken')).toBeNull()
   })
 })
 
-// ── Via exported endpoint functions (integration-style) ──
+// ── Exported endpoint functions ──
 
 import { createTask, updateTask, deleteTask, listTasks, getTask } from './api'
 
 describe('exported endpoint functions', () => {
-  it('createTask sends x-csrf-token', async () => {
+  it('createTask sends Authorization header', async () => {
+    login()
     mockFetch(201, { id: '1', title: 'test' })
-    setCsrfCookie('csrf-create')
 
     await createTask({ title: 'New task' })
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('csrf-create')
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 
-  it('updateTask sends x-csrf-token', async () => {
+  it('updateTask sends Authorization header', async () => {
+    login()
     mockFetch(200, { id: '1', title: 'updated' })
-    setCsrfCookie('csrf-update')
 
     await updateTask('1', { title: 'Updated' })
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('csrf-update')
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 
-  it('deleteTask sends x-csrf-token', async () => {
+  it('deleteTask sends Authorization header', async () => {
+    login()
     mockFetch(204, null)
-    setCsrfCookie('csrf-delete')
 
     await deleteTask('1')
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBe('csrf-delete')
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 
-  it('listTasks does NOT send x-csrf-token (GET)', async () => {
+  it('listTasks sends Authorization header when logged in', async () => {
+    login()
     mockFetch(200, [])
-    setCsrfCookie('should-not-send')
 
     await listTasks()
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBeUndefined()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 
-  it('getTask does NOT send x-csrf-token (GET)', async () => {
+  it('getTask sends Authorization header when logged in', async () => {
+    login()
     mockFetch(200, { id: '1' })
-    setCsrfCookie('also-not-sent')
 
     await getTask('1')
 
     const headers = getFetchHeaders()
-    expect(headers['x-csrf-token']).toBeUndefined()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
   })
 })

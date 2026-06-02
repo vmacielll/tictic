@@ -21,61 +21,24 @@ setup('authenticate via register', async ({ page, context }) => {
 
   expect(loginResponse.ok()).toBeTruthy()
 
-  // Extract tokens from Set-Cookie header
-  const setCookieHeader = loginResponse.headers()['set-cookie']
-  const accessTokenMatch = setCookieHeader?.match(/accessToken=([^;]+)/)
-  const refreshTokenMatch = setCookieHeader?.match(/refreshToken=([^;]+)/)
-  const csrfTokenMatch = setCookieHeader?.match(/csrf_token=([^;]+)/)
-
-  const accessToken = accessTokenMatch?.[1]
-  const refreshToken = refreshTokenMatch?.[1]
-  const csrfToken = csrfTokenMatch?.[1]
+  const loginBody = await loginResponse.json()
+  const accessToken = loginBody.accessToken
+  const refreshToken = loginBody.refreshToken
 
   expect(accessToken).toBeTruthy()
+  expect(refreshToken).toBeTruthy()
 
-  // Set HttpOnly cookies directly in the browser context
-  await context.addCookies([
-    {
-      name: 'accessToken',
-      value: accessToken,
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      sameSite: 'Lax',
-      expires: Math.floor(Date.now() / 1000) + 60 * 15,
-    },
-    {
-      name: 'refreshToken',
-      value: refreshToken || '',
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      sameSite: 'Lax',
-      expires: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
-    },
-    {
-      name: 'csrf_token',
-      value: csrfToken || '',
-      domain: 'localhost',
-      path: '/',
-      httpOnly: false,
-      sameSite: 'Strict',
-      expires: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-    },
-  ])
-
-  // Also store in localStorage for the frontend's auth state
+  // Store tokens in localStorage (Bearer auth)
   await page.goto('/login')
-  await page.evaluate(({ accessToken, refreshToken }) => {
-    localStorage.setItem('accessToken', accessToken)
-    localStorage.setItem('refreshToken', refreshToken)
-  }, { accessToken, refreshToken: refreshToken || '' })
+  await page.evaluate((tokens) => {
+    localStorage.setItem('accessToken', tokens.accessToken)
+    localStorage.setItem('refreshToken', tokens.refreshToken)
+  }, { accessToken, refreshToken })
 
   await page.goto('/today')
   await page.waitForURL(/\/today/, { timeout: 10000 })
 
-  const hasToken = await page.evaluate(() => !!localStorage.getItem('accessToken'))
-  expect(hasToken).toBeTruthy()
+  await expect(page.getByTestId('page-heading')).toBeVisible({ timeout: 10000 })
 
   await expect(page).toHaveURL(/\/(today|inbox)/)
 
