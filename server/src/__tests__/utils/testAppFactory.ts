@@ -1,11 +1,12 @@
 import Fastify, { FastifyInstance } from 'fastify'
 import fastifyJwt from '@fastify/jwt'
 import fastifyCors from '@fastify/cors'
+import { isValidTimezone } from '@shared/utils/timezone'
 
 const TEST_JWT_SECRET = 'test-secret-key-for-integration-tests'
 
 /**
- * Creates a Fastify test app with JWT and CORS pre-configured.
+ * Creates a Fastify test app with JWT, CORS, and timezone pre-configured.
  * Returns the app instance + a token generator helper.
  *
  * Usage:
@@ -22,6 +23,12 @@ export async function createTestApp(): Promise<{
 
   await app.register(fastifyCors, { origin: '*' })
   await app.register(fastifyJwt, { secret: TEST_JWT_SECRET })
+
+  // Extract timezone from request headers (mirrors production app.ts)
+  app.addHook('preHandler', async (request: any) => {
+    const timezoneHeader = request.headers['x-timezone'] as string
+    request.userTimezone = timezoneHeader && isValidTimezone(timezoneHeader) ? timezoneHeader : 'UTC'
+  })
 
   app.decorate('authenticate', async (request: any, reply: any) => {
     try {
