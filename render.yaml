@@ -9,7 +9,7 @@ databases:
 services:
   - type: web
     name: tictic-api
-    runtime: node-22
+    runtime: node
     plan: free
     region: oregon
     rootDir: server
