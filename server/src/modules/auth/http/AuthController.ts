@@ -109,7 +109,7 @@ export class AuthController {
       reply.setCookie('csrf_token', csrfToken, {
         path: '/',
         httpOnly: false,
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24,
       })
