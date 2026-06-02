@@ -16,6 +16,11 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+// Mock AuthContext
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: null, loading: false, refreshUser: vi.fn(), logout: vi.fn() }),
+}))
+
 // Mock API
 const mockLogin = vi.fn()
 vi.mock('@/lib/api', () => ({

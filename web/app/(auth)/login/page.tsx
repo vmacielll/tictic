@@ -1,19 +1,25 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { login } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (user) router.push('/today')
+  }, [user, router])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()

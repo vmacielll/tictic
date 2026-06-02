@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import crypto from 'crypto'
 import { RegisterUser } from '../application/use-cases/RegisterUser'
 import { LoginUser } from '../application/use-cases/LoginUser'
@@ -32,26 +32,6 @@ export class AuthController {
     this.refreshTokenRepository = refreshTokenRepository
   }
 
-  private setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string) {
-    const isProduction = process.env.NODE_ENV === 'production'
-
-    reply.setCookie('accessToken', accessToken, {
-      path: '/',
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 60 * 15, // 15 minutes
-    })
-
-    reply.setCookie('refreshToken', refreshToken, {
-      path: '/',
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
-  }
-
   async register(request: FastifyRequest, reply: FastifyReply) {
     const parseResult = RegisterSchema.safeParse(request.body)
     if (!parseResult.success) {
@@ -76,19 +56,7 @@ export class AuthController {
 
     try {
       const result = await this.loginUser.execute({ email, password })
-      
-      // Set CSRF token cookie
-      const csrfToken = crypto.randomBytes(32).toString('hex')
-      reply.setCookie('csrf_token', csrfToken, {
-        path: '/',
-        httpOnly: false,  // Must be readable by JavaScript
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24, // 24 hours
-      })
-      
-      this.setAuthCookies(reply, result.accessToken, result.refreshToken)
-      return reply.status(200).send({ user: result.user, csrfToken })
+      return reply.status(200).send({ user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken })
     } catch (error) {
       return handleError(error, reply)
     }
@@ -96,27 +64,15 @@ export class AuthController {
 
   async refresh(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const refreshToken = request.cookies.refreshToken
+      const { refreshToken } = request.body as { refreshToken?: string }
 
       if (!refreshToken) {
         throw new AppError('Refresh token required', 401, 'UNAUTHORIZED')
       }
 
       const result = await this.refreshToken.execute(refreshToken)
-      
-      // Set CSRF token cookie
-      const csrfToken = crypto.randomBytes(32).toString('hex')
-      reply.setCookie('csrf_token', csrfToken, {
-        path: '/',
-        httpOnly: false,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24,
-      })
-      
-      this.setAuthCookies(reply, result.accessToken, result.refreshToken)
 
-      return reply.status(200).send({ accessToken: result.accessToken, csrfToken })
+      return reply.status(200).send({ accessToken: result.accessToken, refreshToken: result.refreshToken })
     } catch (error) {
       return handleError(error, reply)
     }
@@ -124,15 +80,12 @@ export class AuthController {
 
   async logout(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const refreshToken = request.cookies.refreshToken
+      const { refreshToken } = request.body as { refreshToken?: string }
 
       if (refreshToken) {
         const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
         await this.refreshTokenRepository.revoke(tokenHash)
       }
-
-      reply.clearCookie('accessToken', { path: '/' })
-      reply.clearCookie('refreshToken', { path: '/' })
 
       return reply.status(200).send({ message: 'Logged out successfully' })
     } catch (error) {
