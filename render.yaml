@@ -41,4 +41,4 @@ services:
         value: "22"
 
       - key: FRONTEND_URL
-        value: https://tictic-a9ip7ed2u-vitikomack-6003s-projects.vercel.app
+        value: https://tictic-app.vercel.app
