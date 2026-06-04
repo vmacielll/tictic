@@ -1,5 +1,5 @@
 import type { ITaskRepository } from '../../../tasks/domain/repositories/ITaskRepository'
-import type { CalendarDay, CalendarTask } from '../../domain/types/CalendarTypes'
+import type { CalendarDay } from '../../domain/types/CalendarTypes'
 import { DateTime } from 'luxon'
 
 interface GetCalendarWeekRequest {

@@ -56,6 +56,12 @@ cd server && npx prisma migrate dev --schema=src/infra/database/prisma/schema.pr
 
 `.planning/` tracks project progress via GSD phases. Run `/gsd:progress` for current state.
 
+## Agent Rules
+
+- **Never push to remote without explicit approval.** Stage and commit only after presenting a summary and getting confirmation.
+- **Before committing, always present a summary** of what was changed and wait for approval.
+- Include affected files, purpose of changes, and any risks or follow-ups needed.
+
 ## Maintenance
 
 When the project changes in ways that affect documentation, update these files proactively:

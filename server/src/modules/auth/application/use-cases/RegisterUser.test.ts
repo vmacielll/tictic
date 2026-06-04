@@ -5,12 +5,12 @@ import { AppError } from '@shared/errors/AppError'
 import type { IUser } from '../../domain/repositories/IUserRepository'
 
 describe('RegisterUser Use Case', () => {
-  let registerUser: RegisterUser
+  let _registerUser: RegisterUser
   const mockRepository = createMockUserRepository()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    registerUser = new RegisterUser(mockRepository)
+    _registerUser = new RegisterUser(mockRepository)
   })
 
   it('should register a new user successfully', async () => {

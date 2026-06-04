@@ -1,6 +1,5 @@
 import { Task } from '@modules/tasks/domain/entities/Task'
 import { TaskTitle } from '@modules/tasks/domain/value-objects/TaskTitle'
-import type { Priority } from '@modules/tasks/domain/types/Priority'
 import type { Task as PrismaTask } from '@prisma/client'
 import type { Mapper } from './Mapper'
 

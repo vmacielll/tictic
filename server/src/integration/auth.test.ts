@@ -39,7 +39,7 @@ const mockPrisma = {
   },
 }
 
-const mockPassword = {
+const _mockPassword = {
   hash: async (password: string) => `hashed_${password}`,
   compare: async (password: string, hash: string) => password === hash.replace('hashed_', ''),
 }

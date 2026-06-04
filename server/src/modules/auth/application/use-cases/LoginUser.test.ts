@@ -8,7 +8,7 @@ import type { IRefreshTokenRepository } from '../../domain/repositories/IRefresh
 import { resetLogger } from '@shared/utils/logger'
 
 describe('LoginUser Use Case', () => {
-  const mockRepository = createMockUserRepository()
+  const _mockRepository = createMockUserRepository()
   const mockRefreshTokenRepository = {
     create: vi.fn().mockResolvedValue({ id: 'token-id' }),
   } as unknown as IRefreshTokenRepository

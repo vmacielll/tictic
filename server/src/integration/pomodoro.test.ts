@@ -27,7 +27,7 @@ const mockPrisma = {
     findUnique: async ({ where }: { where: { id: string } }) => {
       return mockPomodoros.find((p) => p.id === where.id) || null
     },
-    findMany: async ({ where, orderBy }: any) => {
+    findMany: async ({ where, orderBy: _orderBy }: any) => {
       let results = mockPomodoros.filter((p) => p.userId === where?.userId)
       if (where?.status) {
         results = results.filter((p) => p.status === where.status)

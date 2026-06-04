@@ -1,5 +1,4 @@
 import 'fastify'
-import { User } from '../modules/auth/domain/entities/User'
 import { AuthController } from '../modules/auth/http/AuthController'
 import { TasksController } from '../modules/tasks/http/TasksController'
 import { ListsController } from '../modules/lists/http/ListsController'

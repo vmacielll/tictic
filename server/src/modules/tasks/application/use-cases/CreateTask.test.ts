@@ -3,7 +3,6 @@ import { type ITaskRepository } from '../../domain/repositories/ITaskRepository'
 import { CreateTask } from './CreateTask'
 import { Task } from '../../domain/entities/Task'
 import type { Priority } from '../../domain/types/Priority'
-import { testDate } from '../../../../__tests__/utils/dateUtils'
 import { resetLogger } from '@shared/utils/logger'
 
 describe('CreateTask', () => {

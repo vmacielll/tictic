@@ -1,5 +1,4 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { DateTime } from 'luxon'
 import { GetCalendarMonth } from '../application/use-cases/GetCalendarMonth'
 import { GetCalendarWeek } from '../application/use-cases/GetCalendarWeek'
 import { GetCalendarDay } from '../application/use-cases/GetCalendarDay'

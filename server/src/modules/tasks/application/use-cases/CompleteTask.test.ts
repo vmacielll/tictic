@@ -89,7 +89,7 @@ describe('CompleteTask', () => {
   })
 
   it('should handle completing an already completed task (idempotent)', async () => {
-    const task = Task.create('user-1', 'Test Task')
+    const _task = Task.create('user-1', 'Test Task')
     // Simulate already completed task
     const completedTask = Task.create('user-1', 'Test Task')
     ;(completedTask as any)._completed = true

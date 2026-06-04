@@ -32,7 +32,7 @@ describe('UpdateTask', () => {
     vi.spyOn(mockTaskRepository, 'findById').mockResolvedValue(task)
     vi.spyOn(mockTaskRepository, 'save').mockResolvedValue(updatedTask)
 
-    const result = await useCase.execute({
+    await useCase.execute({
       taskId: task.id,
       userId: 'user-1',
       title: 'New Title',

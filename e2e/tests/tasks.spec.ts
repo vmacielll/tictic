@@ -18,7 +18,7 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
+    await expect(page.getByTestId('task-add-button')).toBeEnabled()
 
     const responsePromise = page.waitForResponse(
       resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
@@ -146,7 +146,7 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
+    await expect(page.getByTestId('task-add-button')).toBeEnabled()
 
     const responsePromise = page.waitForResponse(
       resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
@@ -192,7 +192,7 @@ test.describe('Tasks - Full CRUD Flow', () => {
     const taskInput = page.getByTestId('task-input')
     await taskInput.waitFor({ state: 'visible', timeout: 10000 })
     await taskInput.fill(taskTitle)
-    await expect(page.getByTestId('task-add-button')).not.toBeDisabled()
+    await expect(page.getByTestId('task-add-button')).toBeEnabled()
 
     const responsePromise = page.waitForResponse(
       resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'

@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { vi } from 'vitest'
 
-export function createMockFastifyInstance(overrides?: {
+export function createMockFastifyInstance(_overrides?: {
   jwtSignResult?: string
 }): { app: FastifyInstance; reply: FastifyReply } {
   const mockJwt = {

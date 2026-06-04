@@ -26,7 +26,7 @@ describe('UpdateList', () => {
     vi.spyOn(mockListRepository, 'findById').mockResolvedValue(list)
     vi.spyOn(mockListRepository, 'save').mockResolvedValue(updatedList)
 
-    const result = await useCase.execute({
+    await useCase.execute({
       listId: list.id,
       userId: 'user-1',
       name: 'New Name',

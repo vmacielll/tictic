@@ -6,7 +6,6 @@ import {
   TaskListResponseSchema,
   TaskArrayResponseSchema,
   PaginationQuerySchema,
-  ErrorResponseSchema,
   CreateTaskBodySchema,
   UpdateTaskBodySchema,
 } from './schemas'

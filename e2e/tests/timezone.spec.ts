@@ -36,8 +36,7 @@ test.describe('Calendar - Timezone Validation', () => {
   })
 
   test('should navigate to today correctly', async ({ page }) => {
-    const today = new Date()
-    const expectedDay = today.getDate()
+    const _today = new Date()
 
     // Navigate to a different month first
     await page.getByTestId('calendar-view-month').click()

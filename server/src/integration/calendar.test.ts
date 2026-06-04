@@ -31,7 +31,7 @@ const mockPrisma = {
     findUnique: async ({ where }: { where: { id: string } }) => {
       return mockTasks.find((t) => t.id === where.id) || null
     },
-    findMany: async ({ where, orderBy }: any) => {
+    findMany: async ({ where, orderBy: _orderBy }: any) => {
       let results = mockTasks.filter((t) => t.userId === where?.userId)
       if (where?.dueDate) {
         results = results.filter((t) => t.dueDate === where.dueDate)

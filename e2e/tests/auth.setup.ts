@@ -5,7 +5,7 @@ import fs from 'fs'
 const authFile = path.join(__dirname, '../test-results/.auth/storageState.json')
 const tokenFile = path.join(__dirname, '../test-results/.auth/token.json')
 
-setup('authenticate via register', async ({ page, context }) => {
+setup('authenticate via register', async ({ page, context: _context }) => {
   const testEmail = `e2e+${Date.now()}@test.com`
   const testPassword = 'e2etestpassword123'
 
