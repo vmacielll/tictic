@@ -176,7 +176,7 @@ describe('useTaskDetail', () => {
   })
 
   describe('handleToggleComplete', () => {
-    it('toggles completed to true and sets completedAt when wasCompleted is false', async () => {
+    it('sets completed to true and sets completedAt when newCompleted is true', async () => {
       mockedGetTask.mockResolvedValue(mockTaskResponse)
       const { result, onToggleTask } = setup()
 
@@ -187,16 +187,17 @@ describe('useTaskDetail', () => {
       expect(result.current.selectedTask?.completedAt).toBeUndefined()
 
       act(() => {
-        result.current.handleToggleComplete(mockTaskResponse.id, false)
+        result.current.handleToggleComplete(mockTaskResponse.id, true)
       })
 
+      // onToggleTask receives the CURRENT state (!newCompleted) since it toggles internally
       expect(onToggleTask).toHaveBeenCalledWith(mockTaskResponse.id, false)
       expect(onToggleTask).toHaveBeenCalledTimes(1)
       expect(result.current.selectedTask?.completed).toBe(true)
       expect(result.current.selectedTask?.completedAt).toBeInstanceOf(Date)
     })
 
-    it('toggles completed to false and clears completedAt when wasCompleted is true', async () => {
+    it('sets completed to false and clears completedAt when newCompleted is false', async () => {
       const completedResponse = {
         ...mockTaskResponse,
         completed: true,
@@ -213,9 +214,10 @@ describe('useTaskDetail', () => {
       expect(result.current.selectedTask?.completedAt).toBeInstanceOf(Date)
 
       act(() => {
-        result.current.handleToggleComplete(mockTaskResponse.id, true)
+        result.current.handleToggleComplete(mockTaskResponse.id, false)
       })
 
+      // onToggleTask receives the CURRENT state (!newCompleted) since it toggles internally
       expect(onToggleTask).toHaveBeenCalledWith(mockTaskResponse.id, true)
       expect(result.current.selectedTask?.completed).toBe(false)
       expect(result.current.selectedTask?.completedAt).toBeUndefined()
@@ -225,7 +227,7 @@ describe('useTaskDetail', () => {
       const { result, onToggleTask } = setup()
 
       act(() => {
-        result.current.handleToggleComplete('some-task-id', false)
+        result.current.handleToggleComplete('some-task-id', true)
       })
 
       expect(onToggleTask).toHaveBeenCalledWith('some-task-id', false)
@@ -243,7 +245,7 @@ describe('useTaskDetail', () => {
       expect(result.current.selectedTask?.id).toBe(mockTaskResponse.id)
 
       act(() => {
-        result.current.handleToggleComplete('different-task-id', false)
+        result.current.handleToggleComplete('different-task-id', true)
       })
 
       expect(onToggleTask).toHaveBeenCalledWith('different-task-id', false)
