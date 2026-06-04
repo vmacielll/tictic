@@ -1,0 +1,26 @@
+{
+  "name": "tictic",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint": "cd server && npm run lint && cd ../web && npm run lint && cd ../e2e && npm run lint",
+    "lint:fix": "cd server && npm run lint:fix && cd ../web && npm run lint && cd ../e2e && npm run lint:fix"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "server/**/*.ts": [
+      "cd server && eslint --fix --cache",
+      "cd server && tsc --noEmit"
+    ],
+    "web/**/*.{ts,tsx}": [
+      "cd web && eslint --fix --cache",
+      "cd web && tsc --noEmit"
+    ],
+    "e2e/**/*.ts": [
+      "cd e2e && eslint --fix --cache"
+    ]
+  }
+}
