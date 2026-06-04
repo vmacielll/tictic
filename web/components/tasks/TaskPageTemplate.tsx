@@ -6,6 +6,7 @@ import { TaskList } from '@/components/tasks/TaskList'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { useListsContext } from '@/contexts/ListsContext'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
+import { useToast } from '@/components/ui/Toast'
 import { DateTime } from 'luxon'
 
 interface TaskPageTemplateProps {
@@ -25,6 +26,7 @@ export function TaskPageTemplate({
 }: TaskPageTemplateProps) {
   const { tasks, loading, error, addTask, toggleTask, removeTask, updateTask, refresh } = useTasks(pageKey)
   const { lists } = useListsContext()
+  const { addToast } = useToast()
 
   // Use Luxon for date formatting (FR-02)
   const today = DateTime.now()
@@ -49,12 +51,15 @@ export function TaskPageTemplate({
         dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
+      addToast('Task updated', 'success')
     },
     async (taskId) => {
       await removeTask(taskId)
+      addToast('Task deleted', 'success')
     },
     async (taskId, completed) => {
       await toggleTask(taskId, completed)
+      addToast(completed ? 'Task completed' : 'Task reopened', 'success')
     }
   )
 

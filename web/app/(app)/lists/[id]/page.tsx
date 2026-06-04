@@ -10,6 +10,7 @@ import { TaskList } from '@/components/tasks/TaskList'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { Pagination } from '@/components/ui/Pagination'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
+import { useToast } from '@/components/ui/Toast'
 
 export default function ListDetailPage() {
   const params = useParams()
@@ -32,6 +33,8 @@ export default function ListDetailPage() {
     refresh,
   } = useListTasks(id)
 
+  const { addToast } = useToast()
+
   const {
     selectedTask,
     isModalOpen,
@@ -53,20 +56,23 @@ export default function ListDetailPage() {
           dueTime: updatedTask.dueTime || undefined,
         })
         await refresh()
+        addToast('Task updated', 'success')
       },
-      [updateTask, refresh]
+      [updateTask, refresh, addToast]
     ),
     useCallback(
       async (taskId) => {
         await removeTask(taskId)
+        addToast('Task deleted', 'success')
       },
-      [removeTask]
+      [removeTask, addToast]
     ),
     useCallback(
       async (taskId, completed) => {
         await toggleTask(taskId, completed)
+        addToast(completed ? 'Task completed' : 'Task reopened', 'success')
       },
-      [toggleTask]
+      [toggleTask, addToast]
     )
   )
 

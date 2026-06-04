@@ -101,7 +101,7 @@ const isTestEnv = process.env.NODE_ENV === 'test'
 
 app.register(fastifyRateLimit, {
   global: !isTestEnv,  // Disable globally in test env
-  max: 100,
+  max: isTestEnv ? 1000 : 300,
   timeWindow: '1 minute',
 })
 

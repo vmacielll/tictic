@@ -14,7 +14,7 @@ interface UseTaskDetailReturn {
   closeModal: () => void
   handleSave: (updatedTask: Task) => void
   handleDelete: (taskId: string) => void
-  handleToggleComplete: (taskId: string, completed: boolean) => void
+  handleToggleComplete: (taskId: string, newCompleted: boolean) => void
 }
 
 export function useTaskDetail(
@@ -55,16 +55,16 @@ export function useTaskDetail(
     closeModal()
   }, [onDeleteTask, closeModal])
 
-  const handleToggleComplete = useCallback((taskId: string, wasCompleted: boolean) => {
-    // Toggle the completed status
-    onToggleTask(taskId, wasCompleted)
+  const handleToggleComplete = useCallback((taskId: string, newCompleted: boolean) => {
+    // onToggleTask expects the CURRENT completed state and toggles internally
+    onToggleTask(taskId, !newCompleted)
 
-    // Update selected task if it's still open
+    // Optimistically update the selected task with the NEW completed state
     if (selectedTask?.id === taskId) {
       setSelectedTask({
         ...selectedTask,
-        completed: !wasCompleted,
-        completedAt: !wasCompleted ? DateTime.now().toJSDate() : undefined
+        completed: newCompleted,
+        completedAt: newCompleted ? DateTime.now().toJSDate() : undefined
       })
     }
   }, [onToggleTask, selectedTask])

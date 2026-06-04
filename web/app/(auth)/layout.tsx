@@ -4,7 +4,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary-600/8 rounded-full blur-3xl" />
@@ -16,7 +16,7 @@ export default function AuthLayout({
 
       <div className="relative z-10 w-full max-w-md px-4">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <header className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-600 mb-4 shadow-lg shadow-primary-600/25">
             <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -24,9 +24,9 @@ export default function AuthLayout({
           </div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">TicTic</h1>
           <p className="mt-2 text-sm text-text-muted">Organize your life, one task at a time</p>
-        </div>
+        </header>
         {children}
       </div>
-    </div>
+    </main>
   )
 }

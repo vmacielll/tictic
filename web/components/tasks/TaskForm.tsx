@@ -103,19 +103,21 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
             {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => {
               const config = PRIORITY_CONFIG[p]
               const isActive = priority === p
+              const labels = { LOW: 'Low', MEDIUM: 'Med', HIGH: 'High' }
               return (
                 <button
                   key={p}
                   data-testid={`priority-${p[0]}`}
                   type="button"
                   onClick={() => setPriority(p)}
-                  className={`w-7 h-7 text-xs rounded-lg font-semibold transition-all
+                  className={`px-2 h-7 text-xs rounded-lg font-semibold transition-all
                     ${isActive
                       ? `${config.bg} ${config.text} ring-1 ${config.ring}`
                       : 'bg-surface-raised text-text-muted hover:bg-surface-overlay border border-border-light'
                     }`}
+                  title={`${p.charAt(0) + p.slice(1).toLowerCase()} priority`}
                 >
-                  {p[0]}
+                  {labels[p]}
                 </button>
               )
             })}

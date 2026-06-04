@@ -22,14 +22,14 @@ export async function cleanupUserData(): Promise<void> {
     const context = await request.newContext({
       baseURL: 'http://localhost:3333',
       extraHTTPHeaders: {
-        Cookie: `accessToken=${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     })
 
     const tasksResponse = await context.get('/tasks')
     if (tasksResponse.ok()) {
       const data = await tasksResponse.json()
-      const tasks = data.tasks || []
+      const tasks = data.items || data.tasks || []
       for (const task of tasks) {
         await context.delete(`/tasks/${task.id}`).catch(() => {})
       }
@@ -47,10 +47,10 @@ export async function cleanupUserData(): Promise<void> {
     const sessionsResponse = await context.get('/pomodoro')
     if (sessionsResponse.ok()) {
       const data = await sessionsResponse.json()
-      const sessions = data.sessions || []
+      const sessions = data.pomodoroSessions || data.sessions || []
       for (const session of sessions) {
         if (session.status === 'RUNNING') {
-          await context.post(`/pomodoro/${session.id}/cancel`).catch(() => {})
+          await context.patch(`/pomodoro/${session.id}/cancel`).catch(() => {})
         }
       }
     }

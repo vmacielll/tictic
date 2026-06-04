@@ -59,21 +59,21 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
               key={index}
               data-testid={`calendar-day-cell-${dateStr || `empty-${index}`}`}
               data-date={dateStr || ''}
-              className="border border-border/30 p-1.5 min-h-[80px] cursor-pointer hover:bg-surface-overlay/50 transition-colors"
+              className="border border-border/30 p-1.5 min-h-[80px] sm:min-h-[100px] cursor-pointer hover:bg-surface-overlay/50 transition-colors"
               onClick={() => date && onDayClick(date)}
             >
               {date && (
                 <>
-                  <span
-                    data-testid="calendar-day-number"
-                    className={`text-xs font-medium inline-block mb-1 px-1.5 py-0.5 rounded-full ${
-                      isToday ? 'bg-primary-600 text-white' : 'text-text-secondary'
-                    }`}
-                  >
-                    {date.getDate()}
-                  </span>
-                  <div className="space-y-0.5 overflow-hidden">
-                    {tasks.slice(0, 3).map((task) => (
+<span
+                     data-testid="calendar-day-number"
+                     className={`text-xs font-medium inline-block mb-1 px-1.5 py-0.5 rounded-full ${
+                       isToday ? 'bg-primary-600 text-white' : 'text-text-secondary'
+                     }`}
+                   >
+                     {date.getDate()}
+                   </span>
+                   <div className="space-y-0.5 overflow-hidden">
+                     {tasks.slice(0, 2).map((task) => (
                       <div
                         key={task.id}
                         className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${

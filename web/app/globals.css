@@ -77,3 +77,22 @@ input, textarea, select {
 input::placeholder, textarea::placeholder {
   color: #71717a !important;
 }
+
+/* Focus-visible: only show focus rings for keyboard navigation, not mouse clicks */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Preserve existing focus:ring styles for elements that already have them */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}

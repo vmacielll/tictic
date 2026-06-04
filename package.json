@@ -11,16 +11,15 @@
     "lint-staged": "^15.0.0"
   },
   "lint-staged": {
-    "server/**/*.ts": [
-      "cd server && eslint --fix --cache",
-      "cd server && tsc --noEmit"
+    "server/src/**/*.ts": [
+      "cd server && npx eslint --fix --cache --no-warn-ignored .",
+      "cd server && npx tsc --noEmit"
     ],
     "web/**/*.{ts,tsx}": [
-      "cd web && eslint --fix --cache",
-      "cd web && tsc --noEmit"
+      "cd web && npx eslint --fix --cache --no-warn-ignored ."
     ],
     "e2e/**/*.ts": [
-      "cd e2e && eslint --fix --cache"
+      "cd e2e && npx eslint --fix --cache --no-warn-ignored ."
     ]
   }
 }

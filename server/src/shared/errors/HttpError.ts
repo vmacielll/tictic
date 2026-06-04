@@ -15,6 +15,18 @@ export function toHttpError(error: unknown): HttpErrorResponse {
     }
   }
 
+  // Handle Fastify rate limit errors (they have statusCode property)
+  if (error && typeof error === 'object' && 'statusCode' in error) {
+    const fastifyError = error as { statusCode: number; message?: string }
+    if (fastifyError.statusCode === 429) {
+      return {
+        message: fastifyError.message || 'Rate limit exceeded, retry later',
+        code: 'RATE_LIMIT_EXCEEDED',
+        statusCode: 429,
+      }
+    }
+  }
+
   if (error instanceof Error) {
     return {
       message: error.message,

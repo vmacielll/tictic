@@ -9,7 +9,7 @@ interface TaskDetailHeaderProps {
 
 export function TaskDetailHeader({ task, onClose, onToggleComplete }: TaskDetailHeaderProps) {
   return (
-    <div className={`sticky top-0 bg-surface-overlay border-b border-border px-6 py-4 rounded-t-xl ${task.completed ? 'opacity-60' : ''}`}>
+    <div className="sticky top-0 bg-surface-overlay border-b border-border px-6 py-4 md:rounded-t-xl z-10">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
           <button
@@ -20,7 +20,7 @@ export function TaskDetailHeader({ task, onClose, onToggleComplete }: TaskDetail
           >
             {task.completed && <Icon name="check" className="w-4 h-4 text-white" />}
           </button>
-          <h2 className={`text-xl font-semibold ${task.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>
+          <h2 id="modal-title" className="text-xl font-semibold text-text-primary">
             Task Details
           </h2>
         </div>
