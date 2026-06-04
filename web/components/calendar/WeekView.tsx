@@ -20,7 +20,8 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
       </div>
     ) : (
-      <div className="grid grid-cols-7 divide-x divide-border min-h-[400px] w-full">
+      <div className="overflow-x-auto">
+        <div className="grid grid-cols-7 divide-x divide-border min-h-[400px] min-w-[700px]">
         {days.map((day) => {
           const [year, month, dateDay] = day.date.split('-').map(Number)
           const date = new Date(year, month - 1, dateDay)
@@ -92,6 +93,7 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
             </div>
           )
         })}
+      </div>
       </div>
     )}
     </div>

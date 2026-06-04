@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useListsContext } from '@/contexts/ListsContext'
+import { logout as apiLogout } from '@/lib/api'
+import { useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
 
 const navItems = [
@@ -16,12 +18,24 @@ const navItems = [
 
 export function Sidebar({ className = '' }: { className?: string }) {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const router = useRouter()
+  const { user, logout } = useAuth()
   const { lists, loading } = useListsContext()
 
   const initials = user
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U'
+
+  const handleLogout = async () => {
+    try {
+      await apiLogout()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    } finally {
+      logout()
+      router.push('/login')
+    }
+  }
 
   return (
     <aside className={`w-60 bg-surface border-r border-border flex flex-col h-full ${className}`}>
@@ -107,7 +121,16 @@ export function Sidebar({ className = '' }: { className?: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-text-primary truncate">{user?.name || 'User'}</p>
+            <p className="text-xs text-text-muted truncate">{user?.email || ''}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <Icon name="logout" className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>

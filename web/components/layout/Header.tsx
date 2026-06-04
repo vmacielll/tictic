@@ -35,7 +35,7 @@ export function Header({ className = '' }: { className?: string }) {
   }
 
   return (
-    <header className={`h-14 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6 sticky top-0 z-10 ${className}`}>
+    <header className={`h-14 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 ${className}`}>
       <div className="flex items-center gap-2">
         {pageLabel && (
           <span className="text-sm text-text-muted">{pageLabel}</span>
@@ -43,10 +43,10 @@ export function Header({ className = '' }: { className?: string }) {
       </div>
       <button
         onClick={handleLogout}
-        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-surface-raised"
+        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors px-3 py-2 -mr-2 rounded-lg hover:bg-surface-raised min-h-[44px]"
       >
         <Icon name="logout" className="w-4 h-4" />
-        <span>Sign out</span>
+        <span className="hidden sm:inline">Sign out</span>
       </button>
     </header>
   )
