@@ -3,7 +3,7 @@ import { type Task, type UpdateTaskInput, parseTask } from '@/domain/tasks/types
 import { updateTask } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
-import { DateTime } from 'luxon'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { List } from '@/domain/lists/types'
 
 interface TaskDetailFormProps {
@@ -30,6 +30,7 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
   const [listId, setListId] = useState<string | undefined>(task.listId)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     setTitle(task.title)
@@ -79,19 +80,14 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this task?')) return
-    try {
-      onDelete(task.id)
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete task')
-    }
+  const handleDelete = () => {
+    setShowDeleteConfirm(true)
   }
 
-  // Use Luxon for date formatting (FR-02)
-  const formatDate = (date: Date) => {
-    return DateTime.fromJSDate(date).toFormat('MM/dd/yyyy, hh:mm a')
+  const confirmDelete = () => {
+    setShowDeleteConfirm(false)
+    onDelete(task.id)
+    onClose()
   }
 
   return (
@@ -131,10 +127,11 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
               key={p}
               type="button"
               onClick={() => setPriority(p)}
+              title={`${p.charAt(0) + p.slice(1).toLowerCase()} priority`}
               className={`flex-1 px-3 py-2 text-sm rounded-lg border font-medium transition-all
                 ${priority === p ? priorityColors[p] : 'bg-surface-raised border-border-light text-text-secondary hover:bg-surface'}`}
             >
-              {p === 'HIGH' ? '🔴' : p === 'MEDIUM' ? '🟡' : '🟢'} {p}
+              {p === 'HIGH' ? '🔴' : p === 'MEDIUM' ? '🟡' : '🟢'} {p.charAt(0) + p.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
@@ -178,32 +175,12 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
         <div className="text-sm text-text-muted">Timezone: {task.dueTimezone}</div>
       )}
 
-      <div className="pt-4 border-t border-border">
-        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">Information</h3>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-text-secondary">Created:</span>
-            <p className="text-text-primary">{formatDate(task.createdAt)}</p>
-          </div>
-          <div>
-            <span className="text-text-secondary">Updated:</span>
-            <p className="text-text-primary">{formatDate(task.updatedAt)}</p>
-          </div>
-          {task.completedAt && (
-            <div>
-              <span className="text-text-secondary">Completed:</span>
-              <p className="text-text-primary">{formatDate(task.completedAt)}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div data-testid="task-detail-pomodoro" className="pt-4 border-t border-border">
         <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">🍅 Pomodoro Focus</h3>
         <PomodoroTimer taskId={task.id} onSessionComplete={() => {}} />
       </div>
 
-      <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 rounded-b-xl flex items-center justify-between">
+      <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 md:rounded-b-xl flex items-center justify-between">
         <button
           type="button"
           onClick={handleDelete}
@@ -215,7 +192,8 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-text-primary bg-surface-raised border border-border-light rounded-lg hover:bg-surface transition-colors"
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-text-primary bg-surface-raised border border-border-light rounded-lg hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -229,6 +207,17 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </form>
   )
 }

@@ -55,7 +55,7 @@ export function TaskDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-slide-up"
+      className="fixed inset-0 z-[60] flex items-end md:items-center md:justify-center md:p-4 animate-slide-up"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -64,10 +64,10 @@ export function TaskDetailModal({
       aria-labelledby="modal-title"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      {/* Modal */}
-      <div className="relative bg-surface-overlay rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border">
+      {/* Modal — full-screen on mobile, centered card on desktop */}
+      <div className="relative bg-surface-overlay md:rounded-xl shadow-2xl w-full md:max-w-2xl h-full md:h-auto md:max-h-[90vh] overflow-y-auto border-t md:border border-border">
         <TaskDetailHeader
           task={task}
           onClose={onClose}
