@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { getMe } from '@/lib/api'
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { getMe, registerAuthErrorCallback } from '@/lib/api'
 import { getUserFromToken, removeToken } from '@/lib/auth'
 
 interface User {
@@ -23,18 +23,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const logout = useCallback(() => {
+    removeToken()
+    setUser(null)
+    // Redirect to login if not already there
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login'
+    }
+  }, [])
+
+  // Register global auth error callback — triggers logout on expired/invalid token
+  useEffect(() => {
+    const unregister = registerAuthErrorCallback(logout)
+    return unregister
+  }, [logout])
+
   useEffect(() => {
     async function loadUser() {
       try {
+        // Always fetch from API for accurate user data (JWT doesn't include name/email)
+        const fetchedUser = await getMe()
+        setUser(fetchedUser)
+      } catch {
+        // If API fails, try JWT as fallback (may have incomplete data)
         const cachedUser = getUserFromToken()
         if (cachedUser) {
           setUser(cachedUser)
         } else {
-          const fetchedUser = await getMe()
-          setUser(fetchedUser)
+          setUser(null)
         }
-      } catch {
-        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -49,11 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       setUser(null)
     }
-  }
-
-  const logout = () => {
-    removeToken()
-    setUser(null)
   }
 
   return (

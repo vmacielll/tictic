@@ -6,6 +6,19 @@ import type { TaskResponse, CreateTaskInput, UpdateTaskInput } from '@/domain/ta
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
+// ── Auth error callback ──
+// Registered by AuthContext to handle expired/invalid tokens globally
+let onAuthError: (() => void) | null = null
+
+export function registerAuthErrorCallback(callback: () => void): () => void {
+  onAuthError = callback
+  return () => { onAuthError = null }
+}
+
+export function triggerAuthError(): void {
+  if (onAuthError) onAuthError()
+}
+
 // ── Token storage ──
 const ACCESS_TOKEN_KEY = 'accessToken'
 const REFRESH_TOKEN_KEY = 'refreshToken'
@@ -81,14 +94,23 @@ export async function apiRequest<T>(
       headers,
     })
 
-    if (response.status === 401 && !_retry && requiresAuth) {
+    if (response.status === 401 && !_retry && requiresAuth && token) {
+      // Had a token but it's expired — try refresh
       try {
         await refreshToken()
         return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
       } catch {
         clearTokens()
+        triggerAuthError()
         throw new Error('Session expired')
       }
+    }
+
+    if (response.status === 401 && requiresAuth && token) {
+      // Token refresh already failed or wasn't attempted — force logout
+      clearTokens()
+      triggerAuthError()
+      throw new Error('Session expired')
     }
 
     if (!response.ok) {
