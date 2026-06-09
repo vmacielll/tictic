@@ -36,6 +36,23 @@ test.describe('Calendar', () => {
     await expect(heading).toHaveText(initialContent || '')
   })
 
+  test('should navigate to day view by clicking WeekView cell', async ({ page }) => {
+    await page.goto('/calendar')
+    await page.waitForLoadState('networkidle')
+
+    // Switch to Week view
+    await page.getByTestId('calendar-view-week').click()
+    await expect(page.getByTestId('calendar-week-grid')).toBeVisible({ timeout: 10000 })
+
+    // Click on the first day cell (the entire cell should be clickable — UP-10)
+    const firstDayCell = page.getByTestId(/calendar-week-day-/).first()
+    await firstDayCell.click()
+
+    // Should navigate to Day view
+    await expect(page.getByTestId('calendar-day-view')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('calendar-view-day')).toHaveClass(/bg-primary-600/)
+  })
+
   test('should go to today with Today button', async ({ page }) => {
     await page.goto('/calendar')
     await page.getByTestId('calendar-next-btn').click()

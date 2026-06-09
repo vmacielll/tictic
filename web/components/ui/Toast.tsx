@@ -75,12 +75,14 @@ function ToastContainer({
 
   return (
     <div
-      className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-80 z-[80] flex flex-col gap-2 pointer-events-none"
+      className="fixed bottom-28 md:bottom-6 right-4 left-4 md:left-auto md:w-80 z-[80] flex flex-col gap-2 pointer-events-none"
       aria-live="polite"
+      data-testid="toast-container"
     >
       {toasts.map((toast) => (
         <div
           key={toast.id}
+          data-testid="toast-message"
           className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg animate-slide-up ${typeStyles[toast.type]}`}
           role="alert"
         >

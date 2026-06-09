@@ -6,7 +6,7 @@ interface DayViewProps {
   date?: string
   tasks?: CalendarDetailTask[]
   loading: boolean
-  onToggleTask?: (id: string, completed: boolean) => void
+  onToggleTask?: (id: string, currentCompleted: boolean) => void
   onViewTask?: (task: CalendarDetailTask) => void
 }
 

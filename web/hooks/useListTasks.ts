@@ -33,7 +33,7 @@ interface UseListTasksReturn {
   totalCount: number
   addTask: (data: CreateTaskInput) => Promise<void>
   updateTask: (id: string, data: UpdateTaskInput) => Promise<Task>
-  toggleTask: (id: string, completed: boolean) => Promise<void>
+  toggleTask: (id: string, currentCompleted: boolean) => Promise<void>
   removeTask: (id: string) => Promise<void>
   setPage: (page: number) => void
   refresh: () => Promise<void>

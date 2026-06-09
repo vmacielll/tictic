@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useTasks } from '@/hooks/useTasks'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { TaskList } from '@/components/tasks/TaskList'
@@ -27,6 +28,14 @@ export function TaskPageTemplate({
   const { tasks, loading, error, addTask, toggleTask, removeTask, updateTask, refresh } = useTasks(pageKey)
   const { lists } = useListsContext()
   const { addToast } = useToast()
+
+  const handleToggleTask = useCallback(
+    async (taskId: string, currentCompleted: boolean) => {
+      await toggleTask(taskId, currentCompleted)
+      addToast(currentCompleted ? 'Task reopened' : 'Task completed', 'success')
+    },
+    [toggleTask, addToast]
+  )
 
   // Use Luxon for date formatting (FR-02)
   const today = DateTime.now()
@@ -57,10 +66,7 @@ export function TaskPageTemplate({
       await removeTask(taskId)
       addToast('Task deleted', 'success')
     },
-    async (taskId, completed) => {
-      await toggleTask(taskId, completed)
-      addToast(completed ? 'Task completed' : 'Task reopened', 'success')
-    }
+    handleToggleTask
   )
 
   return (
@@ -80,7 +86,7 @@ export function TaskPageTemplate({
         loading={loading}
         emptyMessage={emptyMessage}
         onAddTask={addTask}
-        onToggleTask={toggleTask}
+        onToggleTask={handleToggleTask}
         onDeleteTask={removeTask}
         defaultDueDate={showDate ? todayFormatted : undefined}
         onViewDetails={openModal}

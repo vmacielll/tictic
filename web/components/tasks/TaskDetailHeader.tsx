@@ -26,6 +26,7 @@ export function TaskDetailHeader({ task, onClose, onToggleComplete }: TaskDetail
         </div>
         <button
           onClick={onClose}
+          data-testid="task-detail-close"
           className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-raised rounded-lg transition-colors"
           aria-label="Close modal"
         >

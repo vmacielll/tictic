@@ -35,6 +35,14 @@ export default function ListDetailPage() {
 
   const { addToast } = useToast()
 
+  const handleToggleTask = useCallback(
+    async (taskId: string, completed: boolean) => {
+      await toggleTask(taskId, completed)
+      addToast(completed ? 'Task reopened' : 'Task completed', 'success')
+    },
+    [toggleTask, addToast]
+  )
+
   const {
     selectedTask,
     isModalOpen,
@@ -67,13 +75,7 @@ export default function ListDetailPage() {
       },
       [removeTask, addToast]
     ),
-    useCallback(
-      async (taskId, completed) => {
-        await toggleTask(taskId, completed)
-        addToast(completed ? 'Task completed' : 'Task reopened', 'success')
-      },
-      [toggleTask, addToast]
-    )
+    handleToggleTask
   )
 
   if (listsLoading) {
@@ -138,7 +140,7 @@ export default function ListDetailPage() {
         loading={tasksLoading}
         emptyMessage="No tasks in this list"
         onAddTask={addTask}
-        onToggleTask={toggleTask}
+        onToggleTask={handleToggleTask}
         onDeleteTask={removeTask}
         onViewDetails={openModal}
         lists={lists}

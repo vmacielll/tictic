@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 import { Icon } from '@/components/ui/Icon'
 
 interface ConfirmDialogProps {
@@ -42,6 +42,8 @@ export function ConfirmDialog({
     }
   }, [isOpen])
 
+  const id = useId()
+
   if (!isOpen) return null
 
   const variantStyles = {
@@ -55,9 +57,10 @@ export function ConfirmDialog({
       className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
       role="alertdialog"
+      data-testid="confirm-dialog"
       aria-modal="true"
-      aria-labelledby="confirm-dialog-title"
-      aria-describedby="confirm-dialog-message"
+      aria-labelledby={`confirm-dialog-title-${id}`}
+      aria-describedby={`confirm-dialog-message-${id}`}
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div className="relative bg-surface-overlay rounded-xl shadow-2xl w-full max-w-md border border-border p-6 animate-slide-up">

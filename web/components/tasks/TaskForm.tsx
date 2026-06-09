@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { type CreateTaskInput } from '@/domain/tasks/types'
 import type { List } from '@/domain/lists/types'
 
@@ -25,6 +25,16 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
   const [listId, setListId] = useState<string | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const formRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showDetails) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowDetails(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showDetails])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -53,6 +63,14 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
   }
 
   return (
+    <div
+      ref={formRef}
+      onBlur={(e) => {
+        if (formRef.current && !formRef.current.contains(e.relatedTarget as Node)) {
+          setShowDetails(false)
+        }
+      }}
+    >
     <form onSubmit={handleSubmit} className="space-y-2">
       {/* Main input */}
       <div className="flex items-center gap-2">
@@ -144,5 +162,6 @@ export function TaskForm({ onSubmit, placeholder = 'Add a task...', defaultDueDa
         </div>
       )}
     </form>
+    </div>
   )
 }

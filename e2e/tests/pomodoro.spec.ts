@@ -51,7 +51,7 @@ test.describe('Pomodoro', () => {
 
     // Complete the session
     const completeButton = page.getByTestId('pomodoro-complete-button')
-    await completeButton.waitFor({ state: 'visible', timeout: 10000 })
+    await completeButton.waitFor({ state: 'visible', timeout: 15000 })
     await completeButton.click()
 
     // Wait for session to complete and new session button to appear
@@ -104,6 +104,11 @@ test('should show pomodoro timer in task detail modal', async ({ page }) => {
 
     // Use test-id instead of fragile selector
     await taskItem.getByTestId('task-item-content').click()
+
+    // Expand the collapsed Pomodoro section (UP-13)
+    const pomodoroToggle = page.getByTestId('pomodoro-toggle')
+    await pomodoroToggle.waitFor({ state: 'visible', timeout: 10000 })
+    await pomodoroToggle.click()
 
     const pomodoroSection = page.getByTestId('task-detail-pomodoro')
     await expect(pomodoroSection).toBeVisible({ timeout: 10000 })

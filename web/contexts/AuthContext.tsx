@@ -59,14 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser()
   }, [])
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const fetchedUser = await getMe()
       setUser(fetchedUser)
     } catch {
       setUser(null)
     }
-  }
+  }, [])
 
   return (
     <AuthContext.Provider value={{ user, loading, refreshUser, logout }}>

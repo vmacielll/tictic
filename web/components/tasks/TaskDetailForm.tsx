@@ -31,6 +31,7 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showPomodoro, setShowPomodoro] = useState(false)
 
   useEffect(() => {
     setTitle(task.title)
@@ -91,12 +92,14 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
   }
 
   return (
-    <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+    <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
       {error && (
-        <div className="p-3 bg-danger/10 border border-danger/30 rounded-lg text-sm text-danger">
+        <div className="mx-6 mt-4 p-3 bg-danger/10 border border-danger/30 rounded-lg text-sm text-danger">
           {error}
         </div>
       )}
+
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
       <Input
         data-testid="modal-title-input"
@@ -122,18 +125,22 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
       <div>
         <label className="block text-sm font-medium text-text-primary mb-1.5">Priority</label>
         <div className="flex gap-2">
-          {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => (
+          {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => {
+            const label = `${p.charAt(0) + p.slice(1).toLowerCase()} priority`
+            return (
             <button
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              title={`${p.charAt(0) + p.slice(1).toLowerCase()} priority`}
+              aria-label={label}
+              title={label}
               className={`flex-1 px-3 py-2 text-sm rounded-lg border font-medium transition-all
                 ${priority === p ? priorityColors[p] : 'bg-surface-raised border-border-light text-text-secondary hover:bg-surface'}`}
             >
-              {p === 'HIGH' ? '🔴' : p === 'MEDIUM' ? '🟡' : '🟢'} {p.charAt(0) + p.slice(1).toLowerCase()}
+              <span aria-hidden="true">{p === 'HIGH' ? '🔴' : p === 'MEDIUM' ? '🟡' : '🟢'}</span> {p.charAt(0) + p.slice(1).toLowerCase()}
             </button>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -175,15 +182,32 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
         <div className="text-sm text-text-muted">Timezone: {task.dueTimezone}</div>
       )}
 
-      <div data-testid="task-detail-pomodoro" className="pt-4 border-t border-border">
-        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">🍅 Pomodoro Focus</h3>
-        <PomodoroTimer taskId={task.id} onSessionComplete={() => {}} />
+      <div className="pt-4 border-t border-border">
+        <button
+          type="button"
+          data-testid="pomodoro-toggle"
+          onClick={() => setShowPomodoro(!showPomodoro)}
+          className="w-full flex items-center justify-between text-xs font-semibold text-text-muted uppercase tracking-wide hover:text-text-primary transition-colors"
+        >
+          <span>🍅 Pomodoro Focus</span>
+          <span className={`transform transition-transform ${showPomodoro ? 'rotate-180' : ''}`}>
+            ▼
+          </span>
+        </button>
+        {showPomodoro && (
+          <div className="mt-3" data-testid="task-detail-pomodoro">
+            <PomodoroTimer taskId={task.id} onSessionComplete={() => {}} />
+          </div>
+        )}
       </div>
 
-      <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 md:rounded-b-xl flex items-center justify-between">
+      </div>
+
+      <div className="bg-surface border-t border-border px-6 py-4 md:rounded-b-xl flex items-center justify-between shrink-0">
         <button
           type="button"
           onClick={handleDelete}
+          data-testid="delete-task-button"
           className="px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10 rounded-lg transition-colors"
         >
           Delete Task
