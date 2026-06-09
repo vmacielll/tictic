@@ -12,11 +12,11 @@ jobs:
   review:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event.pull_request.draft == false
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-      issues: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,5 +32,4 @@ jobs:
             - Check for code quality issues
             - Look for potential bugs
             - Suggest improvements
-            - Verify tests pass
             - Check adherence to project conventions
