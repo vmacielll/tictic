@@ -80,7 +80,6 @@ export function TaskDetailModal({
             onSave={onSave}
             onClose={onClose}
             onDelete={onDelete}
-            onToggleComplete={onToggleComplete}
             lists={lists}
           />
         </div>

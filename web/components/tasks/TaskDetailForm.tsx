@@ -11,7 +11,6 @@ interface TaskDetailFormProps {
   onSave: (updatedTask: Task) => void
   onClose: () => void
   onDelete: (taskId: string) => void
-  onToggleComplete: (taskId: string, completed: boolean) => void
   lists?: List[]
 }
 
@@ -21,7 +20,7 @@ const priorityColors = {
   LOW: 'bg-success/10 text-success/80 border-success/30',
 }
 
-export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComplete, lists }: TaskDetailFormProps) {
+export function TaskDetailForm({ task, onSave, onClose, onDelete, lists }: TaskDetailFormProps) {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>(task.priority)

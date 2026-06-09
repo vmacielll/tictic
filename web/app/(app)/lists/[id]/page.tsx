@@ -36,9 +36,9 @@ export default function ListDetailPage() {
   const { addToast } = useToast()
 
   const handleToggleTask = useCallback(
-    async (taskId: string, completed: boolean) => {
-      await toggleTask(taskId, completed)
-      addToast(completed ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
+      async (taskId: string, currentCompleted: boolean) => {
+        await toggleTask(taskId, currentCompleted)
+        addToast(currentCompleted ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
     },
     [toggleTask, addToast]
   )
