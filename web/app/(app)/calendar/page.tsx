@@ -11,7 +11,7 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { type CalendarDetailTask } from '@/domain/calendar/types'
 import { type Task } from '@/domain/tasks/types'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useToast } from '@/components/ui/Toast'
+import { useToast, ToastType, ToastMessage } from '@/components/ui/Toast'
 import { DateTime } from 'luxon'
 
 function toTask(task: CalendarDetailTask): Task {
@@ -55,7 +55,7 @@ export default function CalendarPage() {
   const handleToggleTask = useCallback(
     async (taskId: string, currentCompleted: boolean) => {
       await onToggleTask(taskId, currentCompleted)
-      addToast(currentCompleted ? 'Task reopened' : 'Task completed', 'success')
+      addToast(currentCompleted ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
     },
     [onToggleTask, addToast]
   )
@@ -78,12 +78,12 @@ export default function CalendarPage() {
         dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
-      addToast('Task updated', 'success')
+      addToast(ToastMessage.TaskUpdated, ToastType.Success)
     },
     async (taskId) => {
       await removeTask(taskId)
       await refresh()
-      addToast('Task deleted', 'success')
+      addToast(ToastMessage.TaskDeleted, ToastType.Error)
     },
     handleToggleTask
   )

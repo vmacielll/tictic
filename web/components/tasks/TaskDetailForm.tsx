@@ -71,16 +71,6 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, onToggleComple
     }
   }
 
-  const handleToggleComplete = async () => {
-    try {
-      const newCompleted = !task.completed
-      await updateTask(task.id, { completed: newCompleted })
-      onToggleComplete(task.id, newCompleted)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update task')
-    }
-  }
-
   const handleDelete = () => {
     setShowDeleteConfirm(true)
   }

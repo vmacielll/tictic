@@ -7,7 +7,7 @@ import { TaskList } from '@/components/tasks/TaskList'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { useListsContext } from '@/contexts/ListsContext'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useToast } from '@/components/ui/Toast'
+import { useToast, ToastType, ToastMessage } from '@/components/ui/Toast'
 import { DateTime } from 'luxon'
 
 interface TaskPageTemplateProps {
@@ -32,7 +32,7 @@ export function TaskPageTemplate({
   const handleToggleTask = useCallback(
     async (taskId: string, currentCompleted: boolean) => {
       await toggleTask(taskId, currentCompleted)
-      addToast(currentCompleted ? 'Task reopened' : 'Task completed', 'success')
+      addToast(currentCompleted ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
     },
     [toggleTask, addToast]
   )
@@ -60,11 +60,11 @@ export function TaskPageTemplate({
         dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
-      addToast('Task updated', 'success')
+      addToast(ToastMessage.TaskUpdated, ToastType.Success)
     },
     async (taskId) => {
       await removeTask(taskId)
-      addToast('Task deleted', 'success')
+      addToast(ToastMessage.TaskDeleted, ToastType.Error)
     },
     handleToggleTask
   )

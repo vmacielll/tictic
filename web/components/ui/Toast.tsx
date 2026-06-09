@@ -2,7 +2,22 @@
 
 import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react'
 
-export type ToastType = 'success' | 'error' | 'info'
+export const ToastType = {
+  Success: 'success',
+  Error: 'error',
+  Info: 'info',
+} as const
+
+export type ToastType = (typeof ToastType)[keyof typeof ToastType]
+
+export const ToastMessage = {
+  TaskCompleted: 'Task completed',
+  TaskReopened: 'Task reopened',
+  TaskUpdated: 'Task updated',
+  TaskDeleted: 'Task deleted',
+} as const
+
+export type ToastMessage = (typeof ToastMessage)[keyof typeof ToastMessage]
 
 interface Toast {
   id: string
@@ -29,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const addToast = useCallback(
     (message: string, type: ToastType = 'info') => {
       const id = `toast-${++counterRef.current}`
-      setToasts((prev) => [...prev, { id, message, type }])
+      setToasts((prev) => [{ id, message, type }])
       setTimeout(() => removeToast(id), 4000)
     },
     [removeToast],
