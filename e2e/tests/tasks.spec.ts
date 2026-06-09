@@ -62,7 +62,7 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await expect(page.getByTestId('toast-message')).toContainText('Task completed')
 
     // Wait for toast to disappear, then reopen
-    await page.waitForTimeout(4500)
+    await expect(page.getByTestId('toast-message')).not.toBeVisible({ timeout: 6000 })
 
     // Reopen task — should show "Task reopened" toast
     await taskItem.getByTestId('task-complete-button').click()
