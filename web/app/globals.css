@@ -89,10 +89,3 @@ input::placeholder, textarea::placeholder {
   border-radius: 4px;
 }
 
-/* Preserve existing focus:ring styles for elements that already have them */
-button:focus-visible,
-a:focus-visible,
-[role="button"]:focus-visible {
-  outline: 2px solid #8b5cf6;
-  outline-offset: 2px;
-}

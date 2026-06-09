@@ -41,6 +41,39 @@ test.describe('Tasks - Full CRUD Flow', () => {
     await expect(taskItem).not.toBeVisible({ timeout: 10000 })
   })
 
+  test('should show toast on task complete and reopen', async ({ page }) => {
+    const taskTitle = `Toast Test ${Date.now()}`
+    const taskInput = page.getByTestId('task-input')
+    await taskInput.waitFor({ state: 'visible', timeout: 10000 })
+    await taskInput.fill(taskTitle)
+
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/tasks') && resp.request().method() === 'POST'
+    )
+    await page.getByTestId('task-add-button').click()
+    await responsePromise
+
+    const taskItem = page.locator('[data-testid^="task-item-"]').filter({ hasText: taskTitle }).first()
+    await expect(taskItem).toBeVisible({ timeout: 15000 })
+
+    // Complete task — should show "Task completed" toast
+    await taskItem.getByTestId('task-complete-button').click()
+    await expect(page.getByTestId('toast-message')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByTestId('toast-message')).toContainText('Task completed')
+
+    // Wait for toast to disappear, then reopen
+    await expect(page.getByTestId('toast-message')).not.toBeVisible({ timeout: 6000 })
+
+    // Reopen task — should show "Task reopened" toast
+    await taskItem.getByTestId('task-complete-button').click()
+    await expect(page.getByTestId('toast-message')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByTestId('toast-message')).toContainText('Task reopened')
+
+    // Cleanup
+    await taskItem.getByTestId('task-delete-button').click()
+    await expect(taskItem).not.toBeVisible({ timeout: 10000 })
+  })
+
   test('should show error when API fails', async ({ page }) => {
     // Abort request to simulate network failure
     await page.route('**/tasks/inbox', (route) => route.abort())

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback } from 'react'
 import { useCalendar } from '@/hooks/useCalendar'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { useTasks } from '@/hooks/useTasks'
@@ -11,7 +11,7 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { type CalendarDetailTask } from '@/domain/calendar/types'
 import { type Task } from '@/domain/tasks/types'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useToast } from '@/components/ui/Toast'
+import { useToast, ToastType, ToastMessage } from '@/components/ui/Toast'
 import { DateTime } from 'luxon'
 
 function toTask(task: CalendarDetailTask): Task {
@@ -33,8 +33,6 @@ function toTask(task: CalendarDetailTask): Task {
 }
 
 export default function CalendarPage() {
-  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0)
-
   const {
     view,
     setView,
@@ -54,6 +52,14 @@ export default function CalendarPage() {
   const { updateTask: updateTaskMutation, removeTask } = useTasks('inbox')
   const { addToast } = useToast()
 
+  const handleToggleTask = useCallback(
+    async (taskId: string, currentCompleted: boolean) => {
+      await onToggleTask(taskId, currentCompleted)
+      addToast(currentCompleted ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
+    },
+    [onToggleTask, addToast]
+  )
+
   const {
     selectedTask,
     isModalOpen,
@@ -72,19 +78,14 @@ export default function CalendarPage() {
         dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
-      setCalendarRefreshKey(prev => prev + 1)
-      addToast('Task updated', 'success')
+      addToast(ToastMessage.TaskUpdated, ToastType.Success)
     },
     async (taskId) => {
       await removeTask(taskId)
       await refresh()
-      setCalendarRefreshKey(prev => prev + 1)
-      addToast('Task deleted', 'success')
+      addToast(ToastMessage.TaskDeleted, ToastType.Error)
     },
-    async (taskId, completed) => {
-      await onToggleTask(taskId, completed)
-      addToast(completed ? 'Task completed' : 'Task reopened', 'success')
-    }
+    handleToggleTask
   )
 
   const handleViewTask = (task: CalendarDetailTask) => {
@@ -141,7 +142,7 @@ export default function CalendarPage() {
           days={days}
           loading={loading}
           onDayClick={goToDay}
-          onToggleTask={onToggleTask}
+          onToggleTask={handleToggleTask}
           onViewTask={handleViewTask}
         />
       )}
@@ -150,7 +151,7 @@ export default function CalendarPage() {
           days={days}
           loading={loading}
           onDayClick={goToDay}
-          onToggleTask={onToggleTask}
+          onToggleTask={handleToggleTask}
           onViewTask={handleViewTask}
         />
       )}
@@ -159,7 +160,7 @@ export default function CalendarPage() {
           date={singleDay?.date}
           tasks={singleDay?.tasks}
           loading={loading}
-          onToggleTask={onToggleTask}
+          onToggleTask={handleToggleTask}
           onViewTask={handleViewTask}
         />
       )}

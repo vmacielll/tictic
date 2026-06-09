@@ -35,7 +35,7 @@ interface UseCalendarReturn {
   goToNext: () => void
   goToToday: () => void
   goToDay: (date: Date) => void
-  onToggleTask: (id: string, completed: boolean) => Promise<void>
+  onToggleTask: (id: string, currentCompleted: boolean) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -80,7 +80,7 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      await updateTask(id, { completed: !completed })
+      await updateTask(id, { completed })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar'] })
@@ -113,8 +113,8 @@ export function useCalendar(initialView: CalendarView = 'month'): UseCalendarRet
 
   const refresh = () => queryClient.invalidateQueries({ queryKey })
 
-  const onToggleTask = async (id: string, completed: boolean) => {
-    await toggleMutation.mutateAsync({ id, completed })
+  const onToggleTask = async (id: string, currentCompleted: boolean) => {
+    await toggleMutation.mutateAsync({ id, completed: !currentCompleted })
   }
 
   const error =

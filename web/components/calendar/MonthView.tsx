@@ -119,8 +119,8 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
                         </span>
                       </div>
                     ))}
-                    {tasks.length > 3 && (
-                      <div className="text-xs text-text-muted pl-1.5">+{tasks.length - 3}</div>
+                    {tasks.length > 2 && (
+                      <div className="text-xs text-text-muted pl-1.5">+{tasks.length - 2}</div>
                     )}
                   </div>
                 </>

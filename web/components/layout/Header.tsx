@@ -30,7 +30,6 @@ export function Header({ className = '' }: { className?: string }) {
       console.error('Logout failed:', error)
     } finally {
       logout()
-      router.push('/login')
     }
   }
 

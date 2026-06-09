@@ -1,12 +1,13 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useTasks } from '@/hooks/useTasks'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { TaskList } from '@/components/tasks/TaskList'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { useListsContext } from '@/contexts/ListsContext'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useToast } from '@/components/ui/Toast'
+import { useToast, ToastType, ToastMessage } from '@/components/ui/Toast'
 import { DateTime } from 'luxon'
 
 interface TaskPageTemplateProps {
@@ -27,6 +28,14 @@ export function TaskPageTemplate({
   const { tasks, loading, error, addTask, toggleTask, removeTask, updateTask, refresh } = useTasks(pageKey)
   const { lists } = useListsContext()
   const { addToast } = useToast()
+
+  const handleToggleTask = useCallback(
+    async (taskId: string, currentCompleted: boolean) => {
+      await toggleTask(taskId, currentCompleted)
+      addToast(currentCompleted ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
+    },
+    [toggleTask, addToast]
+  )
 
   // Use Luxon for date formatting (FR-02)
   const today = DateTime.now()
@@ -51,16 +60,13 @@ export function TaskPageTemplate({
         dueTime: updatedTask.dueTime || undefined,
       })
       await refresh()
-      addToast('Task updated', 'success')
+      addToast(ToastMessage.TaskUpdated, ToastType.Success)
     },
     async (taskId) => {
       await removeTask(taskId)
-      addToast('Task deleted', 'success')
+      addToast(ToastMessage.TaskDeleted, ToastType.Error)
     },
-    async (taskId, completed) => {
-      await toggleTask(taskId, completed)
-      addToast(completed ? 'Task completed' : 'Task reopened', 'success')
-    }
+    handleToggleTask
   )
 
   return (
@@ -80,7 +86,7 @@ export function TaskPageTemplate({
         loading={loading}
         emptyMessage={emptyMessage}
         onAddTask={addTask}
-        onToggleTask={toggleTask}
+        onToggleTask={handleToggleTask}
         onDeleteTask={removeTask}
         defaultDueDate={showDate ? todayFormatted : undefined}
         onViewDetails={openModal}

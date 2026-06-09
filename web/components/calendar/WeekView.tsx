@@ -8,7 +8,7 @@ interface WeekViewProps {
   days: CalendarDay[]
   loading: boolean
   onDayClick: (date: Date) => void
-  onToggleTask?: (id: string, completed: boolean) => void
+  onToggleTask?: (id: string, currentCompleted: boolean) => void
   onViewTask?: (task: CalendarSummaryTask) => void
 }
 
@@ -29,7 +29,7 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
           const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
 
           return (
-            <div key={day.date} data-testid={`calendar-week-day-${day.date}`} className="p-2 min-h-[300px] cursor-pointer hover:bg-surface-overlay/30 transition-colors">
+            <div key={day.date} data-testid={`calendar-week-day-${day.date}`} className="p-2 min-h-[300px] cursor-pointer hover:bg-surface-overlay/30 transition-colors" onClick={() => onDayClick(date)}>
               <div className="text-center mb-2">
                 <div className="text-xs text-text-muted uppercase">{dayName}</div>
                 <span
@@ -40,9 +40,7 @@ export function WeekView({ days, loading, onDayClick, onToggleTask, onViewTask }
                   {date.getDate()}
                 </span>
               </div>
-              <div className="space-y-1" onClick={(e) => {
-                if (e.target === e.currentTarget) onDayClick(date)
-              }}>
+              <div className="space-y-1">
                 {day.tasks.map((task: CalendarSummaryTask) => (
                   <div
                     key={task.id}

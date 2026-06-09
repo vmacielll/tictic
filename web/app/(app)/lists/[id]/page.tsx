@@ -10,7 +10,7 @@ import { TaskList } from '@/components/tasks/TaskList'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { Pagination } from '@/components/ui/Pagination'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useToast } from '@/components/ui/Toast'
+import { useToast, ToastType, ToastMessage } from '@/components/ui/Toast'
 
 export default function ListDetailPage() {
   const params = useParams()
@@ -35,6 +35,14 @@ export default function ListDetailPage() {
 
   const { addToast } = useToast()
 
+  const handleToggleTask = useCallback(
+      async (taskId: string, currentCompleted: boolean) => {
+        await toggleTask(taskId, currentCompleted)
+        addToast(currentCompleted ? ToastMessage.TaskReopened : ToastMessage.TaskCompleted, ToastType.Success)
+    },
+    [toggleTask, addToast]
+  )
+
   const {
     selectedTask,
     isModalOpen,
@@ -56,24 +64,18 @@ export default function ListDetailPage() {
           dueTime: updatedTask.dueTime || undefined,
         })
         await refresh()
-        addToast('Task updated', 'success')
+        addToast(ToastMessage.TaskUpdated, ToastType.Success)
       },
       [updateTask, refresh, addToast]
     ),
     useCallback(
       async (taskId) => {
         await removeTask(taskId)
-        addToast('Task deleted', 'success')
+        addToast(ToastMessage.TaskDeleted, ToastType.Error)
       },
       [removeTask, addToast]
     ),
-    useCallback(
-      async (taskId, completed) => {
-        await toggleTask(taskId, completed)
-        addToast(completed ? 'Task completed' : 'Task reopened', 'success')
-      },
-      [toggleTask, addToast]
-    )
+    handleToggleTask
   )
 
   if (listsLoading) {
@@ -138,7 +140,7 @@ export default function ListDetailPage() {
         loading={tasksLoading}
         emptyMessage="No tasks in this list"
         onAddTask={addTask}
-        onToggleTask={toggleTask}
+        onToggleTask={handleToggleTask}
         onDeleteTask={removeTask}
         onViewDetails={openModal}
         lists={lists}

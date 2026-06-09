@@ -1,8 +1,23 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react'
 
-export type ToastType = 'success' | 'error' | 'info'
+export const ToastType = {
+  Success: 'success',
+  Error: 'error',
+  Info: 'info',
+} as const
+
+export type ToastType = (typeof ToastType)[keyof typeof ToastType]
+
+export const ToastMessage = {
+  TaskCompleted: 'Task completed',
+  TaskReopened: 'Task reopened',
+  TaskUpdated: 'Task updated',
+  TaskDeleted: 'Task deleted',
+} as const
+
+export type ToastMessage = (typeof ToastMessage)[keyof typeof ToastMessage]
 
 interface Toast {
   id: string
@@ -18,10 +33,9 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
 
-let toastCounter = 0
-
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const counterRef = useRef(0)
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
@@ -29,8 +43,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const addToast = useCallback(
     (message: string, type: ToastType = 'info') => {
-      const id = `toast-${++toastCounter}`
-      setToasts((prev) => [...prev, { id, message, type }])
+      const id = `toast-${++counterRef.current}`
+      setToasts((prev) => [{ id, message, type }])
       setTimeout(() => removeToast(id), 4000)
     },
     [removeToast],
@@ -75,12 +89,14 @@ function ToastContainer({
 
   return (
     <div
-      className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-80 z-[80] flex flex-col gap-2 pointer-events-none"
+      className="fixed bottom-28 md:bottom-6 right-4 left-4 md:left-auto md:w-80 z-[80] flex flex-col gap-2 pointer-events-none"
       aria-live="polite"
+      data-testid="toast-container"
     >
       {toasts.map((toast) => (
         <div
           key={toast.id}
+          data-testid="toast-message"
           className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg animate-slide-up ${typeStyles[toast.type]}`}
           role="alert"
         >
