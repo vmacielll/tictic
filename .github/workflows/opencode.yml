@@ -2,9 +2,9 @@ name: opencode
 
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
   pull_request_review_comment:
-    types: [created]
+    types: [created, edited]
 
 jobs:
   opencode:
@@ -12,9 +12,10 @@ jobs:
       contains(github.event.comment.body, '/oc') ||
       contains(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
-      contents: write
+      contents: read
       pull-requests: write
       issues: read
     steps:
@@ -25,7 +26,7 @@ jobs:
           persist-credentials: false
 
       - name: Run OpenCode
-        uses: anomalyco/opencode/github@latest
+        uses: anomalyco/opencode/github@v1
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
         with:
