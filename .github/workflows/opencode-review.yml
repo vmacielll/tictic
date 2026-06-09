@@ -1,19 +1,18 @@
 name: opencode-review
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
-  group: opencode-review-${{ github.event.workflow_run.head_branch }}
+  group: opencode-review-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
   review:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event.pull_request.draft == false
     permissions:
       id-token: write
       contents: read
@@ -21,7 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
       - uses: anomalyco/opencode/github@github-v1.2.25
