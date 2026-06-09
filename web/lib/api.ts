@@ -94,20 +94,16 @@ export async function apiRequest<T>(
       headers,
     })
 
-    if (response.status === 401 && !_retry && requiresAuth && token) {
-      // Had a token but it's expired — try refresh
-      try {
-        await refreshToken()
-        return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
-      } catch {
-        clearTokens()
-        triggerAuthError()
-        throw new Error('Session expired')
+    if (response.status === 401 && requiresAuth && token) {
+      // Attempt token refresh on first 401, then fall through to force logout
+      if (!_retry) {
+        try {
+          await refreshToken()
+          return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
+        } catch {
+          // refresh failed — fall through to clear session
+        }
       }
-    }
-
-    if (response.status === 401 && !_retry && requiresAuth && token) {
-      // Token refresh already failed or wasn't attempted — force logout
       clearTokens()
       triggerAuthError()
       throw new Error('Session expired')

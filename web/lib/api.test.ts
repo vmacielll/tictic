@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { apiRequest, clearTokens } from './api'
+import { apiRequest, clearTokens, triggerAuthError, registerAuthErrorCallback } from './api'
 
 const BASE_URL = 'http://localhost:3333'
 
@@ -152,6 +152,53 @@ describe('token refresh', () => {
     // Should have: 1 task call + 1 refresh call (from the retry). Total 2, not 3+.
     const calls = vi.mocked(global.fetch).mock.calls
     expect(calls.length).toBeLessThanOrEqual(2)
+  })
+
+  it('clears session once when refresh succeeds but retry also gets 401', async () => {
+    login()
+    // Register auth error callback to verify it's called exactly once
+    const authErrorSpy = vi.fn()
+    const unregister = registerAuthErrorCallback(authErrorSpy)
+
+    vi.spyOn(global, 'fetch')
+      // 1st: initial request → 401
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers(),
+        json: async () => ({ message: 'Token expired', code: 'UNAUTHORIZED' }),
+      } as Response)
+      // 2nd: refresh → 200 (succeeds)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: async () => ({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+      } as Response)
+      // 3rd: retry with new token → 401 (fails again)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers(),
+        json: async () => ({ message: 'Token expired', code: 'UNAUTHORIZED' }),
+      } as Response)
+
+    await expect(
+      apiRequest('/tasks', { method: 'POST', body: JSON.stringify({}), requiresAuth: true })
+    ).rejects.toThrow('Session expired')
+
+    // Should have exactly 3 calls: task, refresh, retry — no infinite loop
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls.length).toBe(3)
+
+    // triggerAuthError called exactly once (not double)
+    expect(authErrorSpy).toHaveBeenCalledTimes(1)
+
+    // Tokens should be cleared
+    expect(localStorage.getItem('accessToken')).toBeNull()
+    expect(localStorage.getItem('refreshToken')).toBeNull()
+
+    unregister()
   })
 })
 
