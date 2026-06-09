@@ -64,7 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const fetchedUser = await getMe()
       setUser(fetchedUser)
     } catch {
-      setUser(null)
+      // If API fails, try JWT as fallback (may have incomplete data)
+      const cachedUser = getUserFromToken()
+      if (cachedUser) {
+        setUser(cachedUser)
+      } else {
+        setUser(null)
+      }
     }
   }, [])
 

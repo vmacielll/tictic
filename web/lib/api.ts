@@ -106,7 +106,7 @@ export async function apiRequest<T>(
       }
     }
 
-    if (response.status === 401 && requiresAuth && token) {
+    if (response.status === 401 && !_retry && requiresAuth && token) {
       // Token refresh already failed or wasn't attempted — force logout
       clearTokens()
       triggerAuthError()
