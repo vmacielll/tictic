@@ -2,6 +2,8 @@
 
 import { useEffect, useId } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -34,13 +36,8 @@ export function ConfirmDialog({
     return () => window.removeEventListener('keydown', handleEsc)
   }, [isOpen, onCancel])
 
-  // Prevent body scroll
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = 'unset' }
-    }
-  }, [isOpen])
+  useBodyScrollLock(isOpen)
+  const focusTrapRef = useFocusTrap(isOpen)
 
   const id = useId()
 
@@ -54,6 +51,7 @@ export function ConfirmDialog({
 
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
       role="alertdialog"

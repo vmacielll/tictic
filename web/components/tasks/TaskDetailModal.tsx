@@ -5,6 +5,8 @@ import { type Task } from '@/domain/tasks/types'
 import { TaskDetailHeader } from './TaskDetailHeader'
 import { TaskDetailForm } from './TaskDetailForm'
 import type { List } from '@/domain/lists/types'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface TaskDetailModalProps {
   task: Task
@@ -36,15 +38,8 @@ export function TaskDetailModal({
     }
   }, [isOpen, onClose])
 
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.overflow = 'unset'
-      }
-    }
-  }, [isOpen])
+  useBodyScrollLock(isOpen)
+  const focusTrapRef = useFocusTrap(isOpen, '[data-testid="modal-title-input"]')
 
   if (!isOpen) return null
 
@@ -68,7 +63,7 @@ export function TaskDetailModal({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Modal — full-screen on mobile, centered card on desktop */}
-      <div className="relative bg-surface-overlay md:rounded-xl shadow-2xl w-full md:max-w-2xl h-full md:h-auto md:max-h-[90vh] flex flex-col border-t md:border border-border">
+      <div ref={focusTrapRef} className="relative bg-surface-overlay md:rounded-xl shadow-2xl w-full md:max-w-2xl h-full md:h-auto md:max-h-[90vh] flex flex-col border-t md:border border-border">
         <TaskDetailHeader
           task={task}
           onClose={onClose}
