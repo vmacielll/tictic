@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useCalendar } from '@/hooks/useCalendar'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { useTasks } from '@/hooks/useTasks'
@@ -166,7 +167,7 @@ export default function CalendarPage() {
       )}
 
       {/* Task Detail Modal */}
-      {selectedTask && (
+      {selectedTask && createPortal(
         <TaskDetailModal
           task={selectedTask}
           isOpen={isModalOpen}
@@ -174,7 +175,8 @@ export default function CalendarPage() {
           onSave={handleSave}
           onDelete={handleDelete}
           onToggleComplete={handleToggleComplete}
-        />
+        />,
+        document.body
       )}
     </div>
   )

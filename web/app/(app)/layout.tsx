@@ -35,7 +35,7 @@ export default function AppLayout({
   return (
     <ToastProvider>
       <ListsProvider>
-        <div className="flex h-screen bg-background">
+        <div id="app-shell" className="flex h-screen bg-background">
           <Sidebar className="hidden md:flex" />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header className="md:hidden" />
