@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 
 /**
  * Sets --app-height CSS variable to the actual visible viewport height.
@@ -8,7 +8,7 @@ import { useEffect } from 'react'
  * where dvh/lvh/svh units are delayed or don't update.
  */
 export function useMobileViewport(): void {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
 
