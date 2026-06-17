@@ -193,7 +193,7 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, lists }: TaskD
 
       </div>
 
-      <div className="bg-surface border-t border-border px-6 py-4 md:rounded-b-xl flex items-center justify-between shrink-0">
+      <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 md:rounded-b-xl flex items-center justify-between shrink-0">
         <button
           type="button"
           onClick={handleDelete}

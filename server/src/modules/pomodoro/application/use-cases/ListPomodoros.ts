@@ -13,6 +13,7 @@ interface PomodoroSessionDTO {
   id: string
   userId: string
   taskId?: string
+  taskTitle?: string
   duration: number
   startedAt: string
   completedAt: string | null
@@ -26,11 +27,11 @@ export class ListPomodoros {
     const sessions = await this.pomodoroRepository.findByUserId(request.userId)
 
     return {
-      pomodoroSessions: sessions.map((s) => this.toDTO(s)),
+      pomodoroSessions: sessions.map(({ session, taskTitle }) => this.toDTO(session, taskTitle)),
     }
   }
 
-  private toDTO(session: PomodoroSession): PomodoroSessionDTO {
+  private toDTO(session: PomodoroSession, taskTitle?: string): PomodoroSessionDTO {
     return {
       id: session.id,
       userId: session.userId,
@@ -39,6 +40,7 @@ export class ListPomodoros {
       startedAt: session.startedAt.toISOString(),
       completedAt: session.completedAt?.toISOString() ?? null,
       status: session.status,
+      taskTitle,
     }
   }
 }
