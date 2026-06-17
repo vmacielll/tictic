@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} h-dvh overflow-x-hidden`}>
+      <body className={`${inter.className} min-h-dvh flex flex-col overflow-hidden`}>
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>

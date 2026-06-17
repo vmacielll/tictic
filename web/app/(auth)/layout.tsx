@@ -4,7 +4,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <main className="flex-1 flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary-600/8 rounded-full blur-3xl" />

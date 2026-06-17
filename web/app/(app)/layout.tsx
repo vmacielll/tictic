@@ -6,7 +6,6 @@ import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ListsProvider } from '@/contexts/ListsContext'
 import { ToastProvider } from '@/components/ui/Toast'
-import { useMobileViewport } from '@/hooks/useMobileViewport'
 
 export default function AppLayout({
   children,
@@ -15,7 +14,13 @@ export default function AppLayout({
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
 
-  useMobileViewport()
+  // Force body re-layout on iOS after client-side navigation
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      // Reading offsetHeight forces synchronous layout recalculation
+      void document.body.offsetHeight
+    })
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,7 +43,7 @@ export default function AppLayout({
   return (
     <ToastProvider>
       <ListsProvider>
-        <div className="flex bg-background w-full overflow-hidden" style={{ height: 'var(--app-height, 100dvh)' }}>
+        <div className="flex flex-1 bg-background w-full overflow-hidden">
           <Sidebar className="hidden md:flex" />
           <div className="flex-1 flex flex-col overflow-hidden w-full">
             <Header className="md:hidden" />
