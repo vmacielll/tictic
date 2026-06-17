@@ -24,11 +24,12 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
   const startDayOfWeek = firstDayDate.getDay()
   const paddingDays = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1
 
-  const allDates: (CalendarSummaryTask[] | null)[] = []
-  for (let i = 0; i < paddingDays; i++) allDates.push(null)
-  for (const day of days) allDates.push(day.tasks)
+  const cells: ({ date: string; tasks: CalendarSummaryTask[] } | null)[] = [
+    ...Array(paddingDays).fill(null),
+    ...days.map(d => ({ date: d.date, tasks: d.tasks })),
+  ]
 
-  const totalCells = Math.ceil(allDates.length / 7) * 7
+  const totalCells = Math.ceil(cells.length / 7) * 7
 
   return (
     <div className="bg-surface-raised border border-border-light rounded-xl overflow-hidden" data-testid="calendar-month-grid">
@@ -46,12 +47,12 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
       ) : (
         <div className="grid grid-cols-7 auto-rows-fr">
         {Array.from({ length: totalCells }).map((_, index) => {
-          const tasks = allDates[index]
-          if (tasks === null) {
+          const cell = cells[index]
+          if (!cell) {
             return <div key={index} className="border border-border/30 min-h-[80px]" />
           }
-          const dateStr = days.find((d) => d.tasks === tasks)?.date
-          const date = dateStr ? parseDateString(dateStr) : null
+          const dateStr = cell.date
+          const date = parseDateString(dateStr)
           const isToday = date ? date.toDateString() === DateTime.now().toJSDate().toDateString() : false
 
           return (
@@ -73,7 +74,7 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
                      {date.getDate()}
                    </span>
                    <div className="space-y-0.5 overflow-hidden">
-                     {tasks.slice(0, 2).map((task) => (
+                      {cell.tasks.slice(0, 2).map((task) => (
                       <div
                         key={task.id}
                         className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${
@@ -119,8 +120,8 @@ export function MonthView({ days, loading, onDayClick, onToggleTask, onViewTask 
                         </span>
                       </div>
                     ))}
-                    {tasks.length > 2 && (
-                      <div className="text-xs text-text-muted pl-1.5">+{tasks.length - 2}</div>
+                    {cell.tasks.length > 2 && (
+                      <div className="text-xs text-text-muted pl-1.5">+{cell.tasks.length - 2}</div>
                     )}
                   </div>
                 </>
