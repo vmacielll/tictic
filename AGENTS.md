@@ -52,10 +52,6 @@ cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prism
 cd server && npx prisma migrate dev --schema=src/infra/database/prisma/schema.prisma
 ```
 
-## Planning
-
-`.planning/` tracks project progress via GSD phases. Run `/gsd:progress` for current state.
-
 ## Agent Rules
 
 - **Never push to remote without explicit approval.** Stage and commit only after presenting a summary and getting confirmation.
