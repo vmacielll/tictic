@@ -1,5 +1,10 @@
 import { type PomodoroSession, type PomodoroStatus } from '../entities/PomodoroSession'
 
+export type PomodoroSessionWithTask = {
+  session: PomodoroSession
+  taskTitle?: string
+}
+
 export interface IPomodoroRepository {
   create(data: {
     id: string
@@ -13,7 +18,7 @@ export interface IPomodoroRepository {
 
   findById(id: string, userId: string): Promise<PomodoroSession | null>
 
-  findByUserId(userId: string): Promise<PomodoroSession[]>
+  findByUserId(userId: string): Promise<PomodoroSessionWithTask[]>
 
   findActiveByUserId(userId: string): Promise<PomodoroSession | null>
 

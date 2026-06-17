@@ -1,8 +1,8 @@
-import type { PrismaClient, PomodoroStatus as PrismaPomodoroStatus } from '@prisma/client'
+import type { PrismaClient, PomodoroStatus as PrismaPomodoroStatus, PomodoroSession as PrismaPomodoroSession } from '@prisma/client'
 import {
   PomodoroSession,
 } from '../../domain/entities/PomodoroSession'
-import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
+import { type IPomodoroRepository, type PomodoroSessionWithTask } from '../../domain/repositories/IPomodoroRepository'
 import { prismaPomodoroToDomain } from '@shared/mappers/prismaPomodoroMapper'
 
 export class PrismaPomodoroRepository implements IPomodoroRepository {
@@ -39,12 +39,16 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
     return prismaPomodoroToDomain(session)
   }
 
-  async findByUserId(userId: string): Promise<PomodoroSession[]> {
+  async findByUserId(userId: string): Promise<PomodoroSessionWithTask[]> {
     const sessions = await this.prisma.pomodoroSession.findMany({
       where: { userId },
       orderBy: { startedAt: 'desc' },
+      include: { task: { select: { title: true } } },
     })
-    return sessions.map(prismaPomodoroToDomain)
+    return sessions.map(s => ({
+      session: prismaPomodoroToDomain(s as unknown as PrismaPomodoroSession),
+      taskTitle: s.task?.title ?? undefined,
+    }))
   }
 
   async findActiveByUserId(userId: string): Promise<PomodoroSession | null> {

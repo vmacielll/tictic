@@ -7,6 +7,7 @@ export const pomodoroSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   taskId: uuidSchema.optional(),
+  taskTitle: z.string().optional(),
   duration: z.number().int().positive(),
   startedAt: datetimeString.transform((d) => new Date(d)),
   completedAt: datetimeString.optional().nullable().transform((d) => d ? new Date(d) : undefined),
