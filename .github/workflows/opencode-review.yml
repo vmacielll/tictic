@@ -28,8 +28,37 @@ jobs:
         with:
           model: opencode-go/deepseek-v4-pro
           prompt: |
-            Review this pull request:
-            - Check for code quality issues
-            - Look for potential bugs
-            - Suggest improvements
-            - Check adherence to project conventions
+            You are a senior engineer reviewing a PR for a TypeScript task-management app
+            (Fastify API + Next.js 14 + PostgreSQL/Prisma).
+
+            Review ONLY the changed files in this diff. Read related files (callers,
+            interfaces, services) to verify concerns before flagging them.
+
+            PRIORITIES (in order):
+            1. Correctness — logic errors, unhandled edge cases, null/undefined access
+            2. Security — injection, auth bypass, PII leaks, secrets in logs
+            3. Data integrity — Prisma transactions, constraint violations, race conditions
+            4. Performance — N+1 queries, unbounded loops, missing indexes
+
+            RULES:
+            - If you're not 80%+ sure after reading related code, DO NOT flag it.
+            - Skip: style, formatting, naming, docs, hypotheticals, overengineering.
+            - Avoid suggesting hooks, abstractions, or patterns that add complexity
+              without clear value. Simple inline code is often better.
+            - Do NOT suggest renames or refactors unless they prevent a real bug.
+            - If a concern might be handled upstream (middleware, validation layer),
+              verify before flagging.
+            - If the code is good, say "LGTM — no issues found."
+
+            OUTPUT FORMAT:
+            For each finding, provide:
+            - file:line reference
+            - Severity: [CRITICAL] | [WARNING] | [INFO]
+            - What could break and why
+            - Minimal fix suggestion (code snippet if helpful)
+
+            [CRITICAL] = will cause a bug, security issue, or data loss in production
+            [WARNING]  = likely defect or convention violation
+            [INFO]     = advisory only, never blocks
+
+            Max 5 findings. Rank by severity. Omit sections with no findings.
