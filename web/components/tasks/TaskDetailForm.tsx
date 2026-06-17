@@ -97,6 +97,7 @@ export function TaskDetailForm({ task, onSave, onClose, onDelete, lists }: TaskD
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Enter task title"
         required
+        autoFocus
       />
 
       <div>

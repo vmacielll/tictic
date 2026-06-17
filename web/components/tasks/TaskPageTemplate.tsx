@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useTasks } from '@/hooks/useTasks'
 import { useTaskDetail } from '@/hooks/useTaskDetail'
 import { TaskList } from '@/components/tasks/TaskList'
@@ -93,7 +94,7 @@ export function TaskPageTemplate({
         lists={lists}
       />
 
-      {selectedTask && (
+      {selectedTask && createPortal(
         <TaskDetailModal
           task={selectedTask}
           isOpen={isModalOpen}
@@ -102,7 +103,8 @@ export function TaskPageTemplate({
           onDelete={handleDelete}
           onToggleComplete={handleToggleComplete}
           lists={lists}
-        />
+        />,
+        document.body
       )}
     </div>
   )

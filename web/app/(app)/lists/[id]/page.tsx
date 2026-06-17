@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useListsContext } from '@/contexts/ListsContext'
@@ -156,7 +157,7 @@ export default function ListDetailPage() {
         </div>
       )}
 
-      {selectedTask && (
+      {selectedTask && createPortal(
         <TaskDetailModal
           task={selectedTask}
           isOpen={isModalOpen}
@@ -165,7 +166,8 @@ export default function ListDetailPage() {
           onDelete={handleDelete}
           onToggleComplete={handleToggleComplete}
           lists={lists}
-        />
+        />,
+        document.body
       )}
     </div>
   )

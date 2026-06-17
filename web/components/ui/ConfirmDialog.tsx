@@ -34,14 +34,6 @@ export function ConfirmDialog({
     return () => window.removeEventListener('keydown', handleEsc)
   }, [isOpen, onCancel])
 
-  // Prevent body scroll
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = 'unset' }
-    }
-  }, [isOpen])
-
   const id = useId()
 
   if (!isOpen) return null
@@ -55,7 +47,7 @@ export function ConfirmDialog({
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
+      onClick={onCancel}
       role="alertdialog"
       data-testid="confirm-dialog"
       aria-modal="true"
@@ -63,7 +55,7 @@ export function ConfirmDialog({
       aria-describedby={`confirm-dialog-message-${id}`}
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative bg-surface-overlay rounded-xl shadow-2xl w-full max-w-md border border-border p-6 animate-slide-up">
+      <div className="relative bg-surface-overlay rounded-xl shadow-2xl w-full max-w-md border border-border p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-3">
           {variant === 'danger' && (
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center">
@@ -82,6 +74,7 @@ export function ConfirmDialog({
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onCancel}
+            autoFocus
             className="px-4 py-2 text-sm font-medium text-text-primary bg-surface-raised border border-border-light rounded-lg hover:bg-surface transition-colors"
           >
             {cancelLabel}
