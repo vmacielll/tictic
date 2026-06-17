@@ -1,5 +1,9 @@
 import { type PomodoroSession, type PomodoroStatus } from '../entities/PomodoroSession'
-import type { PomodoroSessionWithTask } from '../../infra/repositories/PrismaPomodoroRepository'
+
+export type PomodoroSessionWithTask = {
+  session: PomodoroSession
+  taskTitle?: string
+}
 
 export interface IPomodoroRepository {
   create(data: {

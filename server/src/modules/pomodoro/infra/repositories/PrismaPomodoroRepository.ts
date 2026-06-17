@@ -1,14 +1,9 @@
-import type { PrismaClient, PomodoroStatus as PrismaPomodoroStatus } from '@prisma/client'
+import type { PrismaClient, PomodoroStatus as PrismaPomodoroStatus, PomodoroSession as PrismaPomodoroSession } from '@prisma/client'
 import {
   PomodoroSession,
 } from '../../domain/entities/PomodoroSession'
-import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
+import { type IPomodoroRepository, type PomodoroSessionWithTask } from '../../domain/repositories/IPomodoroRepository'
 import { prismaPomodoroToDomain } from '@shared/mappers/prismaPomodoroMapper'
-
-export type PomodoroSessionWithTask = {
-  session: PomodoroSession
-  taskTitle?: string
-}
 
 export class PrismaPomodoroRepository implements IPomodoroRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -51,7 +46,7 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
       include: { task: { select: { title: true } } },
     })
     return sessions.map(s => ({
-      session: prismaPomodoroToDomain(s as any),
+      session: prismaPomodoroToDomain(s as unknown as PrismaPomodoroSession),
       taskTitle: s.task?.title ?? undefined,
     }))
   }
