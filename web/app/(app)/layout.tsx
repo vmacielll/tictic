@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ListsProvider } from '@/contexts/ListsContext'
 import { ToastProvider } from '@/components/ui/Toast'
+import { useMobileViewport } from '@/hooks/useMobileViewport'
 
 export default function AppLayout({
   children,
@@ -13,6 +14,8 @@ export default function AppLayout({
   children: React.ReactNode
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
+
+  useMobileViewport()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,11 +38,11 @@ export default function AppLayout({
   return (
     <ToastProvider>
       <ListsProvider>
-        <div className="flex h-screen bg-background">
+        <div className="flex bg-background w-full overflow-hidden" style={{ height: 'var(--app-height, 100dvh)' }}>
           <Sidebar className="hidden md:flex" />
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden w-full">
             <Header className="md:hidden" />
-            <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
+            <main className="flex-1 overflow-y-auto p-6 md:pb-6">
               {children}
             </main>
             <BottomNav />

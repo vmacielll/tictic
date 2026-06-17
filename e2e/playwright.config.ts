@@ -32,6 +32,14 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
+    {
+      name: 'webkit',
+      use: {
+        baseURL: 'http://localhost:3000',
+        storageState: path.resolve(__dirname, 'test-results/.auth/storageState.json'),
+      },
+      dependencies: ['setup'],
+    },
   ],
   webServer: [],
 })
