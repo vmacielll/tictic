@@ -2,8 +2,6 @@
 
 import { useEffect, useId } from 'react'
 import { Icon } from '@/components/ui/Icon'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import { useInertApp } from '@/hooks/useInertApp'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -35,9 +33,6 @@ export function ConfirmDialog({
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
   }, [isOpen, onCancel])
-
-  useBodyScrollLock(isOpen)
-  useInertApp(isOpen)
 
   const id = useId()
 

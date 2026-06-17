@@ -5,8 +5,7 @@ import { type Task } from '@/domain/tasks/types'
 import { TaskDetailHeader } from './TaskDetailHeader'
 import { TaskDetailForm } from './TaskDetailForm'
 import type { List } from '@/domain/lists/types'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import { useInertApp } from '@/hooks/useInertApp'
+
 
 interface TaskDetailModalProps {
   task: Task
@@ -37,9 +36,6 @@ export function TaskDetailModal({
       return () => window.removeEventListener('keydown', handleEsc)
     }
   }, [isOpen, onClose])
-
-  useBodyScrollLock(isOpen)
-  useInertApp(isOpen)
 
   if (!isOpen) return null
 
