@@ -200,6 +200,24 @@ describe('token refresh', () => {
 
     unregister()
   })
+
+  it('triggers auth error on 401 when no token exists (unauthenticated user)', async () => {
+    // No login() — simulates unauthenticated user navigating directly to a protected route
+    const authErrorSpy = vi.fn()
+    const unregister = registerAuthErrorCallback(authErrorSpy)
+
+    mockFetch(401, { message: 'Unauthorized' })
+
+    await expect(
+      apiRequest('/tasks', { requiresAuth: true })
+    ).rejects.toThrow('Session expired')
+
+    expect(authErrorSpy).toHaveBeenCalledTimes(1)
+    // No refresh attempt should have been made — only the original request
+    expect(vi.mocked(global.fetch).mock.calls.length).toBe(1)
+
+    unregister()
+  })
 })
 
 // ── clearTokens ──
