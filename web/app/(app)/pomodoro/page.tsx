@@ -13,7 +13,7 @@ export default function PomodoroPage() {
   // Fetch all tasks to resolve taskId → title
   const { data: taskList } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => listTasks(),
+    queryFn: () => listTasks(100),
     staleTime: 5 * 60 * 1000,
   })
 
