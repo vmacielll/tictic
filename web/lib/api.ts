@@ -94,9 +94,9 @@ export async function apiRequest<T>(
       headers,
     })
 
-    if (response.status === 401 && requiresAuth && token) {
+    if (response.status === 401 && requiresAuth) {
       // Attempt token refresh on first 401, then fall through to force logout
-      if (!_retry) {
+      if (token && !_retry) {
         try {
           await refreshToken()
           return apiRequest<T>(endpoint, { ...restOptions, requiresAuth, headers, _retry: true })
@@ -104,7 +104,7 @@ export async function apiRequest<T>(
           // refresh failed — fall through to clear session
         }
       }
-      clearTokens()
+      if (token) clearTokens()
       triggerAuthError()
       throw new Error('Session expired')
     }
