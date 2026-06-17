@@ -218,11 +218,8 @@ export async function deleteTask(id: string): Promise<void> {
   })
 }
 
-export async function listTasks(size?: number): Promise<ListTasksResponse> {
-  const params = new URLSearchParams()
-  if (size) params.set('size', String(size))
-  const query = params.toString()
-  return apiRequest(`/tasks${query ? `?${query}` : ''}`, { requiresAuth: true })
+export async function listTasks(): Promise<TaskResponse[]> {
+  return apiRequest('/tasks', { requiresAuth: true })
 }
 
 export async function listTodayTasks(signal?: AbortSignal): Promise<TaskResponse[]> {

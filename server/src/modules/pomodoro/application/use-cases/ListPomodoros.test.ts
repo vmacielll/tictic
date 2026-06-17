@@ -25,7 +25,10 @@ describe('ListPomodoros', () => {
     Object.defineProperty(session1, 'id', { value: 'session-1' })
     Object.defineProperty(session2, 'id', { value: 'session-2' })
 
-    vi.spyOn(pomodoroRepository, 'findByUserId').mockResolvedValue([session1, session2])
+    vi.spyOn(pomodoroRepository, 'findByUserId').mockResolvedValue([
+      { session: session1 },
+      { session: session2 },
+    ])
 
     const result = await useCase.execute({ userId: 'user-1' })
 
@@ -54,7 +57,7 @@ describe('ListPomodoros', () => {
       status: 'COMPLETED',
     })
 
-    vi.spyOn(pomodoroRepository, 'findByUserId').mockResolvedValue([session])
+    vi.spyOn(pomodoroRepository, 'findByUserId').mockResolvedValue([{ session }])
 
     const result = await useCase.execute({ userId: 'user-1' })
 
@@ -66,7 +69,7 @@ describe('ListPomodoros', () => {
     const session = PomodoroSession.create('user-1', 25)
     Object.defineProperty(session, 'id', { value: 'session-1' })
 
-    vi.spyOn(pomodoroRepository, 'findByUserId').mockResolvedValue([session])
+    vi.spyOn(pomodoroRepository, 'findByUserId').mockResolvedValue([{ session }])
 
     const result = await useCase.execute({ userId: 'user-1' })
 

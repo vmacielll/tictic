@@ -5,6 +5,11 @@ import {
 import { type IPomodoroRepository } from '../../domain/repositories/IPomodoroRepository'
 import { prismaPomodoroToDomain } from '@shared/mappers/prismaPomodoroMapper'
 
+export type PomodoroSessionWithTask = {
+  session: PomodoroSession
+  taskTitle?: string
+}
+
 export class PrismaPomodoroRepository implements IPomodoroRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -39,12 +44,16 @@ export class PrismaPomodoroRepository implements IPomodoroRepository {
     return prismaPomodoroToDomain(session)
   }
 
-  async findByUserId(userId: string): Promise<PomodoroSession[]> {
+  async findByUserId(userId: string): Promise<PomodoroSessionWithTask[]> {
     const sessions = await this.prisma.pomodoroSession.findMany({
       where: { userId },
       orderBy: { startedAt: 'desc' },
+      include: { task: { select: { title: true } } },
     })
-    return sessions.map(prismaPomodoroToDomain)
+    return sessions.map(s => ({
+      session: prismaPomodoroToDomain(s as any),
+      taskTitle: s.task?.title ?? undefined,
+    }))
   }
 
   async findActiveByUserId(userId: string): Promise<PomodoroSession | null> {

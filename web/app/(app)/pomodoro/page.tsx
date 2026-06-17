@@ -1,27 +1,11 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { usePomodoro } from '@/hooks/usePomodoro'
-import { listTasks } from '@/lib/api'
 import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 
 export default function PomodoroPage() {
   const { sessions, loading, error, refreshSessions } = usePomodoro()
-
-  // Fetch all tasks to resolve taskId → title
-  const { data: taskList } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => listTasks(100),
-    staleTime: 5 * 60 * 1000,
-  })
-
-  const taskTitleMap = useMemo(() => {
-    const map = new Map<string, string>()
-    taskList?.items.forEach(t => map.set(t.id, t.title))
-    return map
-  }, [taskList])
 
   const handleSessionComplete = () => {
     refreshSessions()
@@ -87,7 +71,7 @@ export default function PomodoroPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-text-primary">
-                          {session.taskId ? (taskTitleMap.get(session.taskId) || 'Focus Session') : 'Focus Session'}
+                          {session.taskTitle || 'Focus Session'}
                         </p>
                         <p className="text-xs text-text-muted">
                           {new Date(session.startedAt).toLocaleString('en-US', {
