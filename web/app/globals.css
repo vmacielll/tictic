@@ -76,6 +76,7 @@ input:-webkit-autofill:active {
 
 /* Force input dark mode */
 input, textarea, select {
+  font-size: 16px !important; /* prevents iOS Safari auto-zoom */
   color-scheme: dark;
   background-color: #111111 !important;
   color: #fafafa !important;

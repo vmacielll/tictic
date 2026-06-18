@@ -6,7 +6,6 @@ import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ListsProvider } from '@/contexts/ListsContext'
 import { ToastProvider } from '@/components/ui/Toast'
-import { useMobileViewport } from '@/hooks/useMobileViewport'
 
 export default function AppLayout({
   children,
@@ -14,8 +13,6 @@ export default function AppLayout({
   children: React.ReactNode
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
-
-  useMobileViewport()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
