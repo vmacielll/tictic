@@ -14,14 +14,6 @@ export default function AppLayout({
 }) {
   const [showShortcuts, setShowShortcuts] = useState(false)
 
-  // Force body re-layout on iOS after client-side navigation
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      // Reading offsetHeight forces synchronous layout recalculation
-      void document.body.offsetHeight
-    })
-  }, [])
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // ? to show keyboard shortcuts
