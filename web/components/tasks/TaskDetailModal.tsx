@@ -47,7 +47,8 @@ export function TaskDetailModal({
   return (
     <div
       data-testid="task-detail-modal"
-      className="fixed inset-0 z-[60] flex items-end md:items-center md:justify-center md:p-4 animate-slide-up"
+      className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center md:p-4 animate-slide-up"
+      style={{ height: 'var(--app-height, 100dvh)' }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -57,7 +58,7 @@ export function TaskDetailModal({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Modal — full-screen on mobile, centered card on desktop */}
-      <div className="relative bg-surface-overlay md:rounded-xl shadow-2xl w-full md:max-w-2xl h-full md:h-auto md:max-h-[90vh] flex flex-col border-t md:border border-border" onClick={(e) => e.stopPropagation()}>
+      <div className="relative bg-surface-overlay md:rounded-xl shadow-2xl w-full md:max-w-2xl h-full min-h-0 md:h-auto md:max-h-[90vh] flex flex-col border-t md:border border-border" onClick={(e) => e.stopPropagation()}>
         <TaskDetailHeader
           task={task}
           onClose={onClose}
