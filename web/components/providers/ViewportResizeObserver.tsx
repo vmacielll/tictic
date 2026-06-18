@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 
 /**
  * Sets --app-height CSS variable to the actual visible viewport height.
@@ -14,7 +14,7 @@ import { useEffect } from 'react'
  * and doesn't have the client-side navigation staleness bug.
  */
 export function ViewportResizeObserver() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
 
