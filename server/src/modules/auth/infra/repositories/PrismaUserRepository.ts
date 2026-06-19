@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import type { PrismaClient } from '@prisma/client'
 import type { IUserRepository } from '../../domain/repositories/IUserRepository'
 import { User } from '../../domain/entities/User'
@@ -7,13 +8,17 @@ export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { email } })
+    const user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
+    })
     if (!user) return null
     return prismaUserToDomain(user)
   }
 
   async findById(id: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { id } })
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+    })
     if (!user) return null
     return prismaUserToDomain(user)
   }
@@ -40,5 +45,29 @@ export class PrismaUserRepository implements IUserRepository {
       },
     })
     return prismaUserToDomain(updated)
+  }
+
+  async updatePasswordHash(id: string, hash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash: hash },
+    })
+  }
+
+  async softDelete(id: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+      select: { email: true },
+    })
+    if (!user) return
+
+    const prefix = crypto.randomUUID().slice(0, 8)
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        email: `deleted_${prefix}_${user.email}`,
+      },
+    })
   }
 }

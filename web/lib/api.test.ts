@@ -233,7 +233,7 @@ describe('clearTokens', () => {
 
 // ── Exported endpoint functions ──
 
-import { createTask, updateTask, deleteTask, listTasks, getTask } from './api'
+import { createTask, updateTask, deleteTask, listTasks, getTask, updateProfile, changePassword, deleteAccount } from './api'
 
 describe('exported endpoint functions', () => {
   it('createTask sends Authorization header', async () => {
@@ -284,5 +284,57 @@ describe('exported endpoint functions', () => {
 
     const headers = getFetchHeaders()
     expect(headers['Authorization']).toBe('Bearer test-access-token')
+  })
+
+  // ── Profile & Account functions ──
+
+  it('updateProfile sends PATCH to /auth/profile with name', async () => {
+    login()
+    mockFetch(200, { id: '1', name: 'New Name', email: 'test@example.com' })
+
+    const result = await updateProfile('New Name')
+
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls[0][0]).toContain('/auth/profile')
+    expect((calls[0][1] as RequestInit).method).toBe('PATCH')
+    expect(JSON.parse((calls[0][1] as RequestInit).body as string)).toEqual({ name: 'New Name' })
+    const headers = getFetchHeaders()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
+    expect(result).toEqual({ id: '1', name: 'New Name', email: 'test@example.com' })
+  })
+
+  it('changePassword sends POST to /auth/change-password with current and new password', async () => {
+    login()
+    mockFetch(200, { message: 'Password changed' })
+
+    const result = await changePassword('oldPass123', 'newPass123')
+
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls[0][0]).toContain('/auth/change-password')
+    expect((calls[0][1] as RequestInit).method).toBe('POST')
+    expect(JSON.parse((calls[0][1] as RequestInit).body as string)).toEqual({
+      currentPassword: 'oldPass123',
+      newPassword: 'newPass123',
+    })
+    const headers = getFetchHeaders()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
+    expect(result).toEqual({ message: 'Password changed' })
+  })
+
+  it('deleteAccount sends DELETE to /auth/account with password', async () => {
+    login()
+    mockFetch(200, { message: 'Account deleted' })
+
+    const result = await deleteAccount('myPassword')
+
+    const calls = vi.mocked(global.fetch).mock.calls
+    expect(calls[0][0]).toContain('/auth/account')
+    expect((calls[0][1] as RequestInit).method).toBe('DELETE')
+    expect(JSON.parse((calls[0][1] as RequestInit).body as string)).toEqual({
+      password: 'myPassword',
+    })
+    const headers = getFetchHeaders()
+    expect(headers['Authorization']).toBe('Bearer test-access-token')
+    expect(result).toEqual({ message: 'Account deleted' })
   })
 })

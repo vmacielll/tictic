@@ -177,6 +177,30 @@ export async function register(name: string, email: string, password: string): P
   })
 }
 
+export async function updateProfile(name: string): Promise<{ id: string; name: string; email: string }> {
+  return apiRequest('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+    requiresAuth: true,
+  })
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+  return apiRequest('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+    requiresAuth: true,
+  })
+}
+
+export async function deleteAccount(password: string): Promise<{ message: string }> {
+  return apiRequest('/auth/account', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+    requiresAuth: true,
+  })
+}
+
 // ── Calendar ──
 export async function getCalendarMonth(month: number, year: number, signal?: AbortSignal): Promise<CalendarDay[]> {
   return apiRequest(`/calendar/month?month=${month}&year=${year}`, { requiresAuth: true, signal })

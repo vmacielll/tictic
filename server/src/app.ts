@@ -20,6 +20,9 @@ requiredEnv.forEach((v) => {
 import { RegisterUser } from './modules/auth/application/use-cases/RegisterUser'
 import { LoginUser } from './modules/auth/application/use-cases/LoginUser'
 import { RefreshToken } from './modules/auth/application/use-cases/RefreshToken'
+import { UpdateProfile } from './modules/auth/application/use-cases/UpdateProfile'
+import { ChangePassword } from './modules/auth/application/use-cases/ChangePassword'
+import { DeleteAccount } from './modules/auth/application/use-cases/DeleteAccount'
 import { PrismaUserRepository } from './modules/auth/infra/repositories/PrismaUserRepository'
 import { PrismaRefreshTokenRepository } from './modules/auth/infra/repositories/PrismaRefreshTokenRepository'
 import { AuthController } from './modules/auth/http/AuthController'
@@ -125,8 +128,9 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
     }
 
     await request.jwtVerify()
-    const token = request.user as { sub: string }
+    const token = request.user as { sub: string; iat: number }
     ;(request as unknown as AuthenticatedRequest).userId = token.sub
+    ;(request as unknown as AuthenticatedRequest).tokenIssuedAt = token.iat
   } catch (err) {
     return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
   }
@@ -147,7 +151,19 @@ const refreshToken = new RefreshToken(
   (token: string) => app.jwt.verify(token) as { sub: string },
   prisma,
 )
-const authController = new AuthController(registerUser, loginUser, refreshToken, userRepository, refreshTokenRepository)
+const updateProfile = new UpdateProfile(userRepository)
+const changePassword = new ChangePassword(userRepository)
+const deleteAccount = new DeleteAccount(userRepository, refreshTokenRepository)
+const authController = new AuthController(
+  registerUser,
+  loginUser,
+  refreshToken,
+  updateProfile,
+  changePassword,
+  deleteAccount,
+  userRepository,
+  refreshTokenRepository,
+)
 
 // Decorate app with auth controller
 app.decorate('authController', authController)

@@ -75,7 +75,6 @@ This project is configured for AI coding agents:
 
 - **[`AGENTS.md`](AGENTS.md)** — Root instructions for coding agents
 - **[`docs/`](docs/)** — Progressive disclosure docs (architecture, testing, security, conventions)
-- **[`.planning/`](.planning/)** — GSD roadmap with 15 phases, 83 items, 97.6% complete
 
 ## License
 
