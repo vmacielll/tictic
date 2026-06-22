@@ -44,7 +44,7 @@ describe('ChangePassword Use Case', () => {
     expect(result).toEqual({ message: 'Password changed successfully' })
     expect(Password.compare).toHaveBeenCalledWith('correctPassword', 'oldHashedPassword')
     expect(Password.hash).toHaveBeenCalledWith('newPassword123')
-    expect(mockRepository.updatePasswordHash).toHaveBeenCalledWith('user-id', 'newHashedPassword')
+    expect(mockRepository.updatePasswordAndRevokeTokens).toHaveBeenCalledWith('user-id', 'newHashedPassword')
   })
 
   it('should throw NOT_FOUND if user does not exist', async () => {

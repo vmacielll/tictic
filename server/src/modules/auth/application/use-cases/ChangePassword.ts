@@ -27,7 +27,7 @@ export class ChangePassword {
     }
 
     const newHash = await Password.hash(newPassword)
-    await this.userRepository.updatePasswordHash(userId, newHash)
+    await this.userRepository.updatePasswordAndRevokeTokens(userId, newHash)
 
     return { message: 'Password changed successfully' }
   }

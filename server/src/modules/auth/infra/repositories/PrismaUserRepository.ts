@@ -47,10 +47,16 @@ export class PrismaUserRepository implements IUserRepository {
     return prismaUserToDomain(updated)
   }
 
-  async updatePasswordHash(id: string, hash: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: { passwordHash: hash },
+  async updatePasswordAndRevokeTokens(id: string, hash: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: { passwordHash: hash },
+      })
+      await tx.refreshToken.updateMany({
+        where: { userId: id },
+        data: { revoked: true },
+      })
     })
   }
 
