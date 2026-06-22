@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -7,6 +8,7 @@ import { useListsContext } from '@/contexts/ListsContext'
 import { logout as apiLogout } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import { Icon } from '@/components/ui/Icon'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const navItems = [
   { href: '/today', label: 'Today', icon: 'today' },
@@ -21,6 +23,8 @@ export function Sidebar({ className = '' }: { className?: string }) {
   const router = useRouter()
   const { user, logout } = useAuth()
   const { lists, loading } = useListsContext()
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const initials = user
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -37,6 +41,7 @@ export function Sidebar({ className = '' }: { className?: string }) {
   }
 
   return (
+    <>
     <aside className={`w-60 bg-surface border-r border-border flex flex-col h-full ${className}`}>
       {/* Logo */}
       <div className="px-4 py-5 flex items-center gap-3">
@@ -122,8 +127,16 @@ export function Sidebar({ className = '' }: { className?: string }) {
             <p className="text-sm font-medium text-text-primary truncate">{user?.name || 'User'}</p>
             <p className="text-xs text-text-muted truncate">{user?.email || ''}</p>
           </div>
+          <Link
+            href="/settings"
+            className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-raised rounded-lg transition-colors"
+            aria-label="Settings"
+            title="Settings"
+          >
+            <Icon name="settings" className="w-4 h-4" />
+          </Link>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
             aria-label="Sign out"
             title="Sign out"
@@ -133,5 +146,14 @@ export function Sidebar({ className = '' }: { className?: string }) {
         </div>
       </div>
     </aside>
+    <ConfirmDialog
+      isOpen={showLogoutConfirm}
+      title="Sign out"
+      message="Are you sure you want to sign out?"
+      confirmLabel="Sign out"
+      onConfirm={handleLogout}
+      onCancel={() => setShowLogoutConfirm(false)}
+    />
+  </>
   )
 }

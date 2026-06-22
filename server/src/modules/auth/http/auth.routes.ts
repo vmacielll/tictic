@@ -13,4 +13,10 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/auth/me', { preHandler: [app.authenticate] }, controller.me.bind(controller))
 
   app.post('/auth/logout', controller.logout.bind(controller))
+
+  app.patch('/auth/profile', { preHandler: [app.authenticate] }, controller.updateProfile.bind(controller))
+
+  app.post('/auth/change-password', { preHandler: [app.authenticate] }, controller.changePassword.bind(controller))
+
+  app.delete('/auth/account', { preHandler: [app.authenticate] }, controller.deleteAccount.bind(controller))
 }

@@ -33,6 +33,9 @@ export async function createTestApp(): Promise<{
   app.decorate('authenticate', async (request: any, reply: any) => {
     try {
       await request.jwtVerify()
+      const token = request.user as { sub: string; iat: number }
+      request.userId = token.sub
+      request.tokenIssuedAt = token.iat
     } catch {
       return reply.code(401).send({ message: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
     }

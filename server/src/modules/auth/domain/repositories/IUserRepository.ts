@@ -20,4 +20,6 @@ export interface IUserRepository {
     passwordHash: string
   }): Promise<User>
   save(user: User): Promise<User>
+  updatePasswordAndRevokeTokens(id: string, hash: string): Promise<void>
+  softDeleteAndRevokeTokens(id: string): Promise<void>
 }

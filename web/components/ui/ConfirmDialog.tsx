@@ -12,6 +12,7 @@ interface ConfirmDialogProps {
   variant?: 'danger' | 'warning' | 'default'
   onConfirm: () => void
   onCancel: () => void
+  children?: React.ReactNode
 }
 
 export function ConfirmDialog({
@@ -23,6 +24,7 @@ export function ConfirmDialog({
   variant = 'default',
   onConfirm,
   onCancel,
+  children,
 }: ConfirmDialogProps) {
   // Close on ESC
   useEffect(() => {
@@ -69,6 +71,7 @@ export function ConfirmDialog({
             <p id={`confirm-dialog-message-${id}`} className="mt-2 text-sm text-text-secondary">
               {message}
             </p>
+            {children}
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3">

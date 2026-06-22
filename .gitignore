@@ -52,17 +52,14 @@ prisma/migrations/
 .prisma/client/
 **/.prisma/client/
 
-#qwen
-.qwen
-
-# plan
-plans
-
 # agents
 .agents
 
 # planning
 .planning/
+
+# deepwork
+.slim/deepwork/
 
 skills-lock.json
 
@@ -70,3 +67,7 @@ skills-lock.json
 .playwright-mcp
 
 DEPLOY_SUMMARY.md
+
+AGENTS.md
+
+.opencode
