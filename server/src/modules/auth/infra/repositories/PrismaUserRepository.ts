@@ -54,20 +54,27 @@ export class PrismaUserRepository implements IUserRepository {
     })
   }
 
-  async softDelete(id: string): Promise<void> {
-    const user = await this.prisma.user.findFirst({
-      where: { id, deletedAt: null },
-      select: { email: true },
-    })
-    if (!user) return
+  async softDeleteAndRevokeTokens(id: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findFirst({
+        where: { id, deletedAt: null },
+        select: { email: true },
+      })
+      if (!user) return
 
-    const prefix = crypto.randomUUID().slice(0, 8)
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        email: `deleted_${prefix}_${user.email}`,
-      },
+      const prefix = crypto.randomUUID().slice(0, 8)
+      await tx.user.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          email: `deleted_${prefix}_${user.email}`,
+        },
+      })
+
+      await tx.refreshToken.updateMany({
+        where: { userId: id },
+        data: { revoked: true },
+      })
     })
   }
 }

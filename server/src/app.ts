@@ -153,7 +153,7 @@ const refreshToken = new RefreshToken(
 )
 const updateProfile = new UpdateProfile(userRepository)
 const changePassword = new ChangePassword(userRepository)
-const deleteAccount = new DeleteAccount(userRepository, refreshTokenRepository)
+const deleteAccount = new DeleteAccount(userRepository)
 const authController = new AuthController(
   registerUser,
   loginUser,

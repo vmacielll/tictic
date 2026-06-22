@@ -4,7 +4,6 @@ import { createMockUserRepository } from '../../__mocks__/MockUserRepository'
 import { Password } from '../../domain/value-objects/Password'
 import { AppError } from '@shared/errors/AppError'
 import { User } from '../../domain/entities/User'
-import type { IRefreshTokenRepository } from '../../domain/repositories/IRefreshTokenRepository'
 
 vi.mock('../../domain/value-objects/Password', () => ({
   Password: {
@@ -13,24 +12,13 @@ vi.mock('../../domain/value-objects/Password', () => ({
   },
 }))
 
-function createMockRefreshTokenRepository(): IRefreshTokenRepository {
-  return {
-    create: vi.fn(),
-    findByTokenHash: vi.fn(),
-    revoke: vi.fn(),
-    revokeAllByUserId: vi.fn(),
-    markAsUsed: vi.fn(),
-  }
-}
-
 describe('DeleteAccount Use Case', () => {
   let _deleteAccount: DeleteAccount
   const mockUserRepository = createMockUserRepository()
-  const mockRefreshTokenRepository = createMockRefreshTokenRepository()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    _deleteAccount = new DeleteAccount(mockUserRepository, mockRefreshTokenRepository)
+    _deleteAccount = new DeleteAccount(mockUserRepository)
   })
 
   it('should delete account successfully', async () => {
@@ -55,8 +43,7 @@ describe('DeleteAccount Use Case', () => {
 
     expect(result).toEqual({ message: 'Account deleted successfully' })
     expect(Password.compare).toHaveBeenCalledWith('correctPassword', 'hashedPassword')
-    expect(mockUserRepository.softDelete).toHaveBeenCalledWith('user-id')
-    expect(mockRefreshTokenRepository.revokeAllByUserId).toHaveBeenCalledWith('user-id')
+    expect(mockUserRepository.softDeleteAndRevokeTokens).toHaveBeenCalledWith('user-id')
   })
 
   it('should throw SESSION_TOO_OLD if JWT is older than 5 minutes', async () => {

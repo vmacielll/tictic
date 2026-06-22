@@ -25,6 +25,7 @@ interface MockUser {
 const mockUsers: MockUser[] = []
 
 const mockPrisma = {
+  $transaction: async (fn: (tx: any) => Promise<any>) => fn(mockPrisma),
   user: {
     findUnique: async ({ where }: { where: { email: string } }) => {
       return mockUsers.find((u) => u.email === where.email) || null
@@ -86,7 +87,7 @@ async function buildTestApp() {
   )
   const updateProfile = new UpdateProfile(userRepository)
   const changePassword = new ChangePassword(userRepository)
-  const deleteAccount = new DeleteAccount(userRepository, refreshTokenRepository)
+  const deleteAccount = new DeleteAccount(userRepository)
 
   const authController = new AuthController(
     registerUser,

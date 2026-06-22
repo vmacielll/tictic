@@ -22,6 +22,6 @@ export function createMockUserRepository(overrides?: {
     create: vi.fn().mockResolvedValue(overrides?.createResult ?? defaultUser),
     save: vi.fn().mockResolvedValue(overrides?.saveResult ?? defaultUser),
     updatePasswordHash: vi.fn().mockResolvedValue(undefined),
-    softDelete: vi.fn().mockResolvedValue(undefined),
+    softDeleteAndRevokeTokens: vi.fn().mockResolvedValue(undefined),
   }
 }

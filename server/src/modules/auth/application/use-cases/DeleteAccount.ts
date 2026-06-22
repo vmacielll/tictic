@@ -1,7 +1,6 @@
 import { AppError } from '@shared/errors/AppError'
 import { Password } from '../../domain/value-objects/Password'
 import type { IUserRepository } from '../../domain/repositories/IUserRepository'
-import type { IRefreshTokenRepository } from '../../domain/repositories/IRefreshTokenRepository'
 
 interface DeleteAccountRequest {
   userId: string
@@ -16,7 +15,6 @@ interface DeleteAccountResponse {
 export class DeleteAccount {
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
   async execute({ userId, password, tokenIssuedAt }: DeleteAccountRequest): Promise<DeleteAccountResponse> {
@@ -40,8 +38,7 @@ export class DeleteAccount {
       throw new AppError('Password is incorrect', 401, 'INVALID_PASSWORD')
     }
 
-    await this.userRepository.softDelete(userId)
-    await this.refreshTokenRepository.revokeAllByUserId(userId)
+    await this.userRepository.softDeleteAndRevokeTokens(userId)
 
     return { message: 'Account deleted successfully' }
   }
