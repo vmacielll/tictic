@@ -48,8 +48,8 @@ See `docs/` for detailed guidance. The agent loads these only when relevant to t
 
 ```bash
 # Schema: server/src/infra/database/prisma/schema.prisma
-cd server && npx prisma generate --schema=src/infra/database/prisma/schema.prisma
-cd server && npx prisma migrate dev --schema=src/infra/database/prisma/schema.prisma
+cd server && pnpm exec prisma generate --schema=src/infra/database/prisma/schema.prisma
+cd server && pnpm exec prisma migrate dev --schema=src/infra/database/prisma/schema.prisma
 ```
 
 ## Agent Rules

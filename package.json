@@ -1,10 +1,11 @@
 {
   "name": "tictic",
   "private": true,
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "prepare": "husky",
-    "lint": "cd server && npm run lint && cd ../web && npm run lint && cd ../e2e && npm run lint",
-    "lint:fix": "cd server && npm run lint:fix && cd ../web && npm run lint && cd ../e2e && npm run lint:fix"
+    "lint": "cd server && pnpm run lint && cd ../web && pnpm run lint && cd ../e2e && pnpm run lint",
+    "lint:fix": "cd server && pnpm run lint:fix && cd ../web && pnpm run lint && cd ../e2e && pnpm run lint:fix"
   },
   "devDependencies": {
     "husky": "^9.0.0",
@@ -12,14 +13,14 @@
   },
   "lint-staged": {
     "server/src/**/*.ts": [
-      "cd server && npx eslint --fix --cache --no-warn-ignored .",
-      "cd server && npx tsc --noEmit"
+      "cd server && pnpm exec eslint --fix --cache --no-warn-ignored .",
+      "cd server && pnpm exec tsc --noEmit"
     ],
     "web/**/*.{ts,tsx}": [
-      "cd web && npx eslint --fix --cache --no-warn-ignored ."
+      "cd web && pnpm exec eslint --fix --cache --no-warn-ignored ."
     ],
     "e2e/**/*.ts": [
-      "cd e2e && npx eslint --fix --cache --no-warn-ignored ."
+      "cd e2e && pnpm exec eslint --fix --cache --no-warn-ignored ."
     ]
   }
 }
