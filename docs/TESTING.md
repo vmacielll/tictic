@@ -17,11 +17,11 @@ make test-all     # All tests including E2E
 make e2e          # E2E only (starts services automatically)
 
 # Individual
-cd server && npm test                # Server unit tests
-cd server && npm run test -- src/integration/   # Server integration tests
-cd web && npm test                   # Web unit tests
-cd e2e && npx playwright test        # E2E tests
-cd e2e && npx playwright test --ui   # Interactive E2E
+cd server && pnpm test                # Server unit tests
+cd server && pnpm run test -- src/integration/   # Server integration tests
+cd web && pnpm test                   # Web unit tests
+cd e2e && pnpm exec playwright test        # E2E tests
+cd e2e && pnpm exec playwright test --ui   # Interactive E2E
 ```
 
 ---

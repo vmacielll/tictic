@@ -2,6 +2,7 @@
   "name": "@ticktick/web",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

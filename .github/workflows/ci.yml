@@ -12,28 +12,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci --frozen-lockfile
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
         working-directory: ./server
-      - run: npx prisma generate --schema=src/infra/database/prisma/schema.prisma
+      - run: pnpm exec prisma generate --schema=src/infra/database/prisma/schema.prisma
         working-directory: ./server
-      - run: npm run typecheck
+      - run: pnpm run typecheck
         working-directory: ./server
-      - run: npm run lint
+      - run: pnpm run lint
         working-directory: ./server
 
   lint-web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci --frozen-lockfile
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
         working-directory: ./web
-      - run: npm run lint
+      - run: pnpm run lint
         working-directory: ./web
 
   # ── Unit Tests ──
@@ -59,26 +65,32 @@ jobs:
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci --frozen-lockfile
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
         working-directory: ./server
-      - run: npx prisma generate --schema=src/infra/database/prisma/schema.prisma
+      - run: pnpm exec prisma generate --schema=src/infra/database/prisma/schema.prisma
         working-directory: ./server
-      - run: npm run test:coverage
+      - run: pnpm run test:coverage
         working-directory: ./server
 
   test-web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci --frozen-lockfile
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
         working-directory: ./web
-      - run: npm test
+      - run: pnpm test
         working-directory: ./web
 
   # ── Gate: all checks must pass before Vercel deploys ──
